@@ -32,7 +32,7 @@ public class StockUtils {
             if (stockCode.startsWith("002")) {
                 return "SZ.ZX";
             }
-            if (stockCode.startsWith("300")) {
+            if (stockCode.startsWith("30")) {
                 return "SZ.CY";
             }
             if (stockCode.startsWith("080")) {

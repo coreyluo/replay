@@ -45,7 +45,9 @@ public class StockKbarQuery extends PagingQuery implements Serializable {
      * 交易时间
      */
     private String kbarDate;
+    private String kbarDateFrom;
 
+    private String kbarDateTo;
     /**
      * 唯一索引
      */

@@ -26,7 +26,7 @@ public class PriceUtil {
      * @return
      */
     public static boolean isUpperPrice(String stockCode,BigDecimal currentPrice, BigDecimal yesterdayPrice) {
-        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("300")||stockCode.startsWith("688"))){
+        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("3")||stockCode.startsWith("688"))){
             return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE300).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
         }
         return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;

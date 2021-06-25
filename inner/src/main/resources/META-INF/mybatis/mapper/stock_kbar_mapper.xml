@@ -250,6 +250,16 @@
     </sql>
 
     <sql id="Range_Where_List">
+        <if test="kbarDateFrom != null">
+            <![CDATA[
+            and kbar_date >= #{kbarDateFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="kbarDateTo != null">
+            <![CDATA[
+            and kbar_date <= #{kbarDateTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
         <if test="createTimeFrom != null">
             <![CDATA[
             and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
