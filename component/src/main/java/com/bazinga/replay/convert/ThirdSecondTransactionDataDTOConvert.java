@@ -18,7 +18,7 @@ public class ThirdSecondTransactionDataDTOConvert {
             dto.setTradeTime(row[0]);
             dto.setTradePrice(new BigDecimal(row[1]).setScale(2, BigDecimal.ROUND_HALF_UP));
             dto.setTradeQuantity(Integer.parseInt(row[2]));
-            dto.setTradeType(Integer.parseInt(row[4]));
+            dto.setTradeType(Integer.parseInt(row[3]));
             transactionDataDTOList.add(dto);
         }
         return transactionDataDTOList;
