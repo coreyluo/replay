@@ -25,7 +25,13 @@ public class StockKbarUtil {
             return PriceUtil.isUpperPrice(stockKbar.getStockCode(),stockKbar.getAdjClosePrice(),preStockKbar.getAdjClosePrice());
         }
     }
-
+    public static boolean is10UpperPrice(StockKbar stockKbar, StockKbar preStockKbar){
+        if(stockKbar.getAdjFactor().compareTo(preStockKbar.getAdjFactor())==0){
+            return PriceUtil.isUpperPrice(stockKbar.getClosePrice(),preStockKbar.getClosePrice());
+        }else {
+            return PriceUtil.isUpperPrice(stockKbar.getAdjClosePrice(),preStockKbar.getAdjClosePrice());
+        }
+    }
 
     public static boolean isHighUpperPrice(StockKbar stockKbar, StockKbar preStockKbar){
         if(stockKbar.getAdjFactor().compareTo(preStockKbar.getAdjFactor())==0){
