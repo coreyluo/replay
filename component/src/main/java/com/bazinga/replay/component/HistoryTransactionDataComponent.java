@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.replay.convert.ThirdSecondTransactionDataDTOConvert;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.MarketUtil;
+import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
@@ -173,5 +175,49 @@ public class HistoryTransactionDataComponent {
             log.info("计算均价异常 stockCode:{} tradeDate:{}",stockCode,tradeDateStr);
             return null;
         }
+    }
+
+    /**
+     * 允许买入时间
+     * @param yesterdayPrice
+     * @param stockCode
+     * @return
+     */
+    public String insertTime(BigDecimal yesterdayPrice,String stockCode,Date date){
+        try {
+            List<ThirdSecondTransactionDataDTO> list = getData(stockCode, date);
+            if(CollectionUtils.isEmpty(list)){
+                log.error("查询不到历史分时成交数据计算上板时间 stockCode:{}",stockCode);
+                return null;
+            }
+            boolean canBuy  = false;
+            for (ThirdSecondTransactionDataDTO dto:list){
+                String tradeTime = dto.getTradeTime();
+                BigDecimal tradePrice = dto.getTradePrice();
+                Integer tradeType = dto.getTradeType();
+                boolean isUpperPrice = PriceUtil.isUpperPrice(tradePrice, yesterdayPrice);
+                if(MarketUtil.isChuangYe(stockCode)&&!date.before(DateUtil.parseDate("2020-08-24",DateUtil.yyyy_MM_dd))){
+                    isUpperPrice = PriceUtil.isUpperPrice(stockCode,tradePrice,yesterdayPrice);
+                }
+                boolean isSell = false;
+                if(tradeType==null || tradeType!=0){
+                    isSell = true;
+                }
+                boolean isPlank = false;
+                if(isSell&&isUpperPrice){
+                    isPlank = true;
+                }
+                if(!isPlank){
+                    canBuy = true;
+                }
+                if(canBuy&&isPlank){
+                    return tradeTime;
+                }
+            }
+        }catch (Exception e){
+            log.error("分时成交统计数据查询分时数据异常 stockCode:{}",stockCode);
+        }
+        return null;
+
     }
 }

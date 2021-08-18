@@ -3,6 +3,7 @@ package com.bazinga.replay.query;
 
 import com.bazinga.base.PagingQuery;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 import java.util.Date;
@@ -47,6 +48,7 @@ public class StockPlankDailyQuery extends PagingQuery implements Serializable {
      * 1 首板  2 2板  3 3板  4 4板  5 5板以上
      */
     private Integer plankType;
+    private Integer plankSign;
 
     /**
      * 0 尾盘炸板  1 尾盘封住
@@ -62,6 +64,15 @@ public class StockPlankDailyQuery extends PagingQuery implements Serializable {
      *  结束
      */
     private Date insertTimeTo;
+
+    private BigDecimal beforeRateFive;
+    private BigDecimal beforeRateTen;
+    private BigDecimal beforeRateFifteen;
+    private Long exchangeQuantity;
+
+    private BigDecimal max100PriceScale;
+    private BigDecimal max100AvgPriceScale;
+    private BigDecimal min15PriceScale;
 
     /**
      *  开始

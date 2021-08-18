@@ -1,22 +1,23 @@
 package com.bazinga.replay.model;
 
-import java.util.Date;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈StockReplayDaily〉<p>
+ * 〈StockCommonReplay〉<p>
  *
  * @author
- * @date 2021-06-24
+ * @date 2021-08-15
  */
 @lombok.Data
 @lombok.ToString
-public class StockReplayDaily implements Serializable {
+public class StockCommonReplay implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,87 +33,79 @@ public class StockReplayDaily implements Serializable {
     /**
      * 
      *
-     * @最大长度   255
+     * @最大长度   10
      * @允许为空   NO
-     * @是否索引   NO
+     * @是否索引   YES
      */
     private String stockCode;
 
     /**
      * 
      *
-     * @最大长度   255
+     * @最大长度   20
      * @允许为空   NO
      * @是否索引   NO
      */
     private String stockName;
 
     /**
-     * 
+     * k线时间
      *
+     * @最大长度   10
      * @允许为空   NO
      * @是否索引   NO
      */
-    private Date tradeDate;
+    private String kbarDate;
 
     /**
-     * 板数
+     * 唯一索引
      *
+     * @最大长度   20
      * @允许为空   NO
-     * @是否索引   NO
+     * @是否索引   YES
+     * @唯一索引   uk_unique_key
      */
-    private Integer plankDays;
+    private String uniqueKey;
 
     /**
-     * 断板天数
-     *
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private Integer breakDays;
-
-    /**
-     * 连板类型 n天m板
-     *
-     * @最大长度   255
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private String plankType;
-
-    /**
-     * 0 尾盘炸板  1 尾盘封住
-     *
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private Integer endStatus;
-
-    /**
-     * 0 不是一字  1 是一字
-     *
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private Integer beautifulPlankStatus;
-
-    private Integer openPlankStatus;
-
-    /**
-     * 平均溢价
+     * 上午1个小时均价
      *
      * @允许为空   YES
      * @是否索引   NO
      */
-    private BigDecimal sellAvg;
+    private BigDecimal avgPre1Price;
 
     /**
-     * 
+     * 上午均价涨幅
      *
      * @允许为空   YES
      * @是否索引   NO
      */
-    private Date insertTime;
+    private BigDecimal avgPre1Rate;
+
+    /**
+     * 2点55到收盘涨幅
+     *
+     * @允许为空   YES
+     * @是否索引   NO
+     */
+    private BigDecimal endRaiseRate55;
+
+    /**
+     * 明天板价除以10日内最低价格
+     *
+     * @允许为空   YES
+     * @是否索引   NO
+     */
+    private BigDecimal plankPriceThanLow10;
+
+    /**
+     * 10日内平均换手
+     *
+     * @允许为空   YES
+     * @是否索引   NO
+     */
+    private Long avgExchange10;
 
     /**
      * 

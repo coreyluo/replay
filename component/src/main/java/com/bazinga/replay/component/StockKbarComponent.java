@@ -215,7 +215,7 @@ public class StockKbarComponent {
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 200);
+                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 100);
             }
         });
     }

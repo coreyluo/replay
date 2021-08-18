@@ -1,9 +1,6 @@
 package com.bazinga.test;
 
-import com.bazinga.replay.component.NewStockComponent;
-import com.bazinga.replay.component.PlankExchangeDailyComponent;
-import com.bazinga.replay.component.StockPlankDailyComponent;
-import com.bazinga.replay.component.SynInfoComponent;
+import com.bazinga.replay.component.*;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.tradex.enums.KCate;
@@ -35,11 +32,27 @@ public class BaseTestCase {
     private SynInfoComponent synInfoComponent;
     @Autowired
     private PlankExchangeDailyComponent plankExchangeDailyComponent;
+    @Autowired
+    private StockReplayDailyComponent stockReplayDailyComponent;
+    @Autowired
+    private StockKbarComponent stockKbarComponent;
+    @Autowired
+    private StockCommonReplayComponent stockCommonReplayComponent;
     @Test
     public void test1() {
+        /*stockReplayDailyComponent.stockReplayDaily(new Date());
+        stockReplayDailyComponent.calPreDateAvgPrice(new Date());
         stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
         newStockComponent.catchNewStock();
-        //stockPlankDailyComponent.saveStockRehabilitation("002319","letonggufen",new Date());
+        plankExchangeDailyComponent.plankExchangeDaily(new Date());
+        stockKbarComponent.batchUpdateDaily();
+        stockPlankDailyComponent.calMax100DaysPriceForTwoPlank(new Date());
+        stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(new Date());
+        stockPlankDailyComponent.calSubNewStock(new Date());*/
+
+        //新版复盘
+        stockCommonReplayComponent.saveCommonReplay(DateUtil.parseDate("2021-05-13 15:30:30",DateUtil.DEFAULT_FORMAT));
+
     }
 
     @Test

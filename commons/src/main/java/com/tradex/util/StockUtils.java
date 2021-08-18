@@ -35,6 +35,9 @@ public class StockUtils {
             if (stockCode.startsWith("30")) {
                 return "SZ.CY";
             }
+            if (stockCode.startsWith("301")) {
+                return "SZ.CY";
+            }
             if (stockCode.startsWith("080")) {
                 return "SZ.PG";
             }

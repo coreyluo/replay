@@ -12,6 +12,7 @@
         <result column="plank_type" jdbcType="VARCHAR" property="plankType"/>
         <result column="end_status" jdbcType="TINYINT" property="endStatus"/>
         <result column="beautiful_plank_status" jdbcType="TINYINT" property="beautifulPlankStatus"/>
+        <result column="open_plank_status" jdbcType="TINYINT" property="openPlankStatus"/>
         <result column="sell_avg" jdbcType="DECIMAL" property="sellAvg"/>
         <result column="insert_time" jdbcType="TIMESTAMP" property="insertTime"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
@@ -29,6 +30,7 @@
             plank_type,
             end_status,
             beautiful_plank_status,
+            open_plank_status,
             sell_avg,
             insert_time,
             create_time,
@@ -56,6 +58,7 @@
             #{plankType, jdbcType=VARCHAR},
             #{endStatus, jdbcType=TINYINT},
             #{beautifulPlankStatus, jdbcType=TINYINT},
+            #{openPlankStatus, jdbcType=TINYINT},
             #{sellAvg, jdbcType=DECIMAL},
             #{insertTime, jdbcType=TIMESTAMP},
             #{createTime, jdbcType=TIMESTAMP},
@@ -89,6 +92,9 @@
             </if>
             <if test="beautifulPlankStatus != null">
                 beautiful_plank_status = #{beautifulPlankStatus, jdbcType=TINYINT},
+            </if>
+            <if test="openPlankStatus != null">
+                open_plank_status = #{openPlankStatus, jdbcType=TINYINT},
             </if>
             <if test="sellAvg != null">
                 sell_avg = #{sellAvg, jdbcType=DECIMAL},
@@ -127,6 +133,9 @@
         </if>
         <if test="beautifulPlankStatus != null">
             and beautiful_plank_status = #{beautifulPlankStatus, jdbcType=TINYINT}
+        </if>
+        <if test="openPlankStatus != null">
+            and open_plank_status = #{openPlankStatus, jdbcType=TINYINT}
         </if>
         <if test="sellAvg != null">
             and sell_avg = #{sellAvg, jdbcType=DECIMAL}

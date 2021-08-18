@@ -23,7 +23,7 @@ public class MarketUtil {
         if(StringUtils.isEmpty(stockCode)){
             return false;
         }
-        if(stockCode.startsWith("300")){
+        if(stockCode.startsWith("30")){
             return true;
         }
         return false;

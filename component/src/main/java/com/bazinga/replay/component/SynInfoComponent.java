@@ -180,7 +180,7 @@ public class SynInfoComponent {
                     circulateInfoService.save(circulateInfo);
                 } else {
                     circulateInfo.setStockCode(item.getStock());
-                    circulateInfo.setCirculate(item.getCirculateZ().longValue());
+                    circulateInfo.setCirculate(item.getTotalQuantity().longValue());
                     circulateInfo.setCirculateZ(item.getCirculateZ().longValue());
                     circulateInfo.setStockName(item.getStockName());
                     circulateInfo.setStockType(CommonUtil.getStockType(item.getCirculateZ().longValue()));

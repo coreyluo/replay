@@ -8,8 +8,16 @@
         <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
         <result column="trade_date" jdbcType="TIMESTAMP" property="tradeDate"/>
         <result column="plank_type" jdbcType="TINYINT" property="plankType"/>
+        <result column="plank_sign" jdbcType="TINYINT" property="plankSign"/>
         <result column="end_status" jdbcType="TINYINT" property="endStatus"/>
         <result column="insert_time" jdbcType="TIMESTAMP" property="insertTime"/>
+        <result column="before_rate_five" jdbcType="DECIMAL" property="beforeRateFive"/>
+        <result column="before_rate_ten" jdbcType="DECIMAL" property="beforeRateTen"/>
+        <result column="before_rate_fifteen" jdbcType="DECIMAL" property="beforeRateFifteen"/>
+        <result column="exchange_quantity" jdbcType="BIGINT"  property="exchangeQuantity" />
+        <result column="max100_price_scale" jdbcType="DECIMAL" property="max100PriceScale"/>
+        <result column="max100_avg_price_scale" jdbcType="DECIMAL" property="max100AvgPriceScale"/>
+        <result column="min15_price_scale" jdbcType="DECIMAL" property="min15PriceScale"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
@@ -21,8 +29,16 @@
             stock_name,
             trade_date,
             plank_type,
+            plank_sign,
             end_status,
             insert_time,
+            before_rate_five,
+            before_rate_ten,
+            before_rate_fifteen,
+            exchange_quantity,
+            max100_price_scale,
+            max100_avg_price_scale,
+            min15_price_scale,
             create_time,
             update_time
         </sql>
@@ -44,8 +60,16 @@
             #{stockName, jdbcType=VARCHAR},
             #{tradeDate, jdbcType=TIMESTAMP},
             #{plankType, jdbcType=TINYINT},
+            #{plankSign, jdbcType=TINYINT},
             #{endStatus, jdbcType=TINYINT},
             #{insertTime, jdbcType=TIMESTAMP},
+            #{beforeRateFive, jdbcType=DECIMAL},
+            #{beforeRateTen, jdbcType=DECIMAL},
+            #{beforeRateFifteen, jdbcType=DECIMAL},
+            #{exchangeQuantity, jdbcType=BIGINT},
+            #{max100PriceScale, jdbcType=DECIMAL},
+            #{max100AvgPriceScale, jdbcType=DECIMAL},
+            #{min15PriceScale, jdbcType=DECIMAL},
             #{createTime, jdbcType=TIMESTAMP},
             #{updateTime, jdbcType=TIMESTAMP}
             )
@@ -66,11 +90,35 @@
             <if test="plankType != null">
                 plank_type = #{plankType, jdbcType=TINYINT},
             </if>
+            <if test="plankSign != null">
+                plank_sign = #{plankSign, jdbcType=TINYINT},
+            </if>
             <if test="endStatus != null">
                 end_status = #{endStatus, jdbcType=TINYINT},
             </if>
             <if test="insertTime != null">
                 insert_time = #{insertTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="beforeRateFive != null">
+                before_rate_five = #{beforeRateFive, jdbcType=DECIMAL},
+            </if>
+            <if test="beforeRateTen != null">
+                before_rate_ten = #{beforeRateTen, jdbcType=DECIMAL},
+            </if>
+            <if test="beforeRateFifteen != null">
+                before_rate_fifteen = #{beforeRateFifteen, jdbcType=DECIMAL},
+            </if>
+            <if test="exchangeQuantity != null">
+                exchange_quantity = #{exchangeQuantity, jdbcType=BIGINT},
+            </if>
+            <if test="max100PriceScale != null">
+                max100_price_scale = #{max100PriceScale, jdbcType=DECIMAL},
+            </if>
+            <if test="max100AvgPriceScale != null">
+                max100_avg_price_scale = #{max100AvgPriceScale, jdbcType=DECIMAL},
+            </if>
+            <if test="min15PriceScale != null">
+                min15_price_scale = #{min15PriceScale, jdbcType=DECIMAL},
             </if>
             <if test="createTime != null">
                 create_time = #{createTime, jdbcType=TIMESTAMP},
@@ -91,6 +139,9 @@
         </if>
         <if test="plankType != null">
             and plank_type = #{plankType, jdbcType=TINYINT}
+        </if>
+        <if test="plankSign != null">
+            and plank_sign = #{plankSign, jdbcType=TINYINT}
         </if>
         <if test="endStatus != null">
             and end_status = #{endStatus, jdbcType=TINYINT}

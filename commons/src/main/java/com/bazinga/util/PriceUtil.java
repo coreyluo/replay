@@ -51,14 +51,14 @@ public class PriceUtil {
     }
 
     public static boolean isSuddenPrice(String stockCode,BigDecimal currentPrice, BigDecimal yesterdayPrice) {
-        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("300")||stockCode.startsWith("688"))){
+        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("30")||stockCode.startsWith("688"))){
             return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.SUDDEN_RATE300).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
         }
         return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.SUDDEN_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
     }
 
     public static BigDecimal calUpperPrice(String stockCode,BigDecimal yesterdayPrice) {
-        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("300")||stockCode.startsWith("688"))){
+        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("30")||stockCode.startsWith("688"))){
             return yesterdayPrice.multiply(CommonConstant.UPPER_RATE300).setScale(2, BigDecimal.ROUND_HALF_UP);
         }
         return yesterdayPrice.multiply(CommonConstant.UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP);
@@ -69,7 +69,7 @@ public class PriceUtil {
     }
 
     public static BigDecimal calSuddenPrice(String stockCode,BigDecimal yesterdayPrice) {
-        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("300")||stockCode.startsWith("688"))){
+        if(StringUtils.isNotBlank(stockCode)&&(stockCode.startsWith("30")||stockCode.startsWith("688"))){
             return yesterdayPrice.multiply(CommonConstant.STAR_MARKET_SUDDEN_RATE).setScale(2, BigDecimal.ROUND_HALF_UP);
         }
         return yesterdayPrice.multiply(CommonConstant.SUDDEN_RATE).setScale(2, BigDecimal.ROUND_HALF_UP);

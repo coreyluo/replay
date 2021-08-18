@@ -1,6 +1,7 @@
 package com.bazinga.replay.dto;
 
 import com.bazinga.annotation.ExcelElement;
+import com.xuxueli.poi.excel.annotation.ExcelField;
 import lombok.Data;
 
 
@@ -43,4 +44,6 @@ public class CirculateInfoExcelDTO {
     private Float circulateZ;
 
 
+    @ExcelElement(value = "总股本", pattern = "#,#0.0")
+    private Float totalQuantity;
 }

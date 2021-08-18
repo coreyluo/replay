@@ -1,19 +1,20 @@
 package com.bazinga.replay.component;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.base.Sort;
+import com.bazinga.enums.PlankSignEnum;
 import com.bazinga.enums.PlankTypeEnum;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.AdjFactorDTO;
 import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.PlankTypeDTO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.model.CirculateInfoAll;
-import com.bazinga.replay.model.StockPlankDaily;
-import com.bazinga.replay.model.StockRehabilitation;
+import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.CirculateInfoAllQuery;
+import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.StockPlankDailyQuery;
 import com.bazinga.replay.service.CirculateInfoAllService;
+import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.StockPlankDailyService;
 import com.bazinga.replay.service.StockRehabilitationService;
 import com.bazinga.util.DateTimeUtils;
@@ -53,6 +54,10 @@ public class StockPlankDailyComponent {
     private StockKbarComponent stockKbarComponent;
     @Autowired
     private StockRehabilitationService stockRehabilitationService;
+    @Autowired
+    private StockKbarService stockKbarService;
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
 
 
     public void stockPlankDailyStatistic(Date date){
@@ -85,6 +90,7 @@ public class StockPlankDailyComponent {
                     log.info("复盘数据 没有板 stockCode:{} stockName:{}", stockCode, stockName);
                     continue;
                 }
+                beforeRate(plankTypeDTO,stockKBars,DateUtil.format(date,DateUtil.yyyy_MM_dd));
                 saveStockPlankDaily(stockCode,stockName,date,plankTypeDTO,plankTypeEnum);
             }catch (Exception e){
                 log.info("复盘数据 异常 stockCode:{} stockName:{} e：{}", stockCode, stockName,e);
@@ -103,9 +109,50 @@ public class StockPlankDailyComponent {
         }else{
             daily.setEndStatus(0);
         }
+        daily.setBeforeRateFive(plankTypeDTO.getBeforeRate5());
+        daily.setBeforeRateTen(plankTypeDTO.getBeforeRate10());
+        daily.setBeforeRateFifteen(plankTypeDTO.getBeforeRate15());
+        daily.setExchangeQuantity(plankTypeDTO.getExchangeQuantity());
         daily.setTradeDate(date);
         daily.setCreateTime(new Date());
         stockPlankDailyService.save(daily);
+    }
+
+
+    public void beforeRate(PlankTypeDTO plankTypeDTO, List<KBarDTO> kbars,String tradeDateStr){
+        List<KBarDTO> reverse = Lists.reverse(kbars);
+        int i = 0;
+        boolean flag = false;
+        BigDecimal endPrice = null;
+        for (KBarDTO kBarDTO:reverse){
+            if(flag){
+                i++;
+            }
+            if(i==1){
+                endPrice = kBarDTO.getEndPrice();
+            }
+            if(i==6){
+                BigDecimal rate = PriceUtil.getPricePercentRate(endPrice.subtract(kBarDTO.getEndPrice()), kBarDTO.getEndPrice());
+                plankTypeDTO.setBeforeRate5(rate);
+            }
+
+            if(i==11){
+                BigDecimal rate = PriceUtil.getPricePercentRate(endPrice.subtract(kBarDTO.getEndPrice()), kBarDTO.getEndPrice());
+                plankTypeDTO.setBeforeRate10(rate);
+            }
+
+            if(i==16){
+                BigDecimal rate = PriceUtil.getPricePercentRate(endPrice.subtract(kBarDTO.getEndPrice()), kBarDTO.getEndPrice());
+                plankTypeDTO.setBeforeRate15(rate);
+            }
+            if(i>16){
+                return;
+            }
+            if(kBarDTO.getDateStr().equals(tradeDateStr)){
+                flag = true;
+                plankTypeDTO.setExchangeQuantity(kBarDTO.getTotalExchange()*100);
+            }
+        }
     }
 
     public PlankTypeEnum getPlankTypeEnum(PlankTypeDTO plankTypeDTO){
@@ -279,6 +326,135 @@ public class StockPlankDailyComponent {
         BigDecimal factor = preAdjFactorDTO.getAdjFactor().divide(adjFactorDTO.getAdjFactor(), 4, BigDecimal.ROUND_HALF_UP);
         return factor;
     }
+
+
+    public void calMax100DaysPriceForTwoPlank(Date date){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(date));
+        query.setTradeDateTo(DateTimeUtils.getDate235959(date));
+        List<StockPlankDaily> stockPlankDailies = stockPlankDailyService.listByCondition(query);
+        for (StockPlankDaily stockPlankDaily:stockPlankDailies){
+            try {
+                StockKbarQuery stockKbarQuery = new StockKbarQuery();
+                stockKbarQuery.setStockCode(stockPlankDaily.getStockCode());
+                stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+                stockKbarQuery.setLimit(100);
+                List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+                String dateStr = DateUtil.format(date, DateUtil.yyyyMMdd);
+                StockKbar highKbar = null;
+                StockKbar currentDayKbar = null;
+                for (StockKbar kbar : stockKbars) {
+                    if (!kbar.getKbarDate().equals(dateStr)) {
+                        if (highKbar == null || kbar.getAdjHighPrice().compareTo(highKbar.getAdjHighPrice()) == 1) {
+                            highKbar = kbar;
+                        }
+                    } else {
+                        currentDayKbar = kbar;
+                    }
+                }
+                if (highKbar != null && currentDayKbar != null) {
+                    BigDecimal twoPlankUpperPrice = PriceUtil.calUpperPrice(stockPlankDaily.getStockCode(), currentDayKbar.getClosePrice());
+                    BigDecimal max100PriceScale = twoPlankUpperPrice.divide(highKbar.getAdjHighPrice(), 2, BigDecimal.ROUND_HALF_UP);
+                    stockPlankDaily.setMax100PriceScale(max100PriceScale);
+                    BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(stockPlankDaily.getStockCode(), DateUtil.parseDate(highKbar.getKbarDate(), DateUtil.yyyyMMdd));
+                    if (avgPrice != null) {
+                        BigDecimal adjAvgPrice = avgPrice.multiply(highKbar.getAdjHighPrice().divide(highKbar.getHighPrice(), 2, BigDecimal.ROUND_HALF_UP));
+                        BigDecimal max100AvgPriceScale = twoPlankUpperPrice.divide(adjAvgPrice, 2, BigDecimal.ROUND_HALF_UP);
+                        stockPlankDaily.setMax100AvgPriceScale(max100AvgPriceScale);
+                    }
+                    stockPlankDailyService.updateById(stockPlankDaily);
+                }
+            }catch (Exception e){
+                log.error(e.getMessage(),e);
+            }
+        }
+
+    }
+
+    public void calMin15DaysPriceForTwoPlank(Date date){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(date));
+        query.setTradeDateTo(DateTimeUtils.getDate235959(date));
+        List<StockPlankDaily> stockPlankDailies = stockPlankDailyService.listByCondition(query);
+        for (StockPlankDaily stockPlankDaily:stockPlankDailies){
+            try {
+                StockKbarQuery stockKbarQuery = new StockKbarQuery();
+                stockKbarQuery.setStockCode(stockPlankDaily.getStockCode());
+                stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+                stockKbarQuery.setLimit(16);
+                List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+                String dateStr = DateUtil.format(date, DateUtil.yyyyMMdd);
+                StockKbar lowKbar = null;
+                StockKbar currentDayKbar = null;
+                for (StockKbar kbar : stockKbars) {
+                    if (!kbar.getKbarDate().equals(dateStr)) {
+                        if (lowKbar == null || kbar.getAdjLowPrice().compareTo(lowKbar.getAdjLowPrice()) == 1) {
+                            lowKbar = kbar;
+                        }
+                    } else {
+                        currentDayKbar = kbar;
+                    }
+                }
+                if (lowKbar != null && currentDayKbar != null) {
+                    BigDecimal twoPlankUpperPrice = PriceUtil.calUpperPrice(stockPlankDaily.getStockCode(), currentDayKbar.getClosePrice());
+                    BigDecimal min15PriceScale = twoPlankUpperPrice.divide(lowKbar.getAdjLowPrice(), 2, BigDecimal.ROUND_HALF_UP);
+                    stockPlankDaily.setMin15PriceScale(min15PriceScale);
+                    stockPlankDailyService.updateById(stockPlankDaily);
+                }
+            }catch (Exception e){
+                log.error(e.getMessage(),e);
+            }
+        }
+
+    }
+
+    public void calSubNewStock(Date date){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(date));
+        query.setTradeDateTo(DateTimeUtils.getDate235959(date));
+        List<StockPlankDaily> stockPlankDailies = stockPlankDailyService.listByCondition(query);
+        String dateStr = DateUtil.format(date, DateUtil.yyyy_MM_dd);
+        for (StockPlankDaily stockPlankDaily:stockPlankDailies){
+            try {
+                DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockPlankDaily.getStockCode(), 0, 50);
+                List<KBarDTO> kbars = KBarDTOConvert.convertKBar(dataTable);
+                if(CollectionUtils.isEmpty(kbars)){
+                    continue;
+                }
+                if(kbars.size()<50){
+                    boolean isContinuePlank = true;
+                    BigDecimal preEndPrice = null;
+                    KBarDTO firstOpenKbar = null;
+                    for (KBarDTO dto:kbars){
+                        if(preEndPrice!=null){
+                            boolean endPlank = PriceUtil.isUpperPrice(dto.getEndPrice(), preEndPrice);
+                            if(isContinuePlank && !endPlank){
+                                isContinuePlank = false;
+                                firstOpenKbar = dto;
+                            }
+                            if(dto.getDateStr().equals(dateStr)){
+                                if(firstOpenKbar==null){
+                                    //执行次新逻辑
+                                    stockPlankDaily.setPlankSign(PlankSignEnum.SUB_NEW.getCode());
+                                    stockPlankDailyService.updateById(stockPlankDaily);
+                                }
+                                if(firstOpenKbar!=null&&firstOpenKbar.getDateStr().equals(dto.getDateStr())){
+                                    //执行次新逻辑
+                                    stockPlankDaily.setPlankSign(PlankSignEnum.SUB_NEW.getCode());
+                                    stockPlankDailyService.updateById(stockPlankDaily);
+                                }
+                            }
+                        }
+                        preEndPrice = dto.getEndPrice();
+                    }
+                }
+            }catch (Exception e){
+                log.error(e.getMessage(),e);
+            }
+        }
+
+    }
+
 
 
 }

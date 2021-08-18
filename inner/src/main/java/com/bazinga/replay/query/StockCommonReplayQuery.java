@@ -3,24 +3,25 @@ package com.bazinga.replay.query;
 
 import com.bazinga.base.PagingQuery;
 
-import java.util.Date;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈StockReplayDaily 查询参数〉<p>
+ * 〈StockCommonReplay 查询参数〉<p>
  *
  * @author
- * @date 2021-06-24
+ * @date 2021-08-15
  */
 @lombok.Data
 @lombok.EqualsAndHashCode(callSuper = true)
 @lombok.ToString(callSuper = true)
-public class StockReplayDailyQuery extends PagingQuery implements Serializable {
+public class StockCommonReplayQuery extends PagingQuery implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -35,56 +36,39 @@ public class StockReplayDailyQuery extends PagingQuery implements Serializable {
     private String stockName;
 
     /**
-     *  开始
+     * k线时间
      */
-    private Date tradeDateFrom;
+    private String kbarDate;
 
     /**
-     *  结束
+     * 唯一索引
      */
-    private Date tradeDateTo;
+    private String uniqueKey;
 
     /**
-     * 板数
+     * 上午1个小时均价
      */
-    private Integer plankDays;
+    private BigDecimal avgPre1Price;
 
     /**
-     * 断板天数
+     * 上午均价涨幅
      */
-    private Integer breakDays;
+    private BigDecimal avgPre1Rate;
 
     /**
-     * 连板类型 n天m板
+     * 2点55到收盘涨幅
      */
-    private String plankType;
+    private BigDecimal endRaiseRate55;
 
     /**
-     * 0 尾盘炸板  1 尾盘封住
+     * 明天板价除以10日内最低价格
      */
-    private Integer endStatus;
+    private BigDecimal plankPriceThanLow10;
 
     /**
-     * 0 不是一字  1 是一字
+     * 10日内平均换手
      */
-    private Integer beautifulPlankStatus;
-
-    private Integer openPlankStatus;
-
-    /**
-     * 平均溢价
-     */
-    private BigDecimal sellAvg;
-
-    /**
-     *  开始
-     */
-    private Date insertTimeFrom;
-
-    /**
-     *  结束
-     */
-    private Date insertTimeTo;
+    private Long avgExchange10;
 
     /**
      *  开始
