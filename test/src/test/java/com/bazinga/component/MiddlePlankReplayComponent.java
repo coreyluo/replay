@@ -73,10 +73,15 @@ public class MiddlePlankReplayComponent {
                 continue;
             }
             for (int i = 6; i < stockKbars.size()-2; i++) {
+
+                StockKbar aftstockKbar = stockKbars.get(i+1);
                 StockKbar stockKbar = stockKbars.get(i);
                 StockKbar preStockKbar = stockKbars.get(i-1);
-                StockKbar sellStockKbar = stockKbars.get(i+1);
+                StockKbar sellStockKbar = stockKbars.get(i+2);
                 List<StockKbar> kbarList = stockKbars.subList(i - 6, i + 1);
+                if(StockKbarUtil.isUpperPrice(aftstockKbar,stockKbar)){
+                    continue;
+                }
                 if(!StockKbarUtil.isUpperPrice(stockKbar,preStockKbar)){
                     continue;
                 }
@@ -139,7 +144,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlankduan.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
