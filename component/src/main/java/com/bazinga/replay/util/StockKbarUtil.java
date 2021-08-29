@@ -104,4 +104,6 @@ public class StockKbarUtil {
         }
         return serialsDays<3?0:serialsDays;
     }
+
+
 }

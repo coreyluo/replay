@@ -28,6 +28,17 @@ public class PlankHighUtil {
         return planks;
     }
 
+    public static boolean isTodayFirstPlank(List<StockKbar> stockKbarList){
+        StockKbar stockKbar = stockKbarList.get(stockKbarList.size()-2);
+        StockKbar pre1StockKbar = stockKbarList.get(stockKbarList.size()-3);
+        StockKbar pre2StockKbar = stockKbarList.get(stockKbarList.size()-4);
+        if(StockKbarUtil.isUpperPrice(stockKbar,pre1StockKbar) || StockKbarUtil.isUpperPrice(pre1StockKbar,pre2StockKbar)){
+            return false;
+        }else {
+            return true;
+        }
+    }
+
     public static PlankHighDTO calTodayPlank(List<StockKbar> stockKbarList) {
         int planks = 1;
         int unPlanks = 0;

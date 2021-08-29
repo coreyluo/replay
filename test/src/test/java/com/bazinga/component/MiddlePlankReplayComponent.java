@@ -2,6 +2,8 @@ package com.bazinga.component;
 
 
 import com.bazinga.base.Sort;
+import com.bazinga.dto.PlankHighDTO;
+import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
@@ -15,6 +17,7 @@ import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.tradex.util.ExcelExportUtil;
@@ -41,10 +44,123 @@ public class MiddlePlankReplayComponent {
     private StockKbarService stockKbarService;
 
     @Autowired
-    private HistoryTransactionDataComponent historyTransactionDataComponent;
+    private CommonComponent commonComponent;
 
     @Autowired
-    private TradeDatePoolService tradeDatePoolService;
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
+
+    public void invokeUnPlank(){
+        Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
+        ExcelExportUtil excelExportUtil = new ExcelExportUtil();
+        excelExportUtil.setWorkbook(workbook);
+        excelExportUtil.setTitle("");
+        excelExportUtil.setSheet(workbook.createSheet("sheet1"));
+        List<Map> dataList = Lists.newArrayList();
+        String[] headList = getUnPlankHeadList();
+        excelExportUtil.setHeadKey(headList);
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            query.setKbarDateFrom("20200710");
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
+                continue;
+            }
+            for (int i = 6; i < stockKbars.size()-2; i++) {
+
+             //   StockKbar aftstockKbar = stockKbars.get(i+1);
+                StockKbar stockKbar = stockKbars.get(i);
+                StockKbar preStockKbar = stockKbars.get(i-1);
+                StockKbar sellStockKbar = stockKbars.get(i+1);
+                List<StockKbar> kbarList = stockKbars.subList(i - 6, i + 1);
+                if(commonComponent.isNewStock(stockKbar.getStockCode(),stockKbar.getKbarDate())){
+                    continue;
+                }
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                    continue;
+                }
+                int plank = calSerialsPlank(kbarList);
+                if(plank<2){
+                    continue;
+                }
+              /*  if(!PlankHighUtil.isTodayFirstPlank(kbarList)){
+                    continue;
+                }*/
+                log.info("满足lianban炸板条件 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                Map<String, Object> map = new HashMap<>();
+                map.put("stockCode",stockKbar.getStockCode());
+                map.put("stockName",stockKbar.getStockName());
+                map.put("tradeAmount",stockKbar.getTradeAmount());
+                map.put("kbarDate",stockKbar.getKbarDate());
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
+                    BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                    map.put(transactionDataDTO.getTradeTime(),rate);
+                }
+                dataList.add(map);
+            }
+        }
+
+        Map<String,List<Map>> groupByMap = new HashMap<>();
+
+        for (Map map : dataList) {
+            List<Map> mapList = groupByMap.get(map.get("kbarDate").toString());
+            if(mapList == null){
+                mapList = new ArrayList<>();
+            }
+            mapList.add(map);
+            groupByMap.put(map.get("kbarDate").toString(),mapList);
+        }
+        List<Map> exportList = Lists.newArrayList();
+        groupByMap.forEach((key,list)->{
+            Map map = new HashMap<>();
+            map.put("kbarDate",key);
+            map.put("count",list.size());
+            String attrKey = headList[2];
+            BigDecimal totalTradeAmount = BigDecimal.ZERO;
+            for (Map itemMap : list) {
+                BigDecimal tradeAmount = new BigDecimal(itemMap.get(attrKey).toString());
+                totalTradeAmount = totalTradeAmount.add(tradeAmount);
+            }
+            map.put(attrKey,totalTradeAmount);
+           /* for (int i = 2; i < headList.length; i++) {
+                String attrKey = headList[i];
+                BigDecimal totalRate = BigDecimal.ZERO;
+                BigDecimal preRate = BigDecimal.ZERO;
+                for (Map itemMap : list) {
+                    BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
+                    totalRate = totalRate.add(rate);
+                    if(itemMap.get(attrKey) != null){
+                        preRate = new BigDecimal(itemMap.get(attrKey).toString());
+                    }
+                }
+                map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
+            }*/
+            exportList.add(map);
+        });
+
+       /* for (TradeDatePool tradeDatePool : tradeDatePools) {
+            String tradeDate = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
+           // List<Map>
+
+        }*/
+        excelExportUtil.setData(exportList);
+        excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
+        excelExportUtil.writeMainData(1);
+
+        try {
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\碰板成交额.xls");
+            workbook.write(output);
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
 
     public void invoke(){
 
@@ -153,6 +269,33 @@ public class MiddlePlankReplayComponent {
     }
 
 
+    private  String[] getUnPlankHeadList(){
+        List<String> headList = Lists.newArrayList();
+        //    headList.add("stockCode");
+        //    headList.add("stockName");
+        headList.add("kbarDate");
+        headList.add("count");
+        headList.add("tradeAmount");
+       /* headList.add("09:25");
+        headList.add("09:30");
+        Date date = DateUtil.parseDate("20210818093000", DateUtil.yyyyMMddHHmmss);
+        int count = 0;
+        while (count< 30){
+            date = DateUtil.addMinutes(date, 1);
+            count++;
+            headList.add(DateUtil.format(date,"HH:mm"));
+        }*/
+     /*   headList.add("13:00");
+        date = DateUtil.parseDate("20210531130000", DateUtil.yyyyMMddHHmmss);
+        count = 0;
+        while (count< 120){
+            date = DateUtil.addMinutes(date, 1);
+            count++;
+            headList.add(DateUtil.format(date,"HH:mm"));
+        }*/
+        return headList.toArray(new String[]{});
+    }
+
     private  String[] getHeadList(){
         List<String> headList = Lists.newArrayList();
     //    headList.add("stockCode");
@@ -181,11 +324,11 @@ public class MiddlePlankReplayComponent {
 
 
     private int calSerialsPlank(List<StockKbar> stockKbarList) {
-        int planks = 0;
+        int planks = 1;
         int unPlanks = 0;
-        for (int i = stockKbarList.size() - 1; i > 0; i--) {
-            StockKbar stockKbar = stockKbarList.get(i);
-            StockKbar preStockKbar = stockKbarList.get(i - 1);
+        for (int i = stockKbarList.size() - 1; i > 1; i--) {
+            StockKbar stockKbar = stockKbarList.get(i-1);
+            StockKbar preStockKbar = stockKbarList.get(i - 2);
             if (StockKbarUtil.isUpperPrice(stockKbar, preStockKbar)) {
                 planks++;
                 continue;
