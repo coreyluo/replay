@@ -1,10 +1,7 @@
 package com.bazinga.test;
 
 
-import com.bazinga.component.BlockHeadReplayComponent;
-import com.bazinga.component.MainBlockReplayComponent;
-import com.bazinga.component.MiddlePlankReplayComponent;
-import com.bazinga.component.PositionOwnReplayComponent;
+import com.bazinga.component.*;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,6 +18,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private PositionOwnReplayComponent positionOwnReplayComponent;
+
+    @Autowired
+    private MarketPlankReplayComponent marketPlankReplayComponent;
 
     @Test
     public void test(){
@@ -39,6 +39,11 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test4(){
-        positionOwnReplayComponent.replayReplankTwo();
+        positionOwnReplayComponent.replay();
+    }
+
+    @Test
+    public void test5(){
+        marketPlankReplayComponent.replay();
     }
 }
