@@ -51,7 +51,7 @@ public class BaseTestCase {
         stockPlankDailyComponent.calSubNewStock(new Date());*/
 
         //新版复盘
-        stockCommonReplayComponent.saveCommonReplay(DateUtil.parseDate("2021-05-13 15:30:30",DateUtil.DEFAULT_FORMAT));
+        stockCommonReplayComponent.saveCommonReplay(DateUtil.parseDate("2021-08-13 15:30:30",DateUtil.DEFAULT_FORMAT));
 
     }
 
