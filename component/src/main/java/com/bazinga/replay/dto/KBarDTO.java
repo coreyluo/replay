@@ -23,4 +23,9 @@ public class KBarDTO {
     private Long totalExchange;
     //总额
     private Long totalExchangeMoney;
+
+    private BigDecimal adjStartPrice;
+    private BigDecimal adjHighPrice;
+    private BigDecimal adjLowPrice;
+    private BigDecimal adjEndPrice;
 }
