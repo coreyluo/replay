@@ -1,14 +1,12 @@
 package com.bazinga.dto;
 
-
 import com.bazinga.annotation.ExcelElement;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 @Data
-public class PositionOwnImportDTO {
+public class PositionBlockDTO {
 
     /**
      * 股票代码
@@ -31,19 +29,19 @@ public class PositionOwnImportDTO {
     private String stockName;
 
     @ExcelElement("发生日期")
-    private Date kbarDate;
+    private String kbarDate;
 
     @ExcelElement("委托时间")
-    private Date orderTime;
-
-    @ExcelElement("是否炸板")
-    private Integer sealType;
+    private String orderTime;
 
     @ExcelElement("正盈利")
     private BigDecimal premium;
 
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
+
+    @ExcelElement("是否炸板")
+    private Integer sealType;
 
     @ExcelElement("板块代码")
     private String blockCode;

@@ -22,6 +22,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private MarketPlankReplayComponent marketPlankReplayComponent;
 
+    @Autowired
+    private PositionBlockReplayComponent positionBlockReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -45,5 +48,10 @@ public class ReplayTest extends BaseTestCase {
     @Test
     public void test5(){
         marketPlankReplayComponent.replay();
+    }
+
+    @Test
+    public void test6(){
+        positionBlockReplayComponent.replay();
     }
 }
