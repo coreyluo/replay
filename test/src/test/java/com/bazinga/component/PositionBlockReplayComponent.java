@@ -87,7 +87,7 @@ public class PositionBlockReplayComponent {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-                if(!kbarDate.startsWith("202108")){
+                if(!kbarDate.startsWith("202105")){
                     continue;
                 }
                 Set<String> plankMinSet = plankMinMap.get(kbarDate);
