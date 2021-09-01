@@ -31,8 +31,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -55,6 +57,8 @@ public class OtherBuyStockComponent {
     @Autowired
     private BlockLevelReplayComponent blockLevelReplayComponent;
 
+    public static Map<String,Map<String,BlockLevelDTO>> levelMap = new ConcurrentHashMap<>(8192);
+
 
     public void zgcBuy(List<OtherExcelDTO> excelDTOS){
         List<PlankExchangeDailyDTO> dailys = Lists.newArrayList();
@@ -66,7 +70,7 @@ public class OtherBuyStockComponent {
             String stockCode = circulateInfo.getStockCode();
             String stockName = circulateInfo.getStockName();
             try {
-               /* if (!stockCode.equals("605299")) {
+               /* if (!stockCode.equals("000848")) {
                     continue;
                 }*/
                 System.out.println(stockCode);
@@ -82,9 +86,9 @@ public class OtherBuyStockComponent {
                 }
                 PlankExchangeDailyDTO dto = findDays(adjStockBars, excelDTO, circulateInfo);
                 dailys.add(dto);
-                /*if(dailys.size()>=20){
+                if(dailys.size()>=3){
                     break;
-                }*/
+                }
             }catch (Exception e){
                 log.info("复盘数据 异常 stockCode:{} stockName:{} e：{}", stockCode, stockName,e);
             }
@@ -132,7 +136,9 @@ public class OtherBuyStockComponent {
             list.add(dto.getBlockRate());
             list.add(dto.getPreHighBlockLevel());
             list.add(dto.getPreHighBlockRate());
-
+            list.add(dto.getBlockLevel3Min());
+            list.add(dto.getBlockRate3Min());
+            list.add(dto.getBlockName3Min());
             list.add(dto.getAvgRate30());
 
             Object[] objects = list.toArray();
@@ -142,7 +148,7 @@ public class OtherBuyStockComponent {
 
         String[] rowNames = {"index","stockCode","stockName","流通z","买金额","卖金额","正盈利","盈亏比","连板情况","交易日期","开盘价格","开盘涨幅","开盘成交额","前一天总成交额","开盘时候价格","3日涨幅","5日涨幅","10日涨幅","次日收益","5日板数",
                 "15分是否大于开盘价","15价格","15分溢价","20分是否大于开盘价","20价格","20分溢价","25分是否大于开盘价","25价格","25分溢价","30分是否大于开盘价","30价格",
-                "昨日收盘最高板块排名","昨日收盘最高板块名称","昨日收盘最高板块幅度","开盘最高板块排名","开盘最高板块名称","开盘最高板块幅度","昨日收盘最高板块排名","昨日收盘最高板块幅度","30分溢价"};
+                "昨日收盘最高板块排名","昨日收盘最高板块名称","昨日收盘最高板块幅度","开盘最高板块排名","开盘最高板块名称","开盘最高板块幅度","昨日收盘最高板块排名","昨日收盘最高板块幅度","33最高板块排名","33最高板块幅度","33最高板块名称","30分溢价"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("中关村数据回撤",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("中关村数据回撤");
@@ -151,9 +157,60 @@ public class OtherBuyStockComponent {
         }
     }
 
+    public void getThreeMinBlockLevel(String stockCode,PlankExchangeDailyDTO dto){
+        KBarDTO kBarDTO = dto.getKBarDTO();
+        KBarDTO preKbarDTO = dto.getPreKbarDTO();
+        if(preKbarDTO==null||preKbarDTO==null){
+            return;
+        }
+        Map<String, BlockLevelDTO> stringBlockLevelDTOMap = levelMap.get(kBarDTO.getDateStr());
+        if(stringBlockLevelDTOMap==null||stringBlockLevelDTOMap.size()<=1) {
+            List<StockRateDTO> rates = Lists.newArrayList();
+            CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+            List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+            for (CirculateInfo circulateInfo : circulateInfos) {
+                List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), kBarDTO.getDate());
+                if (CollectionUtils.isEmpty(datas)) {
+                    continue;
+                }
+                String preUniqueKey = circulateInfo.getStockCode() + "_" + DateUtil.format(preKbarDTO.getDate(), DateUtil.yyyyMMdd);
+                StockKbar preUniqueKbar = stockKbarService.getByUniqueKey(preUniqueKey);
+                if (preUniqueKbar == null) {
+                    continue;
+                }
+                BigDecimal price = null;
+                for (ThirdSecondTransactionDataDTO data : datas) {
+                    if (data.getTradeTime().startsWith("09:33") || data.getTradeTime().startsWith("09:34") || data.getTradeTime().startsWith("09:35")) {
+                        price = data.getTradePrice();
+                    }
+                    if (price != null) {
+                        break;
+                    }
+                }
+                if (price == null) {
+                    continue;
+                }
+                StockRateDTO stockRateDTO = new StockRateDTO();
+                stockRateDTO.setStockCode(circulateInfo.getStockCode());
+                stockRateDTO.setStockName(circulateInfo.getStockName());
+                BigDecimal rate = PriceUtil.getPricePercentRate(price.subtract(preUniqueKbar.getClosePrice()), preUniqueKbar.getClosePrice());
+                stockRateDTO.setRate(rate);
+                rates.add(stockRateDTO);
+            }
+            stringBlockLevelDTOMap = blockLevelReplayComponent.calBlockLevelDTO(rates);
+            levelMap.put(kBarDTO.getDateStr(),stringBlockLevelDTOMap);
+        }
+        BlockLevelDTO blockLevel = blockLevelReplayComponent.getBlockLevel(stringBlockLevelDTOMap, stockCode);
+        if(blockLevel!=null&&blockLevel.getLevel()!=null){
+            dto.setBlockName3Min(blockLevel.getBlockName());
+            dto.setBlockLevel3Min(blockLevel.getLevel());
+            dto.setBlockRate3Min(blockLevel.getAvgRate());
+        }
+    }
+
     public void getPreBlockLevel(String stockCode,PlankExchangeDailyDTO dto){
         KBarDTO preKbarDTO = dto.getPreKbarDTO();
-        KBarDTO prePreKbarDTO = dto.getPreKbarDTO();
+        KBarDTO prePreKbarDTO = dto.getPrePreKbarDTO();
         if(preKbarDTO==null||prePreKbarDTO==null){
             return;
         }
@@ -169,8 +226,8 @@ public class OtherBuyStockComponent {
                 continue;
             }
             StockRateDTO stockRateDTO = new StockRateDTO();
-            stockRateDTO.setStockCode(dto.getStockCode());
-            stockRateDTO.setStockName(dto.getStockName());
+            stockRateDTO.setStockCode(circulateInfo.getStockCode());
+            stockRateDTO.setStockName(circulateInfo.getStockName());
             BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getClosePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
             stockRateDTO.setRate(rate);
             rates.add(stockRateDTO);
@@ -203,8 +260,8 @@ public class OtherBuyStockComponent {
                 continue;
             }
             StockRateDTO stockRateDTO = new StockRateDTO();
-            stockRateDTO.setStockCode(dto.getStockCode());
-            stockRateDTO.setStockName(dto.getStockName());
+            stockRateDTO.setStockCode(circulateInfo.getStockCode());
+            stockRateDTO.setStockName(circulateInfo.getStockName());
             BigDecimal rate = PriceUtil.getPricePercentRate(uniqueKbar.getOpenPrice().subtract(preUniqueKbar.getClosePrice()), preUniqueKbar.getClosePrice());
             stockRateDTO.setRate(rate);
             rates.add(stockRateDTO);
@@ -619,6 +676,7 @@ public class OtherBuyStockComponent {
                 if(preKbarDTO!=null) {
                     getPreBlockLevel(dto.getStockCode(), dto);
                     getBlockLevel(dto.getStockCode(), dto);
+                    getThreeMinBlockLevel(dto.getStockCode(),dto);
                 }
             }
             prePreKbarDTO = preKbarDTO;
