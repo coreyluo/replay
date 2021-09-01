@@ -107,14 +107,11 @@ public class OtherBuyStockComponent {
             list.add(dto.getStartExchangeMoney());
             list.add(dto.getBeforeTotalExchangeMoney());
             list.add(dto.getKBarDTO().getAdjStartPrice());
-
             list.add(dto.getRate3());
             list.add(dto.getRate5());
             list.add(dto.getRate10());
-
             list.add(dto.getPlankProfit());
             list.add(dto.getBeforePlanks5());
-
             list.add(dto.isHighThanOpen15());
             list.add(dto.getBuyPrice15());
             list.add(dto.getAvgRate15());
@@ -129,8 +126,13 @@ public class OtherBuyStockComponent {
 
             list.add(dto.getPreBlockLevel());
             list.add(dto.getPreBlockName());
+            list.add(dto.getPreBlockRate());
             list.add(dto.getBlockLevel());
             list.add(dto.getBlockName());
+            list.add(dto.getBlockRate());
+            list.add(dto.getPreHighBlockLevel());
+            list.add(dto.getPreHighBlockRate());
+
             list.add(dto.getAvgRate30());
 
             Object[] objects = list.toArray();
@@ -139,7 +141,8 @@ public class OtherBuyStockComponent {
         }
 
         String[] rowNames = {"index","stockCode","stockName","流通z","买金额","卖金额","正盈利","盈亏比","连板情况","交易日期","开盘价格","开盘涨幅","开盘成交额","前一天总成交额","开盘时候价格","3日涨幅","5日涨幅","10日涨幅","次日收益","5日板数",
-                "15分是否大于开盘价","15价格","15分溢价","20分是否大于开盘价","20价格","20分溢价","25分是否大于开盘价","25价格","25分溢价","30分是否大于开盘价","30价格","昨日收盘最高板块排名","昨日收盘最高板块名称","开盘最高板块排名","开盘最高板块名称","30分溢价"};
+                "15分是否大于开盘价","15价格","15分溢价","20分是否大于开盘价","20价格","20分溢价","25分是否大于开盘价","25价格","25分溢价","30分是否大于开盘价","30价格",
+                "昨日收盘最高板块排名","昨日收盘最高板块名称","昨日收盘最高板块幅度","开盘最高板块排名","开盘最高板块名称","开盘最高板块幅度","昨日收盘最高板块排名","昨日收盘最高板块幅度","30分溢价"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("中关村数据回撤",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("中关村数据回撤");
@@ -148,71 +151,77 @@ public class OtherBuyStockComponent {
         }
     }
 
-    public void getPreBlockLevel(String stockCode,String dateStr,PlankExchangeDailyDTO dto){
+    public void getPreBlockLevel(String stockCode,PlankExchangeDailyDTO dto){
+        KBarDTO preKbarDTO = dto.getPreKbarDTO();
+        KBarDTO prePreKbarDTO = dto.getPreKbarDTO();
+        if(preKbarDTO==null||prePreKbarDTO==null){
+            return;
+        }
         List<StockRateDTO> rates = Lists.newArrayList();
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         for (CirculateInfo circulateInfo:circulateInfos){
-            StockKbarQuery stockKbarQuery = new StockKbarQuery();
-            stockKbarQuery.setStockCode(circulateInfo.getStockCode());
-            stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.ASC);
-            List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
-            if(CollectionUtils.isEmpty(stockKbars)){
+            String preUnique = circulateInfo.getStockCode()+"_"+DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd);
+            String prePreUnique = circulateInfo.getStockCode()+"_"+DateUtil.format(prePreKbarDTO.getDate(),DateUtil.yyyyMMdd);
+            StockKbar stockKbar = stockKbarService.getByUniqueKey(preUnique);
+            StockKbar preStockKbar = stockKbarService.getByUniqueKey(prePreUnique);
+            if(stockKbar==null||preStockKbar==null){
                 continue;
             }
-            BigDecimal preEndPrice = null;
-            for (StockKbar stockKbar:stockKbars){
-                if(preEndPrice!=null&&stockKbar.getKbarDate().equals(dateStr)){
-                    StockRateDTO stockRateDTO = new StockRateDTO();
-                    stockRateDTO.setStockCode(stockKbar.getStockCode());
-                    stockRateDTO.setStockName(stockKbar.getStockName());
-                    BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getClosePrice().subtract(preEndPrice), preEndPrice);
-                    stockRateDTO.setRate(rate);
-                    rates.add(stockRateDTO);
-                }
-                preEndPrice = stockKbar.getClosePrice();
-            }
-
+            StockRateDTO stockRateDTO = new StockRateDTO();
+            stockRateDTO.setStockCode(dto.getStockCode());
+            stockRateDTO.setStockName(dto.getStockName());
+            BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getClosePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
+            stockRateDTO.setRate(rate);
+            rates.add(stockRateDTO);
         }
         Map<String, BlockLevelDTO> stringBlockLevelDTOMap = blockLevelReplayComponent.calBlockLevelDTO(rates);
         BlockLevelDTO blockLevel = blockLevelReplayComponent.getBlockLevel(stringBlockLevelDTOMap, stockCode);
         if(blockLevel!=null&&blockLevel.getLevel()!=null){
             dto.setPreBlockName(blockLevel.getBlockName());
             dto.setPreBlockLevel(blockLevel.getLevel());
+            dto.setPreBlockRate(blockLevel.getAvgRate());
+            dto.setPreBlockCode(blockLevel.getBlockCode());
         }
     }
 
-    public void getBlockLevel(String stockCode,String dateStr,PlankExchangeDailyDTO dto){
+    public void getBlockLevel(String stockCode,PlankExchangeDailyDTO dto){
+        KBarDTO kbarDTO = dto.getKBarDTO();
+        KBarDTO preKbarDTO = dto.getPreKbarDTO();
+        if(preKbarDTO==null||preKbarDTO==null){
+            return;
+        }
         List<StockRateDTO> rates = Lists.newArrayList();
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         for (CirculateInfo circulateInfo:circulateInfos){
-            StockKbarQuery stockKbarQuery = new StockKbarQuery();
-            stockKbarQuery.setStockCode(circulateInfo.getStockCode());
-            stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.ASC);
-            List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
-            if(CollectionUtils.isEmpty(stockKbars)){
+            String uniqueKey = circulateInfo.getStockCode()+"_"+DateUtil.format(kbarDTO.getDate(),DateUtil.yyyyMMdd);
+            String preUniqueKey = circulateInfo.getStockCode()+"_"+DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd);
+            StockKbar uniqueKbar = stockKbarService.getByUniqueKey(uniqueKey);
+            StockKbar preUniqueKbar = stockKbarService.getByUniqueKey(preUniqueKey);
+            if(uniqueKbar==null||preUniqueKbar==null){
                 continue;
             }
-            BigDecimal preEndPrice = null;
-            for (StockKbar stockKbar:stockKbars){
-                if(preEndPrice!=null&&stockKbar.getKbarDate().equals(dateStr)){
-                    StockRateDTO stockRateDTO = new StockRateDTO();
-                    stockRateDTO.setStockCode(stockKbar.getStockCode());
-                    stockRateDTO.setStockName(stockKbar.getStockName());
-                    BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preEndPrice), preEndPrice);
-                    stockRateDTO.setRate(rate);
-                    rates.add(stockRateDTO);
-                }
-                preEndPrice = stockKbar.getClosePrice();
-            }
+            StockRateDTO stockRateDTO = new StockRateDTO();
+            stockRateDTO.setStockCode(dto.getStockCode());
+            stockRateDTO.setStockName(dto.getStockName());
+            BigDecimal rate = PriceUtil.getPricePercentRate(uniqueKbar.getOpenPrice().subtract(preUniqueKbar.getClosePrice()), preUniqueKbar.getClosePrice());
+            stockRateDTO.setRate(rate);
+            rates.add(stockRateDTO);
 
         }
         Map<String, BlockLevelDTO> stringBlockLevelDTOMap = blockLevelReplayComponent.calBlockLevelDTO(rates);
         BlockLevelDTO blockLevel = blockLevelReplayComponent.getBlockLevel(stringBlockLevelDTOMap, stockCode);
+        BlockLevelDTO blockLevelDTOHigh = blockLevelReplayComponent.userBlockCodeBlockLevel(stringBlockLevelDTOMap, dto.getPreBlockCode());
         if(blockLevel!=null&&blockLevel.getLevel()!=null){
             dto.setBlockName(blockLevel.getBlockName());
             dto.setBlockLevel(blockLevel.getLevel());
+            dto.setBlockRate(blockLevel.getAvgRate());
+            dto.setBlockCode(blockLevel.getBlockCode());
+            if(blockLevelDTOHigh!=null) {
+                dto.setPreHighBlockLevel(blockLevelDTOHigh.getLevel());
+                dto.setPreHighBlockRate(blockLevelDTOHigh.getAvgRate());
+            }
         }
     }
 
@@ -585,6 +594,7 @@ public class OtherBuyStockComponent {
     public PlankExchangeDailyDTO findDays(List<KBarDTO> kbars, OtherExcelDTO excelDTO,CirculateInfo circulateInfo){
         PlankExchangeDailyDTO dto = new PlankExchangeDailyDTO();
         KBarDTO preKbarDTO  = null;
+        KBarDTO prePreKbarDTO = null;
         for (KBarDTO kbar:kbars){
             if(kbar.getDateStr().equals(excelDTO.getTradeDate())){
                 dto.setStockCode(circulateInfo.getStockCode());
@@ -597,6 +607,7 @@ public class OtherBuyStockComponent {
                 dto.setRealPlanks(excelDTO.getRealPlanks());
                 dto.setKBarDTO(kbar);
                 dto.setPreKbarDTO(preKbarDTO);
+                dto.setPrePreKbarDTO(prePreKbarDTO);
                 dto.setBeforeTotalExchangeMoney(preKbarDTO.getTotalExchangeMoney());
                 BigDecimal startRate = PriceUtil.getPricePercentRate(kbar.getAdjStartPrice().subtract(preKbarDTO.getAdjEndPrice()), preKbarDTO.getAdjEndPrice());
                 dto.setStartRate(startRate);
@@ -606,10 +617,11 @@ public class OtherBuyStockComponent {
                 buyTimeRate(datas,dto);
                 avgPrice(dto,kbars);
                 if(preKbarDTO!=null) {
-                    getPreBlockLevel(dto.getStockCode(), DateUtil.format(dto.getPreKbarDTO().getDate(), DateUtil.yyyyMMdd), dto);
-                    getBlockLevel(dto.getStockCode(), DateUtil.format(dto.getKBarDTO().getDate(), DateUtil.yyyyMMdd), dto);
+                    getPreBlockLevel(dto.getStockCode(), dto);
+                    getBlockLevel(dto.getStockCode(), dto);
                 }
             }
+            prePreKbarDTO = preKbarDTO;
             preKbarDTO = kbar;
         }
         return dto;

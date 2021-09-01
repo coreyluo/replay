@@ -181,12 +181,20 @@ public class PlankExchangeDailyDTO {
     private BigDecimal raiseThanTwoPointFiveRate;
     private BigDecimal downThanTwoPointFiveRate;
 
-
+    private  String preBlockCode;
     private Integer preBlockLevel;
     private String preBlockName;
+    private BigDecimal preBlockRate;
+
+    private  String blockCode;
     private Integer blockLevel;
     private String blockName;
+    private BigDecimal blockRate;
+
+    private BigDecimal preHighBlockRate;
+    private Integer preHighBlockLevel;
 
     private KBarDTO preKbarDTO;
+    private KBarDTO prePreKbarDTO;
 
 }
