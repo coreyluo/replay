@@ -224,7 +224,7 @@ public class PositionBlockReplayComponent {
                 }
 
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测08.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测05.xls");
 
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);
