@@ -44,7 +44,10 @@ public class BlockLevelReplayComponent {
         if(CollectionUtils.isEmpty(stockRates)){
             return levelMap;
         }
-        Map<String, StockRateDTO> map = stockRates.stream().collect(Collectors.toMap(StockRateDTO::getStockCode, stockRateDTO -> stockRateDTO));
+        Map<String, StockRateDTO> map = new HashMap<>();
+        for (StockRateDTO stockRateDTO:stockRates){
+            map.put(stockRateDTO.getStockCode(),stockRateDTO);
+        }
         List<ThsBlockInfo> thsBlockInfos = thsBlockInfoService.listByCondition(new ThsBlockInfoQuery());
         for (ThsBlockInfo thsBlockInfo:thsBlockInfos){
             ThsBlockStockDetailQuery thsBlockStockDetailQuery = new ThsBlockStockDetailQuery();
@@ -108,5 +111,15 @@ public class BlockLevelReplayComponent {
         }
         return levelDTO;
     }
+
+    public BlockLevelDTO userBlockCodeBlockLevel(Map<String, BlockLevelDTO> map,String blockCode){
+        if(CollectionUtils.isEmpty(map)||blockCode==null){
+            return null;
+        }else{
+            BlockLevelDTO blockLevelDTO = map.get(blockCode);
+            return blockLevelDTO;
+        }
+    }
+
 
 }
