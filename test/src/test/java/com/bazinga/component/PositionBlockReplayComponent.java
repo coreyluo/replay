@@ -87,7 +87,7 @@ public class PositionBlockReplayComponent {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-                /*if(!kbarDate.startsWith("202105")){
+              /*  if(!kbarDate.startsWith("202107")){
                     continue;
                 }*/
                 Set<String> plankMinSet = plankMinMap.get(kbarDate);
@@ -224,7 +224,7 @@ public class PositionBlockReplayComponent {
                 }
 
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测08.xls");
 
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);
