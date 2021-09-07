@@ -182,7 +182,7 @@ public class MiddlePlankReplayComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20200710");
+            query.setKbarDateFrom("20210418");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
 
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
@@ -190,16 +190,28 @@ public class MiddlePlankReplayComponent {
             }
             for (int i = 6; i < stockKbars.size()-2; i++) {
 
-                StockKbar aftstockKbar = stockKbars.get(i+1);
+               // StockKbar aftstockKbar = stockKbars.get(i+1);
                 StockKbar stockKbar = stockKbars.get(i);
                 StockKbar preStockKbar = stockKbars.get(i-1);
-                StockKbar sellStockKbar = stockKbars.get(i+2);
+                StockKbar sellStockKbar = stockKbars.get(i+1);
                 List<StockKbar> kbarList = stockKbars.subList(i - 6, i + 1);
-                if(StockKbarUtil.isUpperPrice(aftstockKbar,stockKbar)){
+
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
                     continue;
                 }
-                if(!StockKbarUtil.isUpperPrice(stockKbar,preStockKbar)){
+                if(stockKbar.getHighPrice().compareTo(stockKbar.getClosePrice())==0){
                     continue;
+                }
+                if(stockKbar.getHighPrice().compareTo(stockKbar.getClosePrice())!=0){
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                    for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
+                        if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
+                            log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                            stockKbar.setClosePrice(stockKbar.getHighPrice());
+                            break;
+                        }
+                    }
+
                 }
                 int plank = calSerialsPlank(kbarList);
                 if(plank<2 || plank >4){
@@ -260,7 +272,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlankduan.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlankZha.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

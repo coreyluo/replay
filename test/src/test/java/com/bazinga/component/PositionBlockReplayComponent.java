@@ -26,6 +26,7 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -87,16 +88,25 @@ public class PositionBlockReplayComponent {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-              /*  if(!kbarDate.startsWith("202107")){
+              /*  if(!kbarDate.startsWith("20210823")){
                     continue;
                 }*/
+                Date preMinDate = DateUtil.addMinutes(stockPosition.getOrderTime(),-1);
+                String preMin = DateUtil.format(preMinDate,DateUtil.HH_MM);
+                if("09:29".equals(preMin)){
+                    preMin = "09:25";
+                }
+                if("12:59".equals(preMin)){
+                    preMin = "11:29";
+                }
                 Set<String> plankMinSet = plankMinMap.get(kbarDate);
                 if(plankMinSet ==null ){
                     plankMinSet = new HashSet<>();
-                    plankMinSet.add(DateUtil.format(stockPosition.getOrderTime(),DateUtil.HH_MM));
+                    plankMinSet.add("09:25");
+                    plankMinSet.add(preMin);
                     plankMinMap.put(kbarDate,plankMinSet);
                 }
-                plankMinSet.add(DateUtil.format(stockPosition.getOrderTime(),DateUtil.HH_MM));
+                plankMinSet.add(preMin);
             }
             log.info("委托时间map数据{}", JSONObject.toJSONString(plankMinMap));
 
@@ -139,9 +149,11 @@ public class PositionBlockReplayComponent {
                 for (Map.Entry<String, List<String>>  detailListEntry : blockDetailMap.entrySet()) {
                     String blockCode = detailListEntry.getKey();
                     List<String> detailList = detailListEntry.getValue();
-                    for (String min : minSet) {
+                    BigDecimal openRate = BigDecimal.ZERO;
+                    boolean openRateFlag = true;
+                    TreeSet<String> treeSet = Sets.newTreeSet(minSet);
+                    for (String min : treeSet) {
                         BigDecimal totalRate = BigDecimal.ZERO;
-
                         int count = 0;
                         for (String stockCode : detailList) {
                             BigDecimal rate = stockRateMinMap.get(stockCode + SymbolConstants.UNDERLINE + min);
@@ -166,14 +178,19 @@ public class PositionBlockReplayComponent {
                         }
                         BigDecimal avgRate = totalRate.divide(new BigDecimal(count),2,BigDecimal.ROUND_HALF_UP);
                         log.info("板块blockCode{} 涨幅{}",blockCode,avgRate);
+                        if("09:25".equals(min) && openRateFlag){
+                            openRate = avgRate;
+                            openRateFlag = false;
+                        }
                         List<BlockResult> blockResults = minBlockRateMap.get(min);
                         if(blockResults ==null){
                             blockResults = new ArrayList<>();
-                            blockResults.add(new BlockResult(blockCode,blockNameMap.get(blockCode),avgRate));
+                            blockResults.add(new BlockResult(blockCode,blockNameMap.get(blockCode),avgRate,openRate));
                             minBlockRateMap.put(min,blockResults);
                         }
-                        blockResults.add(new BlockResult(blockCode,blockNameMap.get(blockCode),avgRate));
+                        blockResults.add(new BlockResult(blockCode,blockNameMap.get(blockCode),avgRate,openRate));
                     }
+
                 }
                 Map<String,List<BlockResult>> minBlockResult = new HashMap<>();
                 for (String min : minSet) {
@@ -190,13 +207,18 @@ public class PositionBlockReplayComponent {
                 for (PositionOwnImportDTO stockPosition : importList) {
                     String positionKbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
                     if(kbarDate.equals(positionKbarDate)){
-                        String orderTime = DateUtil.format(stockPosition.getOrderTime(), DateUtil.HH_MM);
-                        if("12:59".equals(orderTime)){
-                            orderTime = "11:29";
+                        Date preMinDate = DateUtil.addMinutes(stockPosition.getOrderTime(),-1);
+                        String preMin = DateUtil.format(preMinDate,DateUtil.HH_MM);
+                        if("09:29".equals(preMin)){
+                            preMin = "09:25";
                         }
-                        List<BlockResult> blockResults = minBlockResult.get(orderTime);
+                        if("12:59".equals(preMin)){
+                            preMin = "11:29";
+                        }
+
+                        List<BlockResult> blockResults = minBlockResult.get(preMin);
                         if(CollectionUtils.isEmpty(blockResults)){
-                            log.info("板块涨幅数据未空 orderTime{}",orderTime);
+                            log.info("板块涨幅数据未空 orderTime{}",preMin);
                             continue;
                         }
                         for (int i = 0; i < blockResults.size(); i++) {
@@ -214,7 +236,8 @@ public class PositionBlockReplayComponent {
                                 exportDTO.setPremiumRate(stockPosition.getPremiumRate());
                                 exportDTO.setStockName(stockPosition.getStockName());
                                 exportDTO.setSealType(stockPosition.getSealType());
-                                exportDTO.setOrderTime(orderTime);
+                                exportDTO.setOrderTime(DateUtil.format(stockPosition.getOrderTime(),DateUtil.HH_MM));
+                                exportDTO.setBlockOpenRate(blockResult.getOpenRate());
                                 exportDTO.setKbarDate(positionKbarDate);
                                 resultList.add(exportDTO);
                                 break;
@@ -224,7 +247,7 @@ public class PositionBlockReplayComponent {
                 }
 
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测08.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测.xls");
 
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);
@@ -240,10 +263,13 @@ public class PositionBlockReplayComponent {
 
         private BigDecimal blockRate;
 
-        public BlockResult( String blockCode, String blockName, BigDecimal blockRate) {
+        private BigDecimal openRate;
+
+        public BlockResult( String blockCode, String blockName, BigDecimal blockRate , BigDecimal openRate) {
             this.blockCode = blockCode;
             this.blockName = blockName;
             this.blockRate = blockRate;
+            this.openRate = openRate;
         }
     }
 }

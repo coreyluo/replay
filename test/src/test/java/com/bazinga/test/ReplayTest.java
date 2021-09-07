@@ -32,7 +32,7 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invokeUnPlank();
+        middlePlankReplayComponent.invoke();
     }
 
     @Test

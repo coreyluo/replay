@@ -52,6 +52,9 @@ public class PositionBlockDTO {
     @ExcelElement("板块涨幅")
     private BigDecimal blockRate;
 
+    @ExcelElement("板块开盘涨幅")
+    private BigDecimal blockOpenRate;
+
     @ExcelElement("板块排名")
     private Integer compareNum;
 

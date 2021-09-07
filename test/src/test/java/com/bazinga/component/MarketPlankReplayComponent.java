@@ -70,7 +70,7 @@ public class MarketPlankReplayComponent {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (TradeDatePool tradeDatePool : tradeDatePools) {
             String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
-            if("20210827".equals(kbarDate)){
+            if("20210907".equals(kbarDate)){
                 break;
             }
             for (CirculateInfo circulateInfo : circulateInfos) {

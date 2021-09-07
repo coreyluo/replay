@@ -35,9 +35,9 @@ public class StockKbarUtil {
 
     public static boolean isHighUpperPrice(StockKbar stockKbar, StockKbar preStockKbar){
         if(stockKbar.getAdjFactor().compareTo(preStockKbar.getAdjFactor())==0){
-            return PriceUtil.isUpperPrice(stockKbar.getHighPrice(),preStockKbar.getClosePrice());
+            return PriceUtil.isUpperPrice(stockKbar.getStockCode(),stockKbar.getHighPrice(),preStockKbar.getClosePrice());
         }else {
-            return PriceUtil.isUpperPrice(stockKbar.getAdjHighPrice(),preStockKbar.getAdjClosePrice());
+            return PriceUtil.isUpperPrice(stockKbar.getStockCode(),stockKbar.getAdjHighPrice(),preStockKbar.getAdjClosePrice());
         }
     }
 
