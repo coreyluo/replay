@@ -23,6 +23,7 @@ public class HblTest extends BaseTestCase {
     }
     @Test
     public void test2(){
-        realBuyOrSellComponent.realBuyOrSellMin(DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
+        realBuyOrSellComponent.test();
+        //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
     }
 }
