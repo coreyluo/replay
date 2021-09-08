@@ -17,13 +17,14 @@ public class HblTest extends BaseTestCase {
     private RealBuyOrSellComponent realBuyOrSellComponent;
     @Test
     public void test(){
-        synExcelComponent.otherStockBuy();
+       // synExcelComponent.otherStockBuy();
+        synExcelComponent.ziDongHuaBuy();
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
     }
     @Test
     public void test2(){
-        realBuyOrSellComponent.test();
+        //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
     }
 }

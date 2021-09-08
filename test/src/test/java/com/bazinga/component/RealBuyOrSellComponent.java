@@ -6,17 +6,9 @@ import com.bazinga.dto.*;
 import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.model.StockKbar;
-import com.bazinga.replay.model.ThsBlockInfo;
-import com.bazinga.replay.model.ThsBlockStockDetail;
-import com.bazinga.replay.query.CirculateInfoQuery;
-import com.bazinga.replay.query.ThsBlockInfoQuery;
-import com.bazinga.replay.query.ThsBlockStockDetailQuery;
-import com.bazinga.replay.service.CirculateInfoService;
-import com.bazinga.replay.service.StockKbarService;
-import com.bazinga.replay.service.ThsBlockInfoService;
-import com.bazinga.replay.service.ThsBlockStockDetailService;
+import com.bazinga.replay.model.*;
+import com.bazinga.replay.query.*;
+import com.bazinga.replay.service.*;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
@@ -24,6 +16,7 @@ import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.tradex.util.Conf;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -49,29 +42,109 @@ public class RealBuyOrSellComponent {
     private BlockLevelReplayComponent blockLevelReplayComponent;
     @Autowired
     private StockKbarService stockKbarService;
-    public void test(){
-        Date date = DateUtil.parseDate("2021-09-02 09:34:11", DateUtil.DEFAULT_FORMAT);
-        Date preTradeDate = DateUtil.parseDate("2021-09-01 00:00:00", DateUtil.DEFAULT_FORMAT);
-        Map<String, List<GatherTransactionDataDTO>> transactionData = stockTransactionData(DateTimeUtils.getDate000000(date));
-        System.out.println(transactionData);
-        //blockRealInfo("601778",date,preTradeDate,transactionData);
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
+    public void test(List<ZiDongHuaDTO> ziDongHuaDTOS){
+        Map<String, List<SellOrBuyExcelExportDTO>> ziDongHuaMap = new HashMap<>();
+        List<String> tradeDates = Lists.newArrayList();
+        for (ZiDongHuaDTO dto:ziDongHuaDTOS){
+            SellOrBuyExcelExportDTO exportDTO = new SellOrBuyExcelExportDTO();
+            BeanUtils.copyProperties(dto,exportDTO);
+            List<SellOrBuyExcelExportDTO> exports = ziDongHuaMap.get(dto.getTradeDate());
+            if(exports==null){
+                exports = Lists.newArrayList();
+                ziDongHuaMap.put(dto.getTradeDate(),exports);
+                tradeDates.add(dto.getTradeDate());
+            }
+            exports.add(exportDTO);
+        }
+        List<SellOrBuyExcelExportDTO> dailys  = Lists.newArrayList();
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(new TradeDatePoolQuery());
+        String preTradeDateStr  = null;
+        for(TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            List<SellOrBuyExcelExportDTO> exports = ziDongHuaMap.get(format);
+            if(!CollectionUtils.isEmpty(exports)&&format.startsWith("2021-07")) {
+                Map<String, List<GatherTransactionDataDTO>> transactionData = stockTransactionData(DateTimeUtils.getDate000000(tradeDatePool.getTradeDate()));
+                for (SellOrBuyExcelExportDTO export : exports) {
+                    Date date = DateUtil.parseDate(format+" "+export.getBuyTime()+":00", DateUtil.DEFAULT_FORMAT);
+                    Date preTradeDate = DateUtil.parseDate(preTradeDateStr+" 00:00:00", DateUtil.DEFAULT_FORMAT);
+                    blockRealInfo(export.getStockCode(),date,preTradeDate,transactionData,export);
+                    dailys.add(export);
+                }
+            }
+            preTradeDateStr = format;
+        }
+        List<Object[]> datas = Lists.newArrayList();
+        for(SellOrBuyExcelExportDTO dto:dailys){
+            List<Object> list = new ArrayList<>();
+            list.add(dto.getStockCode());
+            list.add(dto.getStockCode());
+            list.add(dto.getStockName());
+            list.add(dto.getTradeDate());
+            list.add(dto.getBuyAmount());
+            list.add(dto.getSellAmount());
+            list.add(dto.getRealProfit());
+            list.add(dto.getRealProfitRate());
+            list.add(dto.getRealPlanks());
+            list.add(dto.getBuyTime());
+            if(dto.getStockRealBuyOrSell()!=null) {
+                list.add(dto.getStockRealBuyOrSell().getRealSell());
+                list.add(dto.getStockRealBuyOrSell().getRealBuy());
+                list.add(dto.getStockRealBuyOrSell().getMoney());
+            }else{
+                list.add(null);
+                list.add(null);
+                list.add(null);
+            }
+            if(dto.getBlockRealBuyOrSell()!=null) {
+                list.add(dto.getBlockRealBuyOrSell().getRealSell());
+                list.add(dto.getBlockRealBuyOrSell().getRealBuy());
+                list.add(dto.getBlockRealBuyOrSell().getMoney());
+            }else{
+                list.add(null);
+                list.add(null);
+                list.add(null);
+            }
+            if(dto.getBlockLevelDTO()!=null){
+                list.add(dto.getBlockLevelDTO().getBlockName());
+                list.add(dto.getBlockLevelDTO().getAvgRate());
+                list.add(dto.getBlockLevelDTO().getLevel());
+            }else{
+                list.add(null);
+                list.add(null);
+                list.add(null);
+            }
+            Object[] objects = list.toArray();
+            datas.add(objects);
+
+        }
+
+        String[] rowNames = {"index","stockCode","stockName","交易日期","买金额","卖金额","正盈利","盈亏比","连板情况","买入时间","股票流出","股票流入","股票净流入","板块流出","板块流入","板块净流入","板块名称","板块涨幅","板块排名"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("流入流出结果",rowNames,datas);
+        try {
+            poiExcelUtil.exportExcelUseExcelTitle("流入流出结果");
+        }catch (Exception e){
+            log.info(e.getMessage());
+        }
     }
-    public void blockRealInfo(String stockCode,Date tradeDate,Date preTradeDate,Map<String, List<ThirdSecondTransactionDataDTO>> transactionDataMap){
-        Date date000000 = DateTimeUtils.getDate000000(tradeDate);
+    public void blockRealInfo(String stockCode,Date tradeDate,Date preTradeDate,Map<String, List<GatherTransactionDataDTO>> transactionDataMap,SellOrBuyExcelExportDTO exportDTO){
         String timeStampHHMM = DateUtil.format(tradeDate, DateUtil.HH_MM);
         //昨日股票流入流出信息
         RealBuyOrSellDTO stockRealBuyOrSell = realBuyOrSell(stockCode, DateTimeUtils.getDate000000(preTradeDate));
+        exportDTO.setStockRealBuyOrSell(stockRealBuyOrSell);
         //今日板块排名
         BlockLevelDTO blockLevelDTO = stockTimeStampLevel(stockCode, timeStampHHMM, transactionDataMap, preTradeDate);
         if(blockLevelDTO==null||blockLevelDTO.getBlockCode()==null){
             return;
         }
+        exportDTO.setBlockLevelDTO(blockLevelDTO);
         //昨日板块流入流出信息
         BlockRealBuyOrSellDTO blockRealBuyOrSell = getBlockRealBuyOrSell(blockLevelDTO.getBlockCode(), blockLevelDTO.getBlockName(), preTradeDate);
         if(blockRealBuyOrSell==null||blockRealBuyOrSell.getMoney()==null){
             return;
         }
-
+        exportDTO.setBlockRealBuyOrSell(blockRealBuyOrSell);
     }
 
     public BlockRealBuyOrSellDTO getBlockRealBuyOrSell(String blockCode,String blockName,Date date){
@@ -119,17 +192,24 @@ public class RealBuyOrSellComponent {
      * @param timeStamp  时间戳 09:14   10:22
      * @param transactionMap  当日所有的整分 分时成交数据
      */
-    public BlockLevelDTO  stockTimeStampLevel(String stockCode,String timeStamp,Map<String, List<ThirdSecondTransactionDataDTO>> transactionMap,Date preDate){
+    public BlockLevelDTO  stockTimeStampLevel(String stockCode,String timeStamp,Map<String, List<GatherTransactionDataDTO>> transactionMap,Date preDate){
         List<StockRateDTO> rates = Lists.newArrayList();
+        Map<String, StockKbar> stockKbarMap = new HashMap<>();
+        StockKbarQuery query = new StockKbarQuery();
+        query.setKbarDate(DateUtil.format(preDate,DateUtil.yyyyMMdd));
+        List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+        for(StockKbar stockKbar:stockKbars){
+            stockKbarMap.put(stockKbar.getStockCode(),stockKbar);
+        }
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Date time = DateUtil.parseDate(timeStamp, DateUtil.HH_MM);
         for (CirculateInfo circulateInfo:circulateInfos){
-            List<ThirdSecondTransactionDataDTO> list = transactionMap.get(circulateInfo.getStockCode());
+            List<GatherTransactionDataDTO> list = transactionMap.get(circulateInfo.getStockCode());
             if(CollectionUtils.isEmpty(list)){
                continue;
             }
-            ThirdSecondTransactionDataDTO thirdSecondTransactionDataDTO = null;
-            for (ThirdSecondTransactionDataDTO dto:list){
+            GatherTransactionDataDTO thirdSecondTransactionDataDTO = null;
+            for (GatherTransactionDataDTO dto:list){
                 Date dtoTime = DateUtil.parseDate(dto.getTradeTime(), DateUtil.HH_MM);
                 if(dtoTime.before(time)){
                     thirdSecondTransactionDataDTO = dto;
@@ -138,8 +218,7 @@ public class RealBuyOrSellComponent {
             if(thirdSecondTransactionDataDTO==null){
                 continue;
             }
-            String uniqueKey = circulateInfo.getStockCode() + "_" + DateUtil.format(preDate, DateUtil.yyyyMMdd);
-            StockKbar preKbar = stockKbarService.getByUniqueKey(uniqueKey);
+            StockKbar preKbar = stockKbarMap.get(circulateInfo.getStockCode());
             if(preKbar==null){
                 continue;
             }
@@ -198,7 +277,15 @@ public class RealBuyOrSellComponent {
     public RealBuyOrSellDTO realBuyOrSell(String stockCode,Date date){
         Map<String,BuyOrSellDTO> map = new HashMap<>();
         List<String> timeStamps = Lists.newArrayList();
-        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData(stockCode, DateTimeUtils.getDate000000(date));
+        List<ThirdSecondTransactionDataDTO> data = null;
+        try {
+            data = historyTransactionDataComponent.getData(stockCode, DateTimeUtils.getDate000000(date));
+        }catch (Exception e){
+
+        }
+        if(CollectionUtils.isEmpty(data)){
+            return null;
+        }
         for (ThirdSecondTransactionDataDTO dto:data){
             BuyOrSellDTO buyOrSellDTO = map.get(dto.getTradeTime());
             if(buyOrSellDTO==null){
