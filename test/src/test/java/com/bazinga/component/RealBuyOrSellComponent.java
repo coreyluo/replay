@@ -64,7 +64,7 @@ public class RealBuyOrSellComponent {
         for(TradeDatePool tradeDatePool:tradeDatePools){
             String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
             List<SellOrBuyExcelExportDTO> exports = ziDongHuaMap.get(format);
-            if(!CollectionUtils.isEmpty(exports)&&format.startsWith("2021-07")) {
+            if(!CollectionUtils.isEmpty(exports)&&format.startsWith("2021-06")) {
                 Map<String, List<GatherTransactionDataDTO>> transactionData = stockTransactionData(DateTimeUtils.getDate000000(tradeDatePool.getTradeDate()));
                 for (SellOrBuyExcelExportDTO export : exports) {
                     Date date = DateUtil.parseDate(format+" "+export.getBuyTime()+":00", DateUtil.DEFAULT_FORMAT);
@@ -120,7 +120,7 @@ public class RealBuyOrSellComponent {
 
         }
 
-        String[] rowNames = {"index","stockCode","stockName","交易日期","买金额","卖金额","正盈利","盈亏比","连板情况","买入时间","股票流出","股票流入","股票净流入","板块流出","板块流入","板块净流入","板块名称","板块涨幅","板块排名"};
+        String[] rowNames = {"index","stockCode","stockName","交易日期","买金额","卖金额","正盈利","盈亏比","连板情况","买入时间","股票前一日流出","股票前一日流入","股票前一日净流入","最高板块前一日流出","最高板块前一日流入","最高板块前一日净流入","最高板块名称","最高板块涨幅","最高板块排名"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("流入流出结果",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("流入流出结果");
