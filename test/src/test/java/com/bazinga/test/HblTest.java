@@ -17,8 +17,8 @@ public class HblTest extends BaseTestCase {
     private RealBuyOrSellComponent realBuyOrSellComponent;
     @Test
     public void test(){
-       // synExcelComponent.otherStockBuy();
-        synExcelComponent.ziDongHuaBuy();
+       synExcelComponent.otherStockBuy();
+        //synExcelComponent.ziDongHuaBuy();
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
     }
