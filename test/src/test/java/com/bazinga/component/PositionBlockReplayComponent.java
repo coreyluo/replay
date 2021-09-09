@@ -75,6 +75,9 @@ public class PositionBlockReplayComponent {
             query.setBlockCode(thsBlockInfo.getBlockCode());
             blockNameMap.put(thsBlockInfo.getBlockCode(),thsBlockInfo.getBlockName());
             List<ThsBlockStockDetail> thsBlockStockDetails = thsBlockStockDetailService.listByCondition(query);
+            if(CollectionUtils.isEmpty(thsBlockStockDetails)){
+                continue;
+            }
             List<String> detailList = thsBlockStockDetails.stream().filter(item->!item.getStockCode().startsWith("688")).map(ThsBlockStockDetail::getStockCode).collect(Collectors.toList());
             if(!CollectionUtils.isEmpty(thsBlockStockDetails) && thsBlockStockDetails.size()>10){
                 blockDetailMap.put(thsBlockInfo.getBlockCode(),detailList);
