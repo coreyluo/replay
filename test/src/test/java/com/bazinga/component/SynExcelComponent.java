@@ -35,6 +35,8 @@ public class SynExcelComponent {
     private OtherBuyStockComponent otherBuyStockComponent;
     @Autowired
     private RealBuyOrSellComponent realBuyOrSellComponent;
+    @Autowired
+    private StockGraphComponent stockGraphComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -89,6 +91,38 @@ public class SynExcelComponent {
                 list.add(item);
             });
             realBuyOrSellComponent.test(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void graphBuy() {
+        List<ZiDongHuaDTO> list = Lists.newArrayList();
+        File file = new File("D:\\circulate\\zidonghua.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\zidonghua.xlsx") + "不存在");
+        }
+        try {
+            List<ZiDongHuaDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZiDongHuaDTO.class);
+            dataList.forEach(item -> {
+                Date tradeDate = null;
+                Date buyDate = null;
+                SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US);//MMM dd hh:mm:ss Z yyyy
+                try {
+                    tradeDate = sdf.parse(item.getTradeDate());
+                    buyDate = sdf.parse(item.getBuyTime());
+                } catch (ParseException ex) {
+                }
+                String format = DateUtil.format(tradeDate, DateUtil.yyyy_MM_dd);
+                String buyDateFormat = DateUtil.format(buyDate, DateUtil.HH_MM);
+                item.setTradeDate(format);
+                item.setBuyTime(buyDateFormat);
+                list.add(item);
+            });
+            stockGraphComponent.graphBuy(dataList);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
