@@ -15,11 +15,15 @@ public class HblTest extends BaseTestCase {
     private OtherBuyStockComponent otherBuyStockComponent;
     @Autowired
     private RealBuyOrSellComponent realBuyOrSellComponent;
+    @Autowired
+    private ZhongWeiDiXiReplayComponent zhongWeiDiXiReplayComponent;
     @Test
     public void test(){
+        zhongWeiDiXiReplayComponent.middle();
+        //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        /*synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();*/
-        synExcelComponent.graphBuy();
+        //synExcelComponent.graphBuy();
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
     }

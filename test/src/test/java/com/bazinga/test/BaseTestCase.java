@@ -40,7 +40,7 @@ public class BaseTestCase {
     private StockCommonReplayComponent stockCommonReplayComponent;
     @Test
     public void test1() {
-        /*stockReplayDailyComponent.stockReplayDaily(new Date());
+        stockReplayDailyComponent.stockReplayDaily(new Date());
         stockReplayDailyComponent.calPreDateAvgPrice(new Date());
         stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
         newStockComponent.catchNewStock();
@@ -48,7 +48,7 @@ public class BaseTestCase {
         stockKbarComponent.batchUpdateDaily();
         stockPlankDailyComponent.calMax100DaysPriceForTwoPlank(new Date());
         stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(new Date());
-        stockPlankDailyComponent.calSubNewStock(new Date());*/
+        stockPlankDailyComponent.calSubNewStock(new Date());
 
         //新版复盘
         stockCommonReplayComponent.saveCommonReplay(DateUtil.parseDate("2021-08-13 15:30:30",DateUtil.DEFAULT_FORMAT));
