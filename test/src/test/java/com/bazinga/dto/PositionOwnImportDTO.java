@@ -45,6 +45,9 @@ public class PositionOwnImportDTO {
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
+    @ExcelElement("连板情况")
+    private String plankInfo;
+
     @ExcelElement("板块代码")
     private String blockCode;
 

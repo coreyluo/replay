@@ -40,6 +40,9 @@ public class PositionBlockDTO {
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
+    @ExcelElement("连板情况")
+    private String plankInfo;
+
     @ExcelElement("是否炸板")
     private Integer sealType;
 
@@ -57,5 +60,10 @@ public class PositionBlockDTO {
 
     @ExcelElement("板块排名")
     private Integer compareNum;
+
+    @ExcelElement("龙头排名")
+    private Integer dragonNum;
+    @ExcelElement("龙头排名300")
+    private Integer dragonNum300;
 
 }

@@ -114,9 +114,9 @@ public class CommonComponent {
         StockKbarQuery query = new StockKbarQuery();
         query.setStockCode(stockCode);
         query.setKbarDateTo(kbarDate);
-        query.setLimit(30);
+        query.setLimit(20);
         List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
-        return stockKbarList.size() < 30;
+        return stockKbarList.size() < 20;
     }
 
 }

@@ -191,6 +191,21 @@ public class HistoryTransactionDataComponent {
         }
     }
 
+    public BigDecimal calPre1HourAvgPrice(String stockCode, String kbarDate) {
+        try{
+            List<ThirdSecondTransactionDataDTO> datas = getData(stockCode, kbarDate);
+            datas = this.getPreOneHourData(datas);
+            if(CollectionUtils.isEmpty(datas)){
+                return null;
+            }
+            BigDecimal avgPrice = new BigDecimal(calAveragePrice(datas)).setScale(2,BigDecimal.ROUND_HALF_UP);
+            return avgPrice;
+        } catch (Exception e) {
+            log.info("计算均价异常 stockCode:{} kbarDate:{}",stockCode,kbarDate);
+            return null;
+        }
+    }
+
     /**
      * 允许买入时间
      * @param yesterdayPrice

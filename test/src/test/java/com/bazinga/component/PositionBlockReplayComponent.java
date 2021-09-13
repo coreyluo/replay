@@ -22,6 +22,7 @@ import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.ThsBlockInfoService;
 import com.bazinga.replay.service.ThsBlockStockDetailService;
+import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
 import com.bazinga.util.PriceUtil;
@@ -91,7 +92,7 @@ public class PositionBlockReplayComponent {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-              /*  if(!kbarDate.startsWith("20210823")){
+             /*   if(!kbarDate.startsWith("20210823")){
                     continue;
                 }*/
                 Date preMinDate = DateUtil.addMinutes(stockPosition.getOrderTime(),-1);
@@ -118,6 +119,7 @@ public class PositionBlockReplayComponent {
                 Set<String> minSet = entry.getValue();
 
                 Map<String,BigDecimal> stockRateMinMap = new HashMap<>();
+                Map<String,Boolean> stockUpperMap = new HashMap<>();
                 for (CirculateInfo circulateInfo : circulateInfos) {
                     StockKbarQuery query = new StockKbarQuery();
                     query.setKbarDateTo(kbarDate);
@@ -142,8 +144,13 @@ public class PositionBlockReplayComponent {
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), kbarDate);
                     for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                         if(minSet.contains(transactionDataDTO.getTradeTime())){
+                            if(StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                                boolean isUpper = transactionDataDTO.getTradeType()==1 && transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice())==0;
+                                stockUpperMap.put(stockKbar.getStockCode() + SymbolConstants.UNDERLINE + transactionDataDTO.getTradeTime(),isUpper);
+                            }
                             BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
                             stockRateMinMap.put(stockKbar.getStockCode() + SymbolConstants.UNDERLINE + transactionDataDTO.getTradeTime(),rate);
+
                         }
                     }
                 }
@@ -229,7 +236,31 @@ public class PositionBlockReplayComponent {
                             List<String> detailList = blockDetailMap.get(blockResult.getBlockCode());
                             if(detailList.contains(stockPosition.getStockCode())){
                                 log.info("找到最大涨幅板块 blockCode{}, blockName{} rate{}",blockResult.getBlockCode(),blockResult.getBlockName(),blockResult.getBlockRate());
+                                int dragon = 0;
+                                for (String stockCode : detailList) {
+                                    Boolean isUpper = stockUpperMap.get(stockCode + SymbolConstants.UNDERLINE + preMin);
+                                    if(isUpper!=null && isUpper){
+                                        log.info("已有一个票涨停 stockCode{} kbarDate{}",stockCode,kbarDate);
+                                        dragon++;
+                                    }
+                                }
+
+                                List<String> detail300List = detailList.stream().filter(item -> item.startsWith("3")).collect(Collectors.toList());
+                                int dragon300 = 0;
+                                for (String stockCode : detail300List) {
+                                    Boolean isUpper = stockUpperMap.get(stockCode + SymbolConstants.UNDERLINE + preMin);
+                                    if(isUpper!=null && isUpper){
+                                        log.info("已有一个300票涨停 stockCode{} kbarDate{}",stockCode,kbarDate);
+                                        dragon300++;
+                                    }
+                                }
                                 PositionBlockDTO exportDTO = new PositionBlockDTO();
+                                exportDTO.setPlankInfo(stockPosition.getPlankInfo());
+                                exportDTO.setDragonNum(dragon+1);
+                                if(stockPosition.getStockCode().startsWith("3")){
+                                    exportDTO.setDragonNum300(dragon300+1);
+                                }else {
+                                }
                                 exportDTO.setBlockCode(blockResult.getBlockCode());
                                 exportDTO.setBlockName(blockResult.getBlockName());
                                 exportDTO.setBlockRate(blockResult.getBlockRate());
@@ -250,7 +281,7 @@ public class PositionBlockReplayComponent {
                 }
 
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块回测.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块带龙头排名回测.xls");
 
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);
