@@ -60,7 +60,7 @@ public class ZhongWeiDiXiReplayComponent {
             if(date.before(DateUtil.parseDate("20210518",DateUtil.yyyyMMdd))){
                 continue;
             }
-            /*if(!tradeDate.equals("20210629")){
+            /*if(!tradeDate.equals("20210722")){
                 continue;
             }*/
             List<StockKbar> middleStocks = middles.get(tradeDate);
@@ -76,7 +76,7 @@ public class ZhongWeiDiXiReplayComponent {
                     if(minuteSumDTO.getTradeTime().equals("09:25")){
                         open = minuteSumDTO;
                     }
-                    if(high==null||minuteSumDTO.getAvgRate().compareTo(high.getAvgRate())==1){
+                    if(high==null||minuteSumDTO.getTotalRate().compareTo(high.getTotalRate())==1){
                         high  = minuteSumDTO;
                     }
                 }
@@ -91,7 +91,7 @@ public class ZhongWeiDiXiReplayComponent {
                     raiseBuyDTO.setHighAvgRateTime(high.getTradeTime());
                     raiseBuyDTO.setChangeRateTotal(high.getTotalRate().subtract(open.getTotalRate()));
                     raiseBuyDTO.setKbars(middleStocks);
-                    if(raise.compareTo(new BigDecimal("1"))==1) {
+                    if(raiseBuyDTO.getChangeRateTotal().compareTo(new BigDecimal("10"))==1) {
                         dates.add(raiseBuyDTO);
                     }
                 }
@@ -168,43 +168,39 @@ public class ZhongWeiDiXiReplayComponent {
             StockKbar stockKbar = tradeMap.get(circulateInfo.getStockCode());
             StockKbar preStockKbar = preTradeMap.get(circulateInfo.getStockCode());
             if(stockKbar!=null&&preStockKbar!=null){
-                boolean upperPrice = PriceUtil.isUpperPrice(circulateInfo.getStockCode(), stockKbar.getHighPrice(), preStockKbar.getClosePrice());
-                if(upperPrice){
-                    List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), DateTimeUtils.getDate000000(tradeDate));
-                    for (ThirdSecondTransactionDataDTO data:datas){
-                        Date dtoTimeDate = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
-                        boolean isUpperPrice = PriceUtil.isUpperPrice(circulateInfo.getStockCode(), data.getTradePrice(), preStockKbar.getClosePrice());
-                        boolean flag = false;
-                        if(isUpperPrice&&data.getTradeType()==1){
-                            flag = true;
+                List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), DateTimeUtils.getDate000000(tradeDate));
+                for (ThirdSecondTransactionDataDTO data:datas){
+                    Date dtoTimeDate = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
+                    boolean isUpperPrice = PriceUtil.isUpperPrice(circulateInfo.getStockCode(), data.getTradePrice(), preStockKbar.getClosePrice());
+                    boolean flag = false;
+                    if(isUpperPrice&&data.getTradeType()==1){
+                        flag = true;
+                    }
+                    if(dtoTimeDate.after(buyTimeDate)){
+                        if(!flag){
+                            BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
+                            BigDecimal buyRate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
+                            StockMiddleRaiseBuyDTO stock = new StockMiddleRaiseBuyDTO();
+                            stock.setTradeDate(dto.getTradeDate());
+                            stock.setCounts(dto.getCounts());
+                            stock.setHighAvgRate(dto.getHighAvgRate());
+                            stock.setHighAvgRateTime(dto.getHighAvgRateTime());
+                            stock.setOpenAvgRate(dto.getOpenAvgRate());
+                            stock.setChangeRateTotal(dto.getChangeRateTotal());
+                            stock.setRaiseRate(dto.getRaiseRate());
+                            stock.setStockCode(circulateInfo.getStockCode());
+                            stock.setStockName(circulateInfo.getStockName());
+                            stock.setStockKbar(stockKbar);
+                            stock.setOpenRate(openRate);
+                            stock.setBuyRate(buyRate);
+                            stock.setBuyPrice(data.getTradePrice());
+                            avgPrice(stock);
+                            getPlanks(stock.getStockCode(), dto.getKbars().get(0).getKbarDate(),stock);
+                            stocks.add(stock);
                         }
-                        if(dtoTimeDate.after(buyTimeDate)){
-                            if(!flag){
-                                BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
-                                BigDecimal buyRate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
-                                StockMiddleRaiseBuyDTO stock = new StockMiddleRaiseBuyDTO();
-                                stock.setTradeDate(dto.getTradeDate());
-                                stock.setCounts(dto.getCounts());
-                                stock.setHighAvgRate(dto.getHighAvgRate());
-                                stock.setHighAvgRateTime(dto.getHighAvgRateTime());
-                                stock.setOpenAvgRate(dto.getOpenAvgRate());
-                                stock.setChangeRateTotal(dto.getChangeRateTotal());
-                                stock.setRaiseRate(dto.getRaiseRate());
-                                stock.setStockCode(circulateInfo.getStockCode());
-                                stock.setStockName(circulateInfo.getStockName());
-                                stock.setStockKbar(stockKbar);
-                                stock.setOpenRate(openRate);
-                                stock.setBuyRate(buyRate);
-                                stock.setBuyPrice(data.getTradePrice());
-                                avgPrice(stock);
-                                getPlanks(stock.getStockCode(), dto.getKbars().get(0).getKbarDate(),stock);
-                                stocks.add(stock);
-                            }
-                            break;
-                        }
+                        break;
                     }
                 }
-
             }
         }
         return stocks;
