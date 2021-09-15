@@ -56,7 +56,7 @@ public class BlockLevelReplayComponent {
             if(CollectionUtils.isEmpty(details)){
                 continue;
             }
-            if(details.size()<=20){
+            if(details.size()<=10){
                 continue;
             }
             BlockLevelDTO blockLevelDTO = new BlockLevelDTO();

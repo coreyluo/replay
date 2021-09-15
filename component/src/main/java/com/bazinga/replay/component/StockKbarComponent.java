@@ -102,6 +102,14 @@ public class StockKbarComponent {
             log.info("stockCode ={} http方式获取复权因子失败", stockCode);
             return;
         }
+        AdjFactorDTO adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate());
+        if(adjFactorDTO==null){
+            if(stockKbarList.size()>=2) {
+                adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 2).getKbarDate());
+            }else{
+                return;
+            }
+        }
         BigDecimal maxAdjFactor = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate()).getAdjFactor();
         transactionTemplate.execute((TransactionCallback<Void>) status -> {
             try {
@@ -211,11 +219,12 @@ public class StockKbarComponent {
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         circulateInfos.forEach(item -> {
+            System.out.println(item.getStockCode());
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 200);
+                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 250);
             }
         });
     }
