@@ -12,6 +12,8 @@ public class BlockKbarExportDTO {
     private String stockCode;
     @ExcelElement("股票名称")
     private String stockName;
+    @ExcelElement("k线日期")
+    private String kbarDate;
     @ExcelElement("板块代码")
     private String blockCode;
     @ExcelElement("板块名称")

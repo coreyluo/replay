@@ -66,7 +66,7 @@ public class PositionBlockReplayComponent {
         List<PositionBlockDTO> resultList = Lists.newArrayList();
 
 
-        File file = new File("E:/excelExport/老窝518板块用.xlsx");
+        File file = new File("E:/excelExport/主流板块市场数据源.xlsx");
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Map<String,String> blockNameMap = new HashMap<>();
         Map<String,List<String>> blockDetailMap = new HashMap<>();
@@ -281,7 +281,7 @@ public class PositionBlockReplayComponent {
                 }
 
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓主流板块带龙头排名回测.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\市场主流板块带龙头排名回测.xls");
 
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);

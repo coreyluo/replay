@@ -89,6 +89,9 @@ public class BlockKbarReplayComponent {
             Date buyTradeDate = commonComponent.afterTradeDate(tradeDate);
             String buyKbarDate = DateUtil.format(buyTradeDate,DateUtil.yyyyMMdd);
             String kbarDate = DateUtil.format(tradeDate,DateUtil.yyyyMMdd);
+            if("20210910".equals(buyKbarDate)){
+                continue;
+            }
             Date sellTradeDate = commonComponent.afterTradeDate(buyTradeDate);
             String sellKbarDate = DateUtil.format(sellTradeDate,DateUtil.yyyyMMdd);
 
@@ -132,22 +135,25 @@ public class BlockKbarReplayComponent {
                     List<String> detailList = blockDetailMap.get(blockCode);
                     for (String stockCode : detailList) {
                         String buyKey = stockCode + SymbolConstants.UNDERLINE + buyKbarDate;
+                        String sellKey = stockCode + SymbolConstants.UNDERLINE + sellKbarDate;
                         StockKbar buyKbar = stockKbarService.getByUniqueKey(buyKey);
                         StockKbar prebuyStockKbar = stockKbarService.getByUniqueKey(stockCode + SymbolConstants.UNDERLINE + kbarDate);
+                        StockKbar sellKbar = stockKbarService.getByUniqueKey(sellKey);
                         if(buyKbar == null || prebuyStockKbar ==null){
                             continue;
                         }
                         if(!buySet.contains(stockCode) && StockKbarUtil.isHighUpperPrice(buyKbar,prebuyStockKbar)){
-                            BigDecimal sellAvgPrice = historyTransactionDataComponent.calPre1HourAvgPrice(stockCode, sellKbarDate);
+                          //  BigDecimal sellAvgPrice = historyTransactionDataComponent.calPre1HourAvgPrice(stockCode, sellKbarDate);
                             log.info("满足买入条件 stockCode{} kbarDate{}",stockCode,buyKbarDate);
                             buySet.add(buyKey);
                             BlockKbarExportDTO exportDTO = new BlockKbarExportDTO();
                             exportDTO.setStockCode(stockCode);
                             exportDTO.setBlockCode(blockCode);
+                            exportDTO.setKbarDate(buyKbarDate);
                             exportDTO.setBlockName(blockNameMap.get(blockCode));
                             exportDTO.setBlockNum(computeNum);
                             exportDTO.setBlockRate(blockRate);
-                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellAvgPrice.subtract(buyKbar.getHighPrice()),buyKbar.getHighPrice()));
+                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellKbar.getClosePrice().subtract(buyKbar.getHighPrice()),buyKbar.getHighPrice()));
                             resultList.add(exportDTO);
                         }
                     }
