@@ -104,13 +104,17 @@ public class StockKbarComponent {
         }
         AdjFactorDTO adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate());
         if(adjFactorDTO==null){
-            if(stockKbarList.size()>=2) {
-                adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 2).getKbarDate());
-            }else{
-                return;
+            for(int i = 1;i<stockKbarList.size();i++) {
+                adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - i).getKbarDate());
+                if(adjFactorDTO!=null){
+                    break;
+                }
             }
         }
-        BigDecimal maxAdjFactor = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate()).getAdjFactor();
+        if(adjFactorDTO==null){
+            return;
+        }
+        BigDecimal maxAdjFactor =adjFactorDTO.getAdjFactor();
         transactionTemplate.execute((TransactionCallback<Void>) status -> {
             try {
                 stockKbarList.forEach(item -> {
@@ -220,6 +224,9 @@ public class StockKbarComponent {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         circulateInfos.forEach(item -> {
             System.out.println(item.getStockCode());
+            if(item.getStockCode().equals("600068")){
+                System.out.println(111);
+            }
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
