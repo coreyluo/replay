@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.replay.dto.AdjFactorDTO;
 import com.bazinga.replay.convert.StockKbarConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.CirculateInfoAll;
@@ -22,6 +23,8 @@ import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateFormatUtils;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.PriceUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
@@ -137,6 +140,31 @@ public class StockKbarComponent {
 
     }
 
+    public void initSpecialStockAndSaveKbarData(String stockCode, String stockName, int days) {
+        try {
+            for(int i=0;i<days;i++) {
+                DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, i, 1);
+                List<StockKbar> stockKbarList = StockKbarConvert.convertSpecial(dataTable, stockCode, stockName);
+                if (CollectionUtils.isEmpty(stockKbarList)) {
+                    return;
+                }
+                for (StockKbar stockKbar : stockKbarList) {
+                    stockKbar.setAdjClosePrice(stockKbar.getClosePrice());
+                    stockKbar.setAdjOpenPrice(stockKbar.getOpenPrice());
+                    stockKbar.setAdjHighPrice(stockKbar.getHighPrice());
+                    stockKbar.setAdjLowPrice(stockKbar.getLowPrice());
+                    StockKbar byUniqueKey = stockKbarService.getByUniqueKey(stockKbar.getUniqueKey());
+                    if (byUniqueKey == null) {
+                        stockKbarService.save(stockKbar);
+                    }
+
+                }
+            }
+        }catch (Exception e){
+            log.info("跑昨日涨停数据异常",e);
+        }
+    }
+
 
     public void updateKbarDataDaily(String stockCode, String stockName) {
 
@@ -164,8 +192,9 @@ public class StockKbarComponent {
                     return;
                 }
                 AdjFactorDTO adjFactorDTO = adjFactorMap.get(todayDate);
-                if (adjFactorDTO.getAdjFactor() == null) {
+                if (adjFactorDTO==null||adjFactorDTO.getAdjFactor() == null) {
                     log.info("当前日不是交易日 today ={}", todayDate);
+                    return;
                 }
                 if (stockKbarList.get(0).getAdjFactor().compareTo(adjFactorDTO.getAdjFactor()) == 0) {
                     TradeDatePoolQuery tradeDatequery = new TradeDatePoolQuery();
@@ -216,6 +245,7 @@ public class StockKbarComponent {
         //circulateInfoQuery.setMarketType(MarketTypeEnum.GENERAL.getCode());
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         circulateInfos.forEach(item -> {
+            log.info("更新K线数据开始 stockCode ={}", item.getStockCode());
             updateKbarDataDaily(item.getStockCode(), item.getStockName());
         }); }
 
@@ -234,6 +264,15 @@ public class StockKbarComponent {
                 initAndSaveKbarData(item.getStockCode(), item.getStockName(), 250);
             }
         });
+    }
+
+    public void batchKbarDataInitToStock(String stockCode,String stockName) {
+        StockKbarQuery query = new StockKbarQuery();
+        query.setStockCode(stockCode);
+        int count = stockKbarService.countByCondition(query);
+        if (count == 0) {
+            initAndSaveKbarData(stockCode, stockName, 100);
+        }
     }
 
     public static void main(String[] args) {
@@ -333,6 +372,47 @@ public class StockKbarComponent {
         DataTable dataTable = TdxHqUtil.getHistoryTransactionData("000001", 20200114,0,200);
         System.out.println(dataTable);
 
+    }
+    //最多500条
+    public List<StockKbar> getStockKBarRemoveNew(String stockCode,int size,int days) {
+        List<StockKbar> list = Lists.newArrayList();
+        StockKbarQuery stockKbarQuery = new StockKbarQuery();
+        stockKbarQuery.setStockCode(stockCode);
+        stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+        stockKbarQuery.setLimit(size);
+        List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return list;
+        }
+        List<StockKbar> kbars = Lists.reverse(stockKbars);
+        if(kbars.size()==size){
+            List<StockKbar> result = kbars.subList(kbars.size() - days, kbars.size());
+            return result;
+        }
+        BigDecimal preEndPrice = null;
+        StockKbar firstKbar = null;
+        boolean flag = false;
+        for (StockKbar kbar:kbars){
+            if(preEndPrice!=null){
+                boolean upperPrice = PriceUtil.isUpperPrice(kbar.getStockCode(), kbar.getHighPrice(), preEndPrice);
+                if(!flag) {
+                    if (kbar.getLowPrice().compareTo(kbar.getHighPrice()) != 0 || !upperPrice) {
+                        list.add(firstKbar);
+                        flag = true;
+                    }
+                }
+                if(flag){
+                    list.add(kbar);
+                }
+            }
+            preEndPrice = kbar.getClosePrice();
+            firstKbar = kbar;
+        }
+        if(list.size()>days){
+            List<StockKbar> result = list.subList(list.size() - days, list.size());
+            return result;
+        }
+        return list;
     }
 
 

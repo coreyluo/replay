@@ -91,6 +91,19 @@ public class StockPlankDaily implements Serializable {
     private BigDecimal min15PriceScale;
 
     /**
+     * 近50天k线数量
+     */
+    private Integer kbarCounts;
+    /**
+     * 15天最低点除以最高点
+     */
+    private BigDecimal day15HighLow;
+    /**
+     * 连续连板
+     */
+    private Integer seriesPlanks;
+
+    /**
      * 
      *
      * @允许为空   NO

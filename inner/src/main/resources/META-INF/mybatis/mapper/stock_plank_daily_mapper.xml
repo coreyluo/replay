@@ -18,6 +18,9 @@
         <result column="max100_price_scale" jdbcType="DECIMAL" property="max100PriceScale"/>
         <result column="max100_avg_price_scale" jdbcType="DECIMAL" property="max100AvgPriceScale"/>
         <result column="min15_price_scale" jdbcType="DECIMAL" property="min15PriceScale"/>
+        <result column="kbar_counts" jdbcType="TINYINT" property="kbarCounts"/>
+        <result column="series_planks" jdbcType="TINYINT" property="seriesPlanks"/>
+        <result column="day15_high_low" jdbcType="DECIMAL" property="day15HighLow"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
@@ -39,6 +42,9 @@
             max100_price_scale,
             max100_avg_price_scale,
             min15_price_scale,
+            kbar_counts,
+            series_planks,
+            day15_high_low,
             create_time,
             update_time
         </sql>
@@ -70,6 +76,9 @@
             #{max100PriceScale, jdbcType=DECIMAL},
             #{max100AvgPriceScale, jdbcType=DECIMAL},
             #{min15PriceScale, jdbcType=DECIMAL},
+            #{kbarCounts, jdbcType=TINYINT},
+            #{seriesPlanks, jdbcType=TINYINT},
+            #{day15HighLow, jdbcType=DECIMAL},
             #{createTime, jdbcType=TIMESTAMP},
             #{updateTime, jdbcType=TIMESTAMP}
             )
@@ -119,6 +128,15 @@
             </if>
             <if test="min15PriceScale != null">
                 min15_price_scale = #{min15PriceScale, jdbcType=DECIMAL},
+            </if>
+            <if test="kbarCounts != null">
+                kbar_counts = #{kbarCounts, jdbcType=TINYINT},
+            </if>
+            <if test="seriesPlanks != null">
+                series_planks = #{seriesPlanks, jdbcType=TINYINT},
+            </if>
+            <if test="day15HighLow != null">
+                day15_high_low = #{day15HighLow, jdbcType=DECIMAL},
             </if>
             <if test="createTime != null">
                 create_time = #{createTime, jdbcType=TIMESTAMP},

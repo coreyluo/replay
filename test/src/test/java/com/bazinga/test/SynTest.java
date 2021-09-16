@@ -26,6 +26,8 @@ public class SynTest extends BaseTestCase {
     public void testThs(){
         try {
             synInfoComponent.synThsBlockInfo();
+            synInfoComponent.thsblockIndex();
+
         } catch (IOException e) {
             log.error(e.getMessage(),e);
         }

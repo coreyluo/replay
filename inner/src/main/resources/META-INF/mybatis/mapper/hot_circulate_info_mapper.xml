@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.HotCirculateInfoDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.HotCirculateInfo">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
+        <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
+        <result column="circulate" jdbcType="BIGINT" property="circulate"/>
+        <result column="stock_type" jdbcType="TINYINT" property="stockType"/>
+        <result column="market_type" jdbcType="TINYINT" property="marketType"/>
+        <result column="circulate_z" jdbcType="BIGINT" property="circulateZ"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            stock_code,
+            stock_name,
+            circulate,
+            stock_type,
+            market_type,
+            circulate_z,
+            create_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from hot_circulate_info
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.HotCirculateInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into hot_circulate_info (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{stockCode, jdbcType=VARCHAR},
+            #{stockName, jdbcType=VARCHAR},
+            #{circulate, jdbcType=BIGINT},
+            #{stockType, jdbcType=TINYINT},
+            #{marketType, jdbcType=TINYINT},
+            #{circulateZ, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.HotCirculateInfo">
+        update hot_circulate_info
+        <set>
+            <if test="stockCode != null">
+                stock_code = #{stockCode, jdbcType=VARCHAR},
+            </if>
+            <if test="stockName != null">
+                stock_name = #{stockName, jdbcType=VARCHAR},
+            </if>
+            <if test="circulate != null">
+                circulate = #{circulate, jdbcType=BIGINT},
+            </if>
+            <if test="stockType != null">
+                stock_type = #{stockType, jdbcType=TINYINT},
+            </if>
+            <if test="marketType != null">
+                market_type = #{marketType, jdbcType=TINYINT},
+            </if>
+            <if test="circulateZ != null">
+                circulate_z = #{circulateZ, jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="stockCode != null">
+            and stock_code = #{stockCode, jdbcType=VARCHAR}
+        </if>
+        <if test="stockName != null">
+            and stock_name = #{stockName, jdbcType=VARCHAR}
+        </if>
+        <if test="circulate != null">
+            and circulate = #{circulate, jdbcType=BIGINT}
+        </if>
+        <if test="stockType != null">
+            and stock_type = #{stockType, jdbcType=TINYINT}
+        </if>
+        <if test="marketType != null">
+            and market_type = #{marketType, jdbcType=TINYINT}
+        </if>
+        <if test="circulateZ != null">
+            and circulate_z = #{circulateZ, jdbcType=BIGINT}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.HotCirculateInfoQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from hot_circulate_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.HotCirculateInfoQuery" resultType="java.lang.Integer">
+        select count(1)
+        from hot_circulate_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

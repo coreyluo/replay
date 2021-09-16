@@ -38,8 +38,12 @@ public class BaseTestCase {
     private StockKbarComponent stockKbarComponent;
     @Autowired
     private StockCommonReplayComponent stockCommonReplayComponent;
+    @Autowired
+    private PlankChenJiaoEComponent plankChenJiaoEComponent;
     @Test
     public void test1() {
+        //无敌数据
+        plankChenJiaoEComponent.exportData();
         stockReplayDailyComponent.stockReplayDaily(new Date());
         stockReplayDailyComponent.calPreDateAvgPrice(new Date());
         stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
@@ -48,11 +52,18 @@ public class BaseTestCase {
         stockKbarComponent.batchUpdateDaily();
         stockPlankDailyComponent.calMax100DaysPriceForTwoPlank(new Date());
         stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(new Date());
+        //stockPlankDaily添加次新标签
         stockPlankDailyComponent.calSubNewStock(new Date());
+        //stockPlankDaily添加insertTime
+        stockPlankDailyComponent.insertTime(new Date());
 
         //新版复盘
-        stockCommonReplayComponent.saveCommonReplay(DateUtil.parseDate("2021-08-13 15:30:30",DateUtil.DEFAULT_FORMAT));
-
+        stockCommonReplayComponent.saveCommonReplay(new Date());
+        stockCommonReplayComponent.firstPlankNoBuyInfo(new Date());
+        stockCommonReplayComponent.highRaiseStockInfo(new Date());
+        stockCommonReplayComponent.forTwoPlankWuDi(new Date());
+        stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        stockPlankDailyComponent.superFactor(new Date());
     }
 
     @Test
@@ -60,10 +71,19 @@ public class BaseTestCase {
         synInfoComponent.synCirculateInfo();
     }
 
+    @Test
+    public void test4() {
+        synInfoComponent.synHotCirculateInfo();
+    }
+
 
     @Test
     public void test3() {
-        plankExchangeDailyComponent.plankExchangeDaily(new Date());
+        //stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
+       stockPlankDailyComponent.superFactor(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
+        //stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        /*List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNew("605588", 3, 50);
+        System.out.println(kbars);*/
     }
 
 
