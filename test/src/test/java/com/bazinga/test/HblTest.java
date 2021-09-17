@@ -21,7 +21,7 @@ public class HblTest extends BaseTestCase {
     private HotBlockDropBuyComponent hotBlockDropBuyComponent;
     @Test
     public void test(){
-        //zhongWeiDiXiReplayComponent.middle();
+        zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
