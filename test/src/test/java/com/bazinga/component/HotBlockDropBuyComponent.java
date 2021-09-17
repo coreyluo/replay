@@ -62,7 +62,24 @@ public class HotBlockDropBuyComponent {
             List<HotBlockDropBuyDTO> dtos = blockDayLevelMap.get(tradeDate);
             for (HotBlockDropBuyDTO dto:dtos) {
                 List<HotBlockDropBuyDTO> dragons = getDragons(dto);
-                dailys.addAll(dragons);
+                if(dragons.size()==0){
+                    continue;
+                }
+                Map<String,HotBlockDropBuyDTO> map  = new HashMap<>();
+                for (HotBlockDropBuyDTO buyDto:dragons){
+                    String key = buyDto.getStockCode() + buyDto.getTradeDate();
+                    HotBlockDropBuyDTO hotBlockDropBuyDTO = map.get(key);
+                    if(hotBlockDropBuyDTO==null){
+                        map.put(key,buyDto);
+                    }else{
+                        if(dto.getBlockRaiseLevel()>=hotBlockDropBuyDTO.getBlockRaiseLevel()){
+                            map.put(key,buyDto);
+                        }
+                    }
+                }
+                for (String key:map.keySet()){
+                    dailys.add(map.get(key));
+                }
             }
         }
         List<Object[]> datas = Lists.newArrayList();
@@ -87,6 +104,8 @@ public class HotBlockDropBuyComponent {
             list.add(dto.getDropDayRate());
             list.add(dto.getDropDayLevel());
             list.add(dto.getBeforeRate3());
+            list.add(dto.getBeforeRate5());
+            list.add(dto.getBeforeRate10());
             list.add(dto.getRaiseDayPlankTime());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
@@ -96,10 +115,10 @@ public class HotBlockDropBuyComponent {
 
         String[] rowNames = {"index","stockCode","stockName","交易日期","板块代码","板块名称","大涨涨幅","大涨时排名","大涨间隔日期","大跌幅度","买入日开盘板块涨幅","买入日开盘板块排名",
                 "股票买入日开盘涨幅","股票买入日开盘排名","股票大涨日涨幅","股票大涨日排名",
-                "股票大跌日涨幅","股票大跌日排名","买入前3日涨跌幅","大涨日上板时间","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("中关村数据回撤",rowNames,datas);
+                "股票大跌日涨幅","股票大跌日排名","买入前3日涨跌幅","买入前5日涨跌幅","买入前10日涨跌幅","大涨日上板时间","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("热门大跌",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("中关村数据回撤");
+            poiExcelUtil.exportExcelUseExcelTitle("热门大跌");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -256,6 +275,14 @@ public class HotBlockDropBuyComponent {
                 BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());
                 buyDTO.setBeforeRate3(rate);
             }
+            if(j==6){
+                BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());
+                buyDTO.setBeforeRate5(rate);
+            }
+            if(j==11){
+                BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());
+                buyDTO.setBeforeRate10(rate);
+            }
             nextKbar = bar;
         }
     }
@@ -293,7 +320,7 @@ public class HotBlockDropBuyComponent {
         Map<String,Map<String, BlockLevelDTO>> allOpenLevelMap = new HashMap<>();
 
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("2021-09-01",DateUtil.yyyy_MM_dd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("2021-01-01",DateUtil.yyyy_MM_dd));
         tradeDatePoolQuery.setTradeDateTo(DateUtil.parseDate("2021-09-15",DateUtil.yyyy_MM_dd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);

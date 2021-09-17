@@ -57,6 +57,8 @@ public class HotBlockDropBuyDTO {
     private String raiseDayPlankTime;
 
     private BigDecimal beforeRate3;
+    private BigDecimal beforeRate5;
+    private BigDecimal beforeRate10;
     private BigDecimal beforeCloseRate;
 
     private BigDecimal profit;
