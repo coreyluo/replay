@@ -18,6 +18,7 @@ public class FastPlankDTO {
     private StockKbar preKbar;
     private StockKbar prePreKbar;
     private String plankTimeStr;
+    private BigDecimal buyDayGatherMoney;
 
     private BigDecimal beforeDay3;
     private BigDecimal beforeDay5;
@@ -32,9 +33,9 @@ public class FastPlankDTO {
 
     private Integer planksDay10;
     private BigDecimal lowerPriceDay10;
-    private Integer avgExchangeDay10;
-    private Integer avgExchangePercentDay10;
-    private Integer avgExchangeDay11To50;
+    private Long avgExchangeDay10;
+    private BigDecimal avgExchangePercentDay10;
+    private Long avgExchangeDay11To50;
     private BigDecimal exchangeDay10DivideDay50;
 
     private BigDecimal plankPriceDivideLowerDay10;

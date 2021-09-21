@@ -26,6 +26,8 @@ public class HotBlockDropBuyDTO {
      */
     private String stockName;
 
+    private Long circulateZ;
+
     /**
      * 交易日期
      *
@@ -49,6 +51,7 @@ public class HotBlockDropBuyDTO {
 
     private BigDecimal raiseDayRate;
     private BigDecimal dropDayRate;
+    private Long dropDayExchange;
 
     private Integer dropDayLevel;
     private Integer raiseDayLevel;
@@ -60,6 +63,11 @@ public class HotBlockDropBuyDTO {
     private BigDecimal beforeRate5;
     private BigDecimal beforeRate10;
     private BigDecimal beforeCloseRate;
+    private Long beforeAvgExchangeDay5;
+    private Integer dropDayReds;
+    private Integer dropDayGreens;
+    private boolean dropDayPlankFlag=false;
+    private Integer dropDayBlockPlanks;
 
     private BigDecimal profit;
 }

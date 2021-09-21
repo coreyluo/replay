@@ -56,12 +56,17 @@ public class HotBlockDropBuyComponent {
 
 
     public void hotDrop(){
+        Map<String, CirculateInfo> circulateMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo:circulateInfos){
+            circulateMap.put(circulateInfo.getStockCode(),circulateInfo);
+        }
         List<HotBlockDropBuyDTO> dailys = Lists.newArrayList();
         Map<String, List<HotBlockDropBuyDTO>> blockDayLevelMap = getBlockDayLevel();
         for (String tradeDate:blockDayLevelMap.keySet()){
             List<HotBlockDropBuyDTO> dtos = blockDayLevelMap.get(tradeDate);
             for (HotBlockDropBuyDTO dto:dtos) {
-                List<HotBlockDropBuyDTO> dragons = getDragons(dto);
+                List<HotBlockDropBuyDTO> dragons = getDragons(dto,circulateMap);
                 if(dragons.size()==0){
                     continue;
                 }
@@ -88,6 +93,7 @@ public class HotBlockDropBuyComponent {
             list.add(dto.getStockCode());
             list.add(dto.getStockCode());
             list.add(dto.getStockName());
+            list.add(dto.getCirculateZ());
             list.add(dto.getTradeDate());
             list.add(dto.getBlockCode());
             list.add(dto.getBlockName());
@@ -103,19 +109,24 @@ public class HotBlockDropBuyComponent {
             list.add(dto.getRaiseDayLevel());
             list.add(dto.getDropDayRate());
             list.add(dto.getDropDayLevel());
+            list.add(dto.getDropDayExchange());
             list.add(dto.getBeforeRate3());
             list.add(dto.getBeforeRate5());
             list.add(dto.getBeforeRate10());
             list.add(dto.getRaiseDayPlankTime());
+            list.add(dto.getBeforeAvgExchangeDay5());
+            list.add(dto.getDropDayReds());
+            list.add(dto.getDropDayGreens());
+            list.add(dto.getDropDayBlockPlanks());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
 
         }
 
-        String[] rowNames = {"index","stockCode","stockName","交易日期","板块代码","板块名称","大涨涨幅","大涨时排名","大涨间隔日期","大跌幅度","买入日开盘板块涨幅","买入日开盘板块排名",
+        String[] rowNames = {"index","stockCode","stockName","流通z","交易日期","板块代码","板块名称","大涨涨幅","大涨时排名","大涨间隔日期","大跌幅度","买入日开盘板块涨幅","买入日开盘板块排名",
                 "股票买入日开盘涨幅","股票买入日开盘排名","股票大涨日涨幅","股票大涨日排名",
-                "股票大跌日涨幅","股票大跌日排名","买入前3日涨跌幅","买入前5日涨跌幅","买入前10日涨跌幅","大涨日上板时间","盈利"};
+                "股票大跌日涨幅","股票大跌日排名","股票大跌日成交量","买入前3日涨跌幅","买入前5日涨跌幅","买入前10日涨跌幅","大涨日上板时间","买入前5日平均成交量","大跌日板块内收盘上涨数量","大跌日板块内收盘下跌数量","大跌日板块内板数","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("热门大跌",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("热门大跌");
@@ -124,7 +135,7 @@ public class HotBlockDropBuyComponent {
         }
     }
 
-    public List<HotBlockDropBuyDTO> getDragons(HotBlockDropBuyDTO dto){
+    public List<HotBlockDropBuyDTO> getDragons(HotBlockDropBuyDTO dto,Map<String, CirculateInfo> circulateMap){
         List<HotBlockDropBuyDTO> datas = Lists.newArrayList();
         ThsBlockStockDetailQuery query = new ThsBlockStockDetailQuery();
         query.setBlockCode(dto.getBlockCode());
@@ -132,6 +143,7 @@ public class HotBlockDropBuyComponent {
         List<LevelDTO> buyDayRates = Lists.newArrayList();
         List<LevelDTO> dropDayRates = Lists.newArrayList();
         List<LevelDTO> raiseDayRates = Lists.newArrayList();
+        int planks = 0;
         for (ThsBlockStockDetail detail:details){
             if(detail.getStockCode().startsWith("68")){
                 continue;
@@ -157,6 +169,12 @@ public class HotBlockDropBuyComponent {
             openRate(buyDTO,kbars);
             if(buyDTO.getOpenRate()!=null) {
                 datas.add(buyDTO);
+                if(buyDTO.isDropDayPlankFlag()){
+                    planks++;
+                }
+                if(circulateMap.get(buyDTO.getStockCode())!=null){
+                    buyDTO.setCirculateZ(circulateMap.get(buyDTO.getStockCode()).getCirculateZ());
+                }
                 LevelDTO openLevel = new LevelDTO();
                 openLevel.setKey(buyDTO.getStockCode());
                 openLevel.setRate(buyDTO.getOpenRate());
@@ -171,10 +189,31 @@ public class HotBlockDropBuyComponent {
                 raiseDayRates.add(raiseDayLevel);
             }
         }
+        Integer dropDayReds = null;
+        Integer dropDayGreens = null;
+        for (LevelDTO levelDTO:dropDayRates){
+            if(levelDTO.getRate().compareTo(BigDecimal.ZERO)==1){
+                if(dropDayReds==null) {
+                    dropDayReds = 1;
+                }else{
+                    dropDayReds++;
+                }
+            }
+            if(levelDTO.getRate().compareTo(BigDecimal.ZERO)==-1){
+                if(dropDayGreens==null) {
+                    dropDayGreens = 1;
+                }else{
+                    dropDayGreens++;
+                }
+            }
+        }
         Collections.sort(buyDayRates);
         Collections.sort(dropDayRates);
         Collections.sort(raiseDayRates);
         for (HotBlockDropBuyDTO data:datas){
+            data.setDropDayReds(dropDayReds);
+            data.setDropDayGreens(dropDayGreens);
+            data.setDropDayBlockPlanks(planks);
             int i = 0;
             for (LevelDTO levelDTO:buyDayRates){
                 i++;
@@ -229,6 +268,8 @@ public class HotBlockDropBuyComponent {
             preKbar  = bar;
         }
         List<StockKbar> reverse = Lists.reverse(bars);
+        Long totalExchangeDay5 = 0l;
+        int exchangeDay5 = 0;
         StockKbar buyBeforeKbar = null;
         StockKbar nextKbar = null;
         boolean flagPlank = false;
@@ -242,11 +283,14 @@ public class HotBlockDropBuyComponent {
             }
             if(j==1){
                 buyBeforeKbar = bar;
+                buyDTO.setDropDayExchange(bar.getTradeQuantity());
             }
             if(j==2){
                 BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());
                 buyDTO.setBeforeCloseRate(rate);
                 buyDTO.setDropDayRate(rate);
+                boolean upperPrice = PriceUtil.isUpperPrice(buyDTO.getStockCode(), buyBeforeKbar.getClosePrice(), bar.getClosePrice());
+                buyDTO.setDropDayPlankFlag(upperPrice);
             }
             if(buyDTO.getRaiseDays()==1){
                 if(j==3){
@@ -274,6 +318,12 @@ public class HotBlockDropBuyComponent {
             if(j==4){
                 BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());
                 buyDTO.setBeforeRate3(rate);
+            }
+            if(j<=5 && j>=1){
+                totalExchangeDay5 = totalExchangeDay5+bar.getTradeQuantity();
+                exchangeDay5 = exchangeDay5+1;
+                long avgExchange = totalExchangeDay5 / exchangeDay5;
+                buyDTO.setBeforeAvgExchangeDay5(avgExchange);
             }
             if(j==6){
                 BigDecimal rate = PriceUtil.getPricePercentRate(buyBeforeKbar.getAdjClosePrice().subtract(bar.getAdjClosePrice()), bar.getAdjClosePrice());

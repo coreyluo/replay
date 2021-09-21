@@ -11,6 +11,7 @@ import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.ThsBlockStockDetail;
 import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.ThsBlockStockDetailQuery;
 import com.bazinga.replay.query.TradeDatePoolQuery;
@@ -61,6 +62,15 @@ public class FastPlankComponent {
 
     public void fastPlank(){
         List<FastPlankDTO> dailys = Lists.newArrayList();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo:circulateInfos){
+            System.out.println(circulateInfo.getStockCode());
+            List<FastPlankDTO> fastPlank = getFastPlank(circulateInfo);
+            dailys.addAll(fastPlank);
+           /* if(dailys.size()>=10){
+                break;
+            }*/
+        }
 
         List<Object[]> datas = Lists.newArrayList();
         for(FastPlankDTO dto:dailys){
@@ -73,6 +83,7 @@ public class FastPlankComponent {
             list.add(dto.getMarketMoney());
             list.add(dto.getBuyKbar().getKbarDate());
             list.add(openRate);
+            list.add(dto.getBuyDayGatherMoney());
             list.add(dto.getPlankTimeStr());
             list.add(dto.getBuyKbar().getHighPrice());
             list.add(dto.getBeforeDay3());
@@ -96,7 +107,7 @@ public class FastPlankComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","stockCode","stockName","流通z","流通市值","买入日期","开盘涨幅","第一次能买入时间","买入价格",
+        String[] rowNames = {"index","stockCode","stockName","流通z","流通市值","买入日期","开盘涨幅","集合成交额","第一次能买入时间","买入价格",
                 "3日涨幅","5日涨幅","10日涨幅", "30日涨幅","前一日255涨幅","前一日收盘涨幅","前一日收盘-255","前一日230至收盘最低点涨幅",
                 "前10日板数","前10日最低价格","前一日均价涨幅","前10日平均成交量","前11日-50日平均成交量","板价/10日最低","前10日平均换手率","前10日平均成交量/前50日平均成交量","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("早上板股票",rowNames,datas);
@@ -136,21 +147,26 @@ public class FastPlankComponent {
                         fastPlankDTO.setPlankTimeStr(buyTime);
                         beforeRateAndProfit(fastPlankDTO,stockKBars);
                         beforeDateInfo(fastPlankDTO);
-
-
-
+                        beforeExchangeInfo(fastPlankDTO,stockKBars);
+                        getGatherMoney(fastPlankDTO,transactions);
+                        list.add(fastPlankDTO);
                     }
                 }
             }
             prePreStockKbar = preStockKbar;
             preStockKbar = stockKbar;
         }
-        return null;
+        return list;
     }
     public void beforeExchangeInfo(FastPlankDTO buyDTO, List<StockKbar> bars){
         List<StockKbar> reverse = Lists.reverse(bars);
         int planks = 0;
         BigDecimal lowestPriceDay10 = null;
+        Long totalExchange = null;
+        int exchangeDays = 0;
+
+        Long totalExchange11To50 = null;
+        int exchangeDays11To50 = 0;
 
         StockKbar nextKbar = null;
         boolean flagPlank = false;
@@ -172,11 +188,46 @@ public class FastPlankComponent {
                 if(lowestPriceDay10==null||bar.getAdjLowPrice().compareTo(lowestPriceDay10)==-1){
                     lowestPriceDay10 = bar.getAdjLowPrice();
                 }
+                if(totalExchange==null){
+                    totalExchange = bar.getTradeQuantity();
+                    exchangeDays = 1;
+                }else{
+                    totalExchange = totalExchange+bar.getTradeQuantity();
+                    exchangeDays = exchangeDays+1;
+                }
             }
+            if(j>=11&&j<=50){
+                if(totalExchange11To50==null){
+                    totalExchange11To50 = bar.getTradeQuantity();
+                    exchangeDays11To50 = 1;
+                }else{
+                    totalExchange11To50 = totalExchange11To50+bar.getTradeQuantity();
+                    exchangeDays11To50 = exchangeDays11To50+1;
+                }
+            }
+
             nextKbar = bar;
         }
         buyDTO.setPlanksDay10(planks);
         buyDTO.setLowerPriceDay10(lowestPriceDay10);
+        if(exchangeDays>0){
+            long avgExchange = totalExchange / exchangeDays;
+            buyDTO.setAvgExchangeDay10(avgExchange);
+            BigDecimal exchangePercent = new BigDecimal(avgExchange * 100).divide(new BigDecimal(buyDTO.getCirculateZ()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            buyDTO.setAvgExchangePercentDay10(exchangePercent);
+        }
+        if(exchangeDays11To50>0){
+            long avgExchange = totalExchange11To50 / exchangeDays11To50;
+            buyDTO.setAvgExchangeDay11To50(avgExchange);
+        }
+        if(buyDTO.getAvgExchangeDay10()!=null&&buyDTO.getAvgExchangeDay11To50()!=null){
+            BigDecimal divide = new BigDecimal(buyDTO.getAvgExchangeDay10()).divide(new BigDecimal(buyDTO.getAvgExchangeDay11To50()), 2, BigDecimal.ROUND_HALF_UP);
+            buyDTO.setExchangeDay10DivideDay50(divide);
+        }
+        if(buyDTO.getBuyKbar()!=null&&buyDTO.getLowerPriceDay10()!=null){
+            BigDecimal divide = buyDTO.getBuyKbar().getHighPrice().divide(buyDTO.getLowerPriceDay10(), 2, BigDecimal.ROUND_HALF_UP);
+            buyDTO.setPlankPriceDivideLowerDay10(divide);
+        }
     }
 
 
@@ -240,8 +291,24 @@ public class FastPlankComponent {
             if(openFlag&&upperPrice&&tradeType==1){
                 return tradeTime;
             }
+            if(tradeTime.startsWith("10")){
+                return null;
+            }
         }
         return null;
+    }
+    public void getGatherMoney(FastPlankDTO buyDto,List<ThirdSecondTransactionDataDTO> transactions){
+        for (ThirdSecondTransactionDataDTO transaction:transactions){
+            String tradeTime = transaction.getTradeTime();
+            BigDecimal tradePrice = transaction.getTradePrice();
+            Integer tradeQuantity = transaction.getTradeQuantity();
+            if(tradeTime.equals("09:25")){
+                BigDecimal gatherMoney = tradePrice.multiply(new BigDecimal(tradeQuantity)).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_UP);
+                buyDto.setBuyDayGatherMoney(gatherMoney);
+                return;
+            }
+        }
+
     }
 
     public boolean isFirstPlank(LimitQueue<StockKbar> limitQueue){
@@ -258,16 +325,18 @@ public class FastPlankComponent {
         int i = 0;
         StockKbar nextKbar = null;
         for (StockKbar kbar:reverse){
-            boolean highUpper = PriceUtil.isUpperPrice(kbar.getStockCode(), nextKbar.getHighPrice(), kbar.getClosePrice());
-            boolean endUpper = PriceUtil.isUpperPrice(kbar.getStockCode(), nextKbar.getClosePrice(), kbar.getClosePrice());
-            if(i==1){
-                if(!highUpper){
-                    return false;
+            if(nextKbar!=null) {
+                boolean highUpper = PriceUtil.isUpperPrice(kbar.getStockCode(), nextKbar.getHighPrice(), kbar.getClosePrice());
+                boolean endUpper = PriceUtil.isUpperPrice(kbar.getStockCode(), nextKbar.getClosePrice(), kbar.getClosePrice());
+                if (i == 1) {
+                    if (!highUpper) {
+                        return false;
+                    }
                 }
-            }
-            if(i==2||i==3){
-                if(endUpper){
-                    return false;
+                if (i == 2 || i == 3) {
+                    if (endUpper) {
+                        return false;
+                    }
                 }
             }
             nextKbar = kbar;
