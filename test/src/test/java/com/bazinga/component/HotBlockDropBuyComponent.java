@@ -65,12 +65,12 @@ public class HotBlockDropBuyComponent {
         Map<String, List<HotBlockDropBuyDTO>> blockDayLevelMap = getBlockDayLevel();
         for (String tradeDate:blockDayLevelMap.keySet()){
             List<HotBlockDropBuyDTO> dtos = blockDayLevelMap.get(tradeDate);
+            Map<String,HotBlockDropBuyDTO> map  = new HashMap<>();
             for (HotBlockDropBuyDTO dto:dtos) {
                 List<HotBlockDropBuyDTO> dragons = getDragons(dto,circulateMap);
                 if(dragons.size()==0){
                     continue;
                 }
-                Map<String,HotBlockDropBuyDTO> map  = new HashMap<>();
                 for (HotBlockDropBuyDTO buyDto:dragons){
                     String key = buyDto.getStockCode() + buyDto.getTradeDate();
                     HotBlockDropBuyDTO hotBlockDropBuyDTO = map.get(key);
@@ -82,9 +82,9 @@ public class HotBlockDropBuyComponent {
                         }
                     }
                 }
-                for (String key:map.keySet()){
-                    dailys.add(map.get(key));
-                }
+            }
+            for (String key:map.keySet()){
+                dailys.add(map.get(key));
             }
         }
         List<Object[]> datas = Lists.newArrayList();
