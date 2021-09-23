@@ -44,6 +44,7 @@ public class HotBlockDropBuyDTO {
 
     private BigDecimal blockRaiseRate;
     private Integer blockRaiseLevel;
+    private String blockRaiseDateStr;
     private Integer raiseDays;
     private BigDecimal blockDropRate;
 
@@ -68,6 +69,19 @@ public class HotBlockDropBuyDTO {
     private Integer dropDayGreens;
     private boolean dropDayPlankFlag=false;
     private Integer dropDayBlockPlanks;
+
+    private Integer beforePlankDay5;
+    private Integer beforeOpenPlankDay5;
+    private Boolean raiseNextDayOpenPlankFlag;
+    private BigDecimal raiseNextDayOpenRate;
+
+    private BigDecimal raiseDayBlockRate5;
+    private BigDecimal raiseDayBlockRate10;
+
+    private BigDecimal raiseDayRate5;
+    private BigDecimal raiseDayRate10;
+
+
 
     private BigDecimal profit;
 }
