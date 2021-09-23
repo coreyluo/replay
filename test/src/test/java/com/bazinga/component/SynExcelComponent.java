@@ -1,10 +1,7 @@
 package com.bazinga.component;
 
 
-import com.bazinga.dto.BlockLevelDTO;
-import com.bazinga.dto.OtherExcelDTO;
-import com.bazinga.dto.StockRateDTO;
-import com.bazinga.dto.ZiDongHuaDTO;
+import com.bazinga.dto.*;
 import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.model.ThsBlockInfo;
 import com.bazinga.replay.model.ThsBlockStockDetail;
@@ -123,6 +120,26 @@ public class SynExcelComponent {
                 list.add(item);
             });
             stockGraphComponent.graphBuy(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void hotBlockDrop() {
+        List<HotBlockDropBuyExcelDTO> list = Lists.newArrayList();
+        File file = new File("D:\\circulate\\hotDrop.xls");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\hotDrop.xls") + "不存在");
+        }
+        try {
+            List<HotBlockDropBuyExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(HotBlockDropBuyExcelDTO.class);
+            dataList.forEach(item -> {
+                list.add(item);
+            });
+            System.out.println(1111111);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
