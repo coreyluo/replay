@@ -34,6 +34,8 @@ public class SynExcelComponent {
     private RealBuyOrSellComponent realBuyOrSellComponent;
     @Autowired
     private StockGraphComponent stockGraphComponent;
+    @Autowired
+    private HotBlockBestBuyComponent hotBlockBestBuyComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -139,7 +141,7 @@ public class SynExcelComponent {
             dataList.forEach(item -> {
                 list.add(item);
             });
-            System.out.println(1111111);
+            hotBlockBestBuyComponent.hotBlockBestBuy(list);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);

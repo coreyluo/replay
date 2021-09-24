@@ -16,27 +16,27 @@ public class HotBlockDropBuyExcelDTO {
      * @允许为空   NO
      * @是否索引   NO
      */
-    @ExcelElement("证券代码")
+    @ExcelElement(value = "stockCode",notNull = true)
     private String stockCode;
 
-    @ExcelElement("交易日期")
+    @ExcelElement(value = "交易日期",notNull = true)
     private String tradeDate;
 
-    @ExcelElement("大涨涨幅")
+    @ExcelElement(value = "大涨涨幅",notNull = false)
     private BigDecimal blockRaiseRate;
 
-    @ExcelElement("大跌涨幅")
+    @ExcelElement(value = "大跌幅度",notNull = false)
     private BigDecimal blockDropRate;
 
-    @ExcelElement("股票大跌日成交量")
+    @ExcelElement(value = "股票大跌日成交量",notNull = false)
     private Long dropDayExchange;
 
-    @ExcelElement("股票大涨日涨幅")
+    @ExcelElement(value = "股票大涨日涨幅",notNull = false)
     private BigDecimal raiseDayRate;
 
-    @ExcelElement("大涨日板块5日涨幅")
+    @ExcelElement(value = "大涨日板块5日涨幅",notNull = false)
     private BigDecimal raiseDayBlockRate5;
 
-    @ExcelElement("盈利")
+    @ExcelElement(value = "盈利",notNull = false)
     private BigDecimal profit;
 }
