@@ -61,6 +61,8 @@ public class HotBlockBestBuyComponent {
 
     public void hotBlockBestBuy(List<HotBlockDropBuyExcelDTO> dailys){
         List<BestBuyDTO> buys = Lists.newArrayList();
+        List<BestBuyStockDTO> stockBuys = Lists.newArrayList();
+        Map<String, BestBuyStockDTO> bestBuyStockMap = new HashMap<>();
         Map<String, HotBlockDropBuyExcelDTO> dailyMap = new HashMap<>();
         for (HotBlockDropBuyExcelDTO dto:dailys){
             String key = dto.getStockCode()+dto.getTradeDate();
@@ -72,12 +74,13 @@ public class HotBlockBestBuyComponent {
         List<LevelDTO> blockRate5s = splitRegionRaiseDayBlockRate5(dailys);
         List<LevelDTO> stockRaiseDayRates = splitRegionRaiseDayRate(dailys);
 
-        Map<String, Map<String,LevelDTO>> blockDropMaps = regions(blockDrops);
-        Map<String, Map<String,LevelDTO>> blockRaisesMaps = regions(blockRaises);
-        Map<String, Map<String,LevelDTO>> stockDropDayExchangesMaps = regions(stockDropDayExchanges);
-        Map<String, Map<String,LevelDTO>> blockRate5sMaps = regions(blockRate5s);
-        Map<String, Map<String,LevelDTO>> stockRaiseDayRatesMaps = regions(stockRaiseDayRates);
-        bestBuy(buys,dailyMap,blockDropMaps,blockRaisesMaps,stockDropDayExchangesMaps,blockRate5sMaps,stockRaiseDayRatesMaps);
+        Map<String, String> regionNameMap = new HashMap<>();
+        Map<String, Map<String,LevelDTO>> blockDropMaps = regions(blockDrops,regionNameMap,"板块大跌日跌幅");
+        Map<String, Map<String,LevelDTO>> blockRaisesMaps = regions(blockRaises,regionNameMap,"板块大涨日跌幅");
+        Map<String, Map<String,LevelDTO>> stockDropDayExchangesMaps = regions(stockDropDayExchanges,regionNameMap,"板块大跌日单个股票成交量");
+        Map<String, Map<String,LevelDTO>> blockRate5sMaps = regions(blockRate5s,regionNameMap,"板块大涨日收盘板块5日涨幅");
+        Map<String, Map<String,LevelDTO>> stockRaiseDayRatesMaps = regions(stockRaiseDayRates,regionNameMap,"板块大涨日单个股票收盘涨幅");
+        bestBuy(buys,dailyMap,bestBuyStockMap,regionNameMap,blockDropMaps,blockRaisesMaps,stockDropDayExchangesMaps,blockRate5sMaps,stockRaiseDayRatesMaps);
 
 
         List<Object[]> datas = Lists.newArrayList();
@@ -117,9 +120,38 @@ public class HotBlockBestBuyComponent {
         }catch (Exception e){
             log.info(e.getMessage());
         }
+
+
+
+        List<Object[]> dataStocks = Lists.newArrayList();
+        for(String key:bestBuyStockMap.keySet()){
+            BestBuyStockDTO dto = bestBuyStockMap.get(key);
+            List<Object> list = new ArrayList<>();
+            list.add(dto.getStockCode());
+            list.add(dto.getStockCode());
+            list.add(dto.getTradeDate());
+            list.add(dto.getReason1());
+            list.add(dto.getReason2());
+            list.add(dto.getReason3());
+            list.add(dto.getReason4());
+            list.add(dto.getReason5());
+            list.add(dto.getProfit());
+            Object[] objects = list.toArray();
+            dataStocks.add(objects);
+
+        }
+
+        String[] rowNameStocks = {"index","stockCode","tradeDate","板块大跌日跌幅","板块大涨日跌幅","板块大跌日单个股票成交量","板块大涨日收盘板块5日涨幅","板块大涨日单个股票收盘涨幅","溢价"};
+        PoiExcelUtil poiExcelUtilStock = new PoiExcelUtil("最佳因素个股",rowNameStocks,dataStocks);
+        try {
+            poiExcelUtilStock.exportExcelUseExcelTitle("最佳因素个股");
+        }catch (Exception e){
+            log.info(e.getMessage());
+        }
+
     }
 
-    public void bestBuy(List<BestBuyDTO> buys,Map<String, HotBlockDropBuyExcelDTO> dailyMap,
+    public void bestBuy(List<BestBuyDTO> buys,Map<String, HotBlockDropBuyExcelDTO> dailyMap,Map<String, BestBuyStockDTO> bestBuyStockMap,Map<String, String> regionNameMap,
                         Map<String, Map<String,LevelDTO>> blockDropMaps,Map<String, Map<String,LevelDTO>> blockRaisesMaps,Map<String, Map<String,LevelDTO>> stockDropDayExchangesMaps,
                             Map<String, Map<String,LevelDTO>> blockRate5sMaps,Map<String, Map<String,LevelDTO>> stockRaiseDayRatesMaps){
         int x=0;
@@ -128,6 +160,12 @@ public class HotBlockBestBuyComponent {
                 for (int k=1;k<=10;k++){
                     for (int m=1;m<=10;m++){
                         for (int n=1;n<=10;n++){
+                            String iName = regionNameMap.get(i + "板块大跌日跌幅");
+                            String jName = regionNameMap.get(i + "板块大涨日跌幅");
+                            String kName = regionNameMap.get(i + "板块大跌日单个股票成交量");
+                            String mName = regionNameMap.get(i + "板块大涨日收盘板块5日涨幅");
+                            String nName = regionNameMap.get(i + "板块大涨日单个股票收盘涨幅");
+
                             BestBuyDTO bestBuyDTO = new BestBuyDTO();
                             Map<String,LevelDTO> iMaps = blockDropMaps.get(String.valueOf(i));
                             int count = 0;
@@ -157,9 +195,34 @@ public class HotBlockBestBuyComponent {
                                 BigDecimal divide = totalProfit.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
                                 bestBuyDTO.setProfit(divide);
                             }
-                            x++;
-                            System.out.println(x);
-                            buys.add(bestBuyDTO);
+                            if(count>0&&bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1) {
+                                buys.add(bestBuyDTO);
+                                for (String key:iMaps.keySet()) {
+                                    Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
+                                    Map<String, LevelDTO> kMaps = stockDropDayExchangesMaps.get(String.valueOf(k));
+                                    Map<String, LevelDTO> mMaps = blockRate5sMaps.get(String.valueOf(m));
+                                    Map<String, LevelDTO> nMaps = stockRaiseDayRatesMaps.get(String.valueOf(n));
+                                    LevelDTO jDto = jMaps.get(key);
+                                    LevelDTO kDto = kMaps.get(key);
+                                    LevelDTO mDto = mMaps.get(key);
+                                    LevelDTO nDto = nMaps.get(key);
+                                    if(jDto!=null&&kDto!=null&&mDto!=null&&nDto!=null){
+                                        BestBuyStockDTO buyStockDTO = new BestBuyStockDTO();
+                                        buyStockDTO.setStockCode(dailyMap.get(key).getStockCode());
+                                        buyStockDTO.setTradeDate(dailyMap.get(key).getTradeDate());
+                                        buyStockDTO.setReason1(iName);
+                                        buyStockDTO.setReason2(jName);
+                                        buyStockDTO.setReason3(kName);
+                                        buyStockDTO.setReason4(mName);
+                                        buyStockDTO.setReason5(nName);
+                                        buyStockDTO.setProfit(dailyMap.get(key).getProfit());
+                                        BestBuyStockDTO mapValue = bestBuyStockMap.get(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate());
+                                        if(mapValue==null) {
+                                            bestBuyStockMap.put(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate(), buyStockDTO);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -167,7 +230,7 @@ public class HotBlockBestBuyComponent {
         }
     }
 
-    public Map<String, Map<String,LevelDTO>>  regions( List<LevelDTO> blockDrops){
+    public Map<String, Map<String,LevelDTO>>  regions( List<LevelDTO> blockDrops,Map<String,String> regionNameMap,String title){
         Map<String, Map<String,LevelDTO>> levelMap = new HashMap<>();
         Map<String,LevelDTO> map1 = new HashMap<>();
         Map<String,LevelDTO> map2 = new HashMap<>();
@@ -180,39 +243,105 @@ public class HotBlockBestBuyComponent {
         Map<String,LevelDTO> map9 = new HashMap<>();
         Map<String,LevelDTO> map10 = new HashMap<>();
 
+        BigDecimal startDate = null;
+
+        BigDecimal region1Date = null;
+        BigDecimal region2Date = null;
+        BigDecimal region3Date = null;
+        BigDecimal region4Date = null;
+        BigDecimal region5Date = null;
+        BigDecimal region6Date = null;
+        BigDecimal region7Date = null;
+        BigDecimal region8Date = null;
+        BigDecimal region9Date = null;
+        BigDecimal region10Date = null;
+
         int regions = blockDrops.size()/10;
         int i=0;
         for (LevelDTO levelDTO:blockDrops){
             i++;
-            if(i<regions*1){
+            if(i==1){
+                startDate = levelDTO.getRate();
+            }
+            if(i<=regions*1){
+                region1Date = levelDTO.getRate();
                 map1.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region1Date.compareTo(levelDTO.getRate())==0){
+                    map1.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*2){
+            if(i<=regions*2){
+                region2Date = levelDTO.getRate();
                 map2.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region2Date.compareTo(levelDTO.getRate())==0){
+                    map2.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*3){
+            if(i<=regions*3){
+                region3Date = levelDTO.getRate();
                 map3.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region3Date.compareTo(levelDTO.getRate())==0){
+                    map3.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*4){
+            if(i<=regions*4){
+                region4Date = levelDTO.getRate();
                 map4.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region4Date.compareTo(levelDTO.getRate())==0){
+                    map4.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*5){
+            if(i<=regions*5){
+                region5Date = levelDTO.getRate();
                 map5.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region5Date.compareTo(levelDTO.getRate())==0){
+                    map5.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*6){
+            if(i<=regions*6){
+                region6Date = levelDTO.getRate();
                 map6.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region6Date.compareTo(levelDTO.getRate())==0){
+                    map6.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*7){
+            if(i<=regions*7){
+                region7Date = levelDTO.getRate();
                 map7.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region7Date.compareTo(levelDTO.getRate())==0){
+                    map7.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*8){
+            if(i<=regions*8){
+                region8Date = levelDTO.getRate();
                 map8.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region8Date.compareTo(levelDTO.getRate())==0){
+                    map8.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*9){
+            if(i<=regions*9){
+                region9Date = levelDTO.getRate();
                 map9.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region9Date.compareTo(levelDTO.getRate())==0){
+                    map9.put(levelDTO.getKey(),levelDTO);
+                }
             }
-            if(i<regions*10){
+            if(i<=regions*10){
+                region10Date = levelDTO.getRate();
                 map10.put(levelDTO.getKey(),levelDTO);
+            }else{
+                if(region10Date.compareTo(levelDTO.getRate())==0){
+                    map10.put(levelDTO.getKey(),levelDTO);
+                }
             }
         }
         levelMap.put("1",map1);
@@ -225,6 +354,18 @@ public class HotBlockBestBuyComponent {
         levelMap.put("8",map8);
         levelMap.put("9",map9);
         levelMap.put("10",map10);
+
+        regionNameMap.put("1"+title,title+startDate.toString()+"至"+region1Date.toString());
+        regionNameMap.put("2"+title,title+startDate.toString()+"至"+region2Date.toString());
+        regionNameMap.put("3"+title,title+startDate.toString()+"至"+region3Date.toString());
+        regionNameMap.put("4"+title,title+startDate.toString()+"至"+region4Date.toString());
+        regionNameMap.put("5"+title,title+startDate.toString()+"至"+region5Date.toString());
+        regionNameMap.put("6"+title,title+startDate.toString()+"至"+region6Date.toString());
+        regionNameMap.put("7"+title,title+startDate.toString()+"至"+region7Date.toString());
+        regionNameMap.put("8"+title,title+startDate.toString()+"至"+region8Date.toString());
+        regionNameMap.put("9"+title,title+startDate.toString()+"至"+region9Date.toString());
+        regionNameMap.put("10"+title,title+startDate.toString()+"至"+region10Date.toString());
+
         return levelMap;
     }
 
