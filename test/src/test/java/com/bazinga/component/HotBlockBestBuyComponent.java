@@ -76,7 +76,7 @@ public class HotBlockBestBuyComponent {
 
         Map<String, String> regionNameMap = new HashMap<>();
         Map<String, Map<String,LevelDTO>> blockDropMaps = regions(blockDrops,regionNameMap,"板块大跌日跌幅");
-        Map<String, Map<String,LevelDTO>> blockRaisesMaps = regions(blockRaises,regionNameMap,"板块大涨日跌幅");
+        Map<String, Map<String,LevelDTO>> blockRaisesMaps = regions(blockRaises,regionNameMap,"板块大涨日涨幅");
         Map<String, Map<String,LevelDTO>> stockDropDayExchangesMaps = regions(stockDropDayExchanges,regionNameMap,"板块大跌日单个股票成交量");
         Map<String, Map<String,LevelDTO>> blockRate5sMaps = regions(blockRate5s,regionNameMap,"板块大涨日收盘板块5日涨幅");
         Map<String, Map<String,LevelDTO>> stockRaiseDayRatesMaps = regions(stockRaiseDayRates,regionNameMap,"板块大涨日单个股票收盘涨幅");
@@ -96,6 +96,9 @@ public class HotBlockBestBuyComponent {
             list.add(dto.getReason4());
             list.add(dto.getReason5());
             list.add(dto.getCount());
+            list.add(dto.getRedCount());
+            list.add(dto.getGreenCount());
+            list.add(dto.getRedRate());
             list.add(dto.getProfitTotal());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
@@ -106,7 +109,7 @@ public class HotBlockBestBuyComponent {
             }
         }
 
-        String[] rowNames = {"index","大跌幅度区段","大涨涨幅区段","股票大跌日成交量区段","大涨日板块5日涨幅区段","股票大涨日涨幅区段","数量","总溢价","平均溢价"};
+        String[] rowNames = {"index","大跌幅度区段","大涨涨幅区段","股票大跌日成交量区段","大涨日板块5日涨幅区段","股票大涨日涨幅区段","数量","赚钱数量","亏钱数量","赚亏比例","总溢价","平均溢价"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("最佳因素1",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("最佳因素1");
@@ -141,7 +144,7 @@ public class HotBlockBestBuyComponent {
 
         }
 
-        String[] rowNameStocks = {"index","stockCode","tradeDate","板块大跌日跌幅","板块大涨日跌幅","板块大跌日单个股票成交量","板块大涨日收盘板块5日涨幅","板块大涨日单个股票收盘涨幅","溢价"};
+        String[] rowNameStocks = {"index","stockCode","tradeDate","板块大跌日跌幅","板块大涨日涨幅","板块大跌日单个股票成交量","板块大涨日收盘板块5日涨幅","板块大涨日单个股票收盘涨幅","溢价"};
         PoiExcelUtil poiExcelUtilStock = new PoiExcelUtil("最佳因素个股",rowNameStocks,dataStocks);
         try {
             poiExcelUtilStock.exportExcelUseExcelTitle("最佳因素个股");
@@ -161,14 +164,16 @@ public class HotBlockBestBuyComponent {
                     for (int m=1;m<=10;m++){
                         for (int n=1;n<=10;n++){
                             String iName = regionNameMap.get(i + "板块大跌日跌幅");
-                            String jName = regionNameMap.get(i + "板块大涨日跌幅");
-                            String kName = regionNameMap.get(i + "板块大跌日单个股票成交量");
-                            String mName = regionNameMap.get(i + "板块大涨日收盘板块5日涨幅");
-                            String nName = regionNameMap.get(i + "板块大涨日单个股票收盘涨幅");
+                            String jName = regionNameMap.get(j + "板块大涨日涨幅");
+                            String kName = regionNameMap.get(k + "板块大跌日单个股票成交量");
+                            String mName = regionNameMap.get(m + "板块大涨日收盘板块5日涨幅");
+                            String nName = regionNameMap.get(n + "板块大涨日单个股票收盘涨幅");
 
                             BestBuyDTO bestBuyDTO = new BestBuyDTO();
                             Map<String,LevelDTO> iMaps = blockDropMaps.get(String.valueOf(i));
                             int count = 0;
+                            int redCount = 0;
+                            int greenCount = 0;
                             BigDecimal totalProfit = BigDecimal.ZERO;
                             for (String key:iMaps.keySet()) {
                                 Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
@@ -181,6 +186,11 @@ public class HotBlockBestBuyComponent {
                                 LevelDTO nDto = nMaps.get(key);
                                 if(jDto!=null&&kDto!=null&&mDto!=null&&nDto!=null){
                                     count++;
+                                    if(dailyMap.get(key).getProfit().compareTo(BigDecimal.ZERO)==1){
+                                        redCount++;
+                                    }else{
+                                        greenCount++;
+                                    }
                                     totalProfit = totalProfit.add(dailyMap.get(key).getProfit());
                                 }
                             }
@@ -190,12 +200,15 @@ public class HotBlockBestBuyComponent {
                             bestBuyDTO.setReason4(String.valueOf(m));
                             bestBuyDTO.setReason5(String.valueOf(n));
                             bestBuyDTO.setCount(count);
+                            bestBuyDTO.setGreenCount(greenCount);
+                            bestBuyDTO.setRedCount(redCount);
                             if(count>0){
                                 bestBuyDTO.setProfitTotal(totalProfit);
                                 BigDecimal divide = totalProfit.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
                                 bestBuyDTO.setProfit(divide);
+                                bestBuyDTO.setRedRate(new BigDecimal(redCount).divide(new BigDecimal(count),4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
                             }
-                            if(count>0&&bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1) {
+                            if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("70"))==1) {
                                 buys.add(bestBuyDTO);
                                 for (String key:iMaps.keySet()) {
                                     Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
@@ -384,7 +397,8 @@ public class HotBlockBestBuyComponent {
             }
         }
         Collections.sort(levelDTOS);
-        return levelDTOS;
+        List<LevelDTO> reverse = Lists.reverse(levelDTOS);
+        return reverse;
     }
     //大涨幅度
     public List<LevelDTO>  splitRegionBlockRaiseRate(List<HotBlockDropBuyExcelDTO> dailys){
@@ -416,8 +430,7 @@ public class HotBlockBestBuyComponent {
             }
         }
         Collections.sort(levelDTOS);
-        List<LevelDTO> reverse = Lists.reverse(levelDTOS);
-        return reverse;
+        return levelDTOS;
     }
 
     //股票大涨日涨幅
@@ -433,8 +446,7 @@ public class HotBlockBestBuyComponent {
             }
         }
         Collections.sort(levelDTOS);
-        List<LevelDTO> reverse = Lists.reverse(levelDTOS);
-        return reverse;
+        return levelDTOS;
     }
 
     //大涨日板块5日涨幅
@@ -450,8 +462,7 @@ public class HotBlockBestBuyComponent {
             }
         }
         Collections.sort(levelDTOS);
-        List<LevelDTO> reverse = Lists.reverse(levelDTOS);
-        return reverse;
+        return levelDTOS;
     }
 
 }

@@ -26,5 +26,10 @@ public class BestBuyDTO {
 
     private int count;
 
+    private int greenCount;
+
+    private int redCount;
+
+    private BigDecimal redRate;
 
 }
