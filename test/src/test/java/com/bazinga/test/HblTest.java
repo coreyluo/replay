@@ -23,13 +23,15 @@ public class HblTest extends BaseTestCase {
     private FastPlankComponent fastPlankComponent;
     @Autowired
     private HotBlockDropBuyScoreComponent hotBlockDropBuyScoreComponent;
+    @Autowired
+    private YesterdayPlankRateComponent yesterdayPlankRateComponent;
     @Test
     public void test(){
         zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        //synExcelComponent.graphBuy();
+        synExcelComponent.graphBuy();
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
     }
@@ -39,7 +41,14 @@ public class HblTest extends BaseTestCase {
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
         //synExcelComponent.hotBlockDrop();
-        hotBlockDropBuyScoreComponent.hotDrop();
+       // hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
+
+    }
+
+    @Test
+    public void test3(){
+        yesterdayPlankRateComponent.yesterdayPlankRate();
+
     }
 }
