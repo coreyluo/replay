@@ -125,7 +125,7 @@ public class HotBlockBestBuyComponent {
         }
 
 
-
+        bestBuyStockMap = openRateLevel(bestBuyStockMap);
         List<Object[]> dataStocks = Lists.newArrayList();
         for(String key:bestBuyStockMap.keySet()){
             BestBuyStockDTO dto = bestBuyStockMap.get(key);
@@ -138,19 +138,47 @@ public class HotBlockBestBuyComponent {
             list.add(dto.getReason3());
             list.add(dto.getReason4());
             list.add(dto.getReason5());
+            list.add(dto.getBeforePlankDay3());
+            list.add(dto.getBuyDayOpenRate());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             dataStocks.add(objects);
-
         }
 
-        String[] rowNameStocks = {"index","stockCode","tradeDate","板块大跌日跌幅","板块大涨日涨幅","板块大跌日单个股票成交量","板块大涨日收盘板块5日涨幅","板块大涨日单个股票收盘涨幅","溢价"};
+        String[] rowNameStocks = {"index","stockCode","tradeDate","板块大跌日跌幅","板块大涨日涨幅","板块大跌日单个股票成交量","板块大涨日收盘板块5日涨幅","板块大涨日单个股票收盘涨幅","3天前是否涨停过","买入日开盘涨幅","溢价"};
         PoiExcelUtil poiExcelUtilStock = new PoiExcelUtil("最佳因素个股",rowNameStocks,dataStocks);
         try {
             poiExcelUtilStock.exportExcelUseExcelTitle("最佳因素个股");
         }catch (Exception e){
             log.info(e.getMessage());
         }
+
+    }
+
+    public Map<String,BestBuyStockDTO> openRateLevel(Map<String, BestBuyStockDTO> map){
+        Map<String,BestBuyStockDTO> level30Map = new HashMap<>();
+        Map<String, List<BestBuyStockDTO>> dateMap = new HashMap<>();
+        for (String key:map.keySet()){
+            BestBuyStockDTO bestBuyStockDTO = map.get(key);
+            List<BestBuyStockDTO> stocks = dateMap.get(bestBuyStockDTO.getTradeDate());
+            if(CollectionUtils.isEmpty(stocks)){
+                stocks = Lists.newArrayList();
+                dateMap.put(bestBuyStockDTO.getTradeDate(),stocks);
+            }
+            stocks.add(bestBuyStockDTO);
+        }
+        for (String key:dateMap.keySet()){
+            List<BestBuyStockDTO> dtos = dateMap.get(key);
+            BestBuyStockDTO.buyDayOpenRateSort(dtos);
+            int i = 0;
+            for(BestBuyStockDTO dto:dtos){
+                i++;
+                if(i<=30){
+                    level30Map.put(dto.getStockCode()+dto.getTradeDate(),dto);
+                }
+            }
+        }
+        return level30Map;
 
     }
 
@@ -208,33 +236,37 @@ public class HotBlockBestBuyComponent {
                                 bestBuyDTO.setProfit(divide);
                                 bestBuyDTO.setRedRate(new BigDecimal(redCount).divide(new BigDecimal(count),4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
                             }
-                            if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("70"))==1) {
+                            if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("50"))==1) {
                                 buys.add(bestBuyDTO);
-                                for (String key:iMaps.keySet()) {
-                                    Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
-                                    Map<String, LevelDTO> kMaps = stockDropDayExchangesMaps.get(String.valueOf(k));
-                                    Map<String, LevelDTO> mMaps = blockRate5sMaps.get(String.valueOf(m));
-                                    Map<String, LevelDTO> nMaps = stockRaiseDayRatesMaps.get(String.valueOf(n));
-                                    LevelDTO jDto = jMaps.get(key);
-                                    LevelDTO kDto = kMaps.get(key);
-                                    LevelDTO mDto = mMaps.get(key);
-                                    LevelDTO nDto = nMaps.get(key);
-                                    if(jDto!=null&&kDto!=null&&mDto!=null&&nDto!=null){
-                                        BestBuyStockDTO buyStockDTO = new BestBuyStockDTO();
-                                        buyStockDTO.setStockCode(dailyMap.get(key).getStockCode());
-                                        buyStockDTO.setTradeDate(dailyMap.get(key).getTradeDate());
-                                        buyStockDTO.setReason1(iName);
-                                        buyStockDTO.setReason2(jName);
-                                        buyStockDTO.setReason3(kName);
-                                        buyStockDTO.setReason4(mName);
-                                        buyStockDTO.setReason5(nName);
-                                        buyStockDTO.setProfit(dailyMap.get(key).getProfit());
-                                        BestBuyStockDTO mapValue = bestBuyStockMap.get(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate());
-                                        if(mapValue==null) {
-                                            bestBuyStockMap.put(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate(), buyStockDTO);
+                                //if(i==10 && j==8 && k==3 && m==1 && n==10) {
+                                    for (String key : iMaps.keySet()) {
+                                        Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
+                                        Map<String, LevelDTO> kMaps = stockDropDayExchangesMaps.get(String.valueOf(k));
+                                        Map<String, LevelDTO> mMaps = blockRate5sMaps.get(String.valueOf(m));
+                                        Map<String, LevelDTO> nMaps = stockRaiseDayRatesMaps.get(String.valueOf(n));
+                                        LevelDTO jDto = jMaps.get(key);
+                                        LevelDTO kDto = kMaps.get(key);
+                                        LevelDTO mDto = mMaps.get(key);
+                                        LevelDTO nDto = nMaps.get(key);
+                                        if (jDto != null && kDto != null && mDto != null && nDto != null) {
+                                            BestBuyStockDTO buyStockDTO = new BestBuyStockDTO();
+                                            buyStockDTO.setStockCode(dailyMap.get(key).getStockCode());
+                                            buyStockDTO.setTradeDate(dailyMap.get(key).getTradeDate());
+                                            buyStockDTO.setReason1(iName);
+                                            buyStockDTO.setReason2(jName);
+                                            buyStockDTO.setReason3(kName);
+                                            buyStockDTO.setReason4(mName);
+                                            buyStockDTO.setReason5(nName);
+                                            buyStockDTO.setBeforePlankDay3(dailyMap.get(key).getBeforePlankDay3());
+                                            buyStockDTO.setBuyDayOpenRate(dailyMap.get(key).getBuyDayOpenRate());
+                                            buyStockDTO.setProfit(dailyMap.get(key).getProfit());
+                                            BestBuyStockDTO mapValue = bestBuyStockMap.get(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate());
+                                            if (mapValue == null) {
+                                                bestBuyStockMap.put(buyStockDTO.getStockCode() + buyStockDTO.getTradeDate(), buyStockDTO);
+                                            }
                                         }
                                     }
-                                }
+                                //}
                             }
                         }
                     }

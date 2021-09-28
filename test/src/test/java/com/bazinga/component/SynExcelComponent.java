@@ -151,4 +151,25 @@ public class SynExcelComponent {
     }
 
 
+    public void hotBlockDropScore() {
+        List<HotBlockDropBuyExcelDTO> list = Lists.newArrayList();
+        File file = new File("D:\\circulate\\hotDrop.xls");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\hotDrop.xls") + "不存在");
+        }
+        try {
+            List<HotBlockDropBuyExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(HotBlockDropBuyExcelDTO.class);
+            dataList.forEach(item -> {
+                list.add(item);
+            });
+            hotBlockBestBuyComponent.hotBlockBestBuy(list);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+
 }

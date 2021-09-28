@@ -36,6 +36,11 @@ public class HotBlockDropBuyExcelDTO {
 
     @ExcelElement(value = "大涨日板块5日涨幅",notNull = false)
     private BigDecimal raiseDayBlockRate5;
+    @ExcelElement(value = "买入前3天是否涨停",notNull = false)
+    private Boolean beforePlankDay3;
+    @ExcelElement(value = "股票买入日开盘涨幅",notNull = false)
+    private BigDecimal buyDayOpenRate;
+
 
     @ExcelElement(value = "盈利",notNull = false)
     private BigDecimal profit;

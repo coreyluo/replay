@@ -6,7 +6,10 @@ import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockKbarComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.*;
+import com.bazinga.replay.model.CirculateInfo;
+import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.model.ThsBlockStockDetail;
+import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.ThsBlockStockDetailQuery;
@@ -20,6 +23,7 @@ import com.bazinga.util.MarketUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -35,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Slf4j
-public class HotBlockDropBuyComponent {
+public class HotBlockDropBuyScoreComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -89,6 +93,7 @@ public class HotBlockDropBuyComponent {
                 dailys.add(map.get(key));
             }
         }
+        dailys = score(dailys);
         List<Object[]> datas = Lists.newArrayList();
         for(HotBlockDropBuyDTO dto:dailys){
             List<Object> list = new ArrayList<>();
@@ -129,6 +134,7 @@ public class HotBlockDropBuyComponent {
             list.add(dto.isDropDayHavePlank());
             list.add(dto.isDropDayEndPlank());
             list.add(dto.isBeforePlankDay3());
+            list.add(dto.getScore());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
@@ -138,13 +144,51 @@ public class HotBlockDropBuyComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","交易日期","板块代码","板块名称","大涨涨幅","大涨时排名","大涨间隔日期","大跌幅度","买入日开盘板块涨幅","买入日开盘板块排名",
                 "股票买入日开盘涨幅","股票买入日开盘排名","股票大涨日涨幅","股票大涨日排名",
                 "股票大跌日涨幅","股票大跌日排名","股票大跌日成交量","买入前3日涨跌幅","买入前5日涨跌幅","买入前10日涨跌幅","大涨日上板时间","买入前5日平均成交量","大跌日板块内收盘上涨数量","大跌日板块内收盘下跌数量","大跌日板块内板数",
-                "买入前5日板数","大涨次日是否开一字","大涨次日开盘涨幅","大涨日板块5日涨幅","大涨日板块10日涨幅","买入前5日开一字次数","大跌日是否触及涨停","大跌日尾盘是否封住","买入前3天是否涨停","盈利"};
+                "买入前5日板数","大涨次日是否开一字","大涨次日开盘涨幅","大涨日板块5日涨幅","大涨日板块10日涨幅","买入前5日开一字次数","大跌日是否触及涨停","大跌日尾盘是否封住","买入前3天是否涨停","得分","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("热门大跌",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("热门大跌");
         }catch (Exception e){
             log.info(e.getMessage());
         }
+    }
+
+    public List<HotBlockDropBuyDTO> score(List<HotBlockDropBuyDTO> dailys){
+        Map<String,List<HotBlockDropBuyDTO>>  map = new HashMap<>();
+        for (HotBlockDropBuyDTO daily:dailys){
+            String raiseDayPlankTime = daily.getRaiseDayPlankTime();
+            if(StringUtils.isBlank(raiseDayPlankTime)){
+                continue;
+            }
+            String key = daily.getTradeDate()+daily.getBlockCode();
+            List<HotBlockDropBuyDTO> dtos = map.get(key);
+            if(dtos==null){
+                dtos=Lists.newArrayList();
+                map.put(key,dtos);
+            }
+            dtos.add(daily);
+        }
+        for (String mapKey:map.keySet()){
+            List<HotBlockDropBuyDTO> stocks = map.get(mapKey);
+            HotBlockDropBuyDTO.beforeRate5Sort(stocks);
+            int score = stocks.get(0).getScore();
+            stocks.get(0).setScore(score+1);
+            HotBlockDropBuyDTO.dropDayExchangeSort(stocks);
+            score = stocks.get(0).getScore();
+            stocks.get(0).setScore(score+1);
+            HotBlockDropBuyDTO.beforePlankDay5Sort(stocks);
+            score = stocks.get(0).getScore();
+            stocks.get(0).setScore(score+1);
+            HotBlockDropBuyDTO.plankTimeSort(stocks);
+            score = stocks.get(0).getScore();
+            stocks.get(0).setScore(score+1);
+        }
+        List<HotBlockDropBuyDTO> list = Lists.newArrayList();
+        for (String mapKey:map.keySet()){
+            List<HotBlockDropBuyDTO> stocks = map.get(mapKey);
+            list.addAll(stocks);
+        }
+        return list;
     }
 
     public List<HotBlockDropBuyDTO> getDragons(HotBlockDropBuyDTO dto,Map<String, CirculateInfo> circulateMap){
@@ -614,29 +658,29 @@ public class HotBlockDropBuyComponent {
 
 
     public static void main(String[] args) {
-        BestBuyStockDTO bestBuyStockDTO1 = new BestBuyStockDTO();
-        bestBuyStockDTO1.setBuyDayOpenRate(new BigDecimal(1));
+        HotBlockDropBuyDTO bestBuyStockDTO1 = new HotBlockDropBuyDTO();
+        bestBuyStockDTO1.setRaiseDayPlankTime("09:31");
 
-        BestBuyStockDTO bestBuyStockDTO2 = new BestBuyStockDTO();
-        bestBuyStockDTO2.setBuyDayOpenRate(new BigDecimal(2));
+        HotBlockDropBuyDTO bestBuyStockDTO2 = new HotBlockDropBuyDTO();
+        bestBuyStockDTO2.setRaiseDayPlankTime("09:31");
 
-        BestBuyStockDTO bestBuyStockDTO3 = new BestBuyStockDTO();
-        bestBuyStockDTO3.setBuyDayOpenRate(new BigDecimal(2));
+        HotBlockDropBuyDTO bestBuyStockDTO3 = new HotBlockDropBuyDTO();
+        bestBuyStockDTO3.setRaiseDayPlankTime("09:33");
 
-        BestBuyStockDTO bestBuyStockDTO4 = new BestBuyStockDTO();
-        bestBuyStockDTO4.setBuyDayOpenRate(new BigDecimal(4));
+        HotBlockDropBuyDTO bestBuyStockDTO4 = new HotBlockDropBuyDTO();
+        bestBuyStockDTO4.setRaiseDayPlankTime("09:34");
 
-        BestBuyStockDTO bestBuyStockDTO5 = new BestBuyStockDTO();
-        bestBuyStockDTO5.setBuyDayOpenRate(new BigDecimal(5));
+        HotBlockDropBuyDTO bestBuyStockDTO5 = new HotBlockDropBuyDTO();
+        bestBuyStockDTO5.setRaiseDayPlankTime("09:35");
 
-        List<BestBuyStockDTO> list = Lists.newArrayList();
+        List<HotBlockDropBuyDTO> list = Lists.newArrayList();
         list.add(bestBuyStockDTO5);
         list.add(bestBuyStockDTO1);
         list.add(bestBuyStockDTO2);
         list.add(bestBuyStockDTO4);
         list.add(bestBuyStockDTO3);
 
-        List<BestBuyStockDTO> bestBuyStockDTOS = BestBuyStockDTO.buyDayOpenRateSort(list);
+        List<HotBlockDropBuyDTO> bestBuyStockDTOS = HotBlockDropBuyDTO.plankTimeSort(list);
 
         System.out.println(bestBuyStockDTOS);
 
