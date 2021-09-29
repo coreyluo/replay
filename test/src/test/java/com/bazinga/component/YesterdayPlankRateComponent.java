@@ -94,7 +94,7 @@ public class YesterdayPlankRateComponent {
                 YesterdayPlankDTO plankDTO = new YesterdayPlankDTO();
                 Date date = commonComponent.afterTradeDate(DateUtil.parseDate(key, DateUtil.yyyyMMdd));
                 plankDTO.setTradeDate(DateUtil.format(date,DateUtil.yyyy_MM_dd));
-                if(plankDTO.getTradeDate().equals("2021-02-25")){
+                if(plankDTO.getTradeDate().equals("2021-09-27")){
                     System.out.println(11111);
                 }
                 plankDTO.setEndRate(endRate);
