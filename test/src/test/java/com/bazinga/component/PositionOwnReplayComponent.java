@@ -125,12 +125,13 @@ public class PositionOwnReplayComponent {
 
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-                if("20210907".equals(kbarDate)){
+               /* if("20210907".equals(kbarDate)){
                     continue;
-                }
+                }*/
                 Date afterTradeDate = commonComponent.afterTradeDate(stockPosition.getKbarDate());
                 log.info("满足中条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockPosition.getStockCode(), afterTradeDate);
+                list = historyTransactionDataComponent.getPreHalfOneHourData(list);
                 if(CollectionUtils.isEmpty(list)){
                     continue;
                 }
@@ -138,11 +139,39 @@ public class PositionOwnReplayComponent {
                 map.put("kbarDate",kbarDate);
                 map.put("seal",stockPosition.getSealType());
                 String uniqueKey = stockPosition.getStockCode() + SymbolConstants.UNDERLINE + kbarDate;
-                StockKbar byUniqueKey = stockKbarService.getByUniqueKey(uniqueKey);
+                StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
+                Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
+
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
-                    BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(byUniqueKey.getClosePrice()), byUniqueKey.getClosePrice());
-                    map.put(transactionDataDTO.getTradeTime(),rate);
+                    BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                    if(!"09:25".equals(transactionDataDTO.getTradeTime())){
+                        List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
+                        if(minList == null){
+                            minList = new ArrayList<>();
+                            minList.add(transactionDataDTO);
+                            tempMap.put(transactionDataDTO.getTradeTime(),minList);
+                        }else {
+                            minList.add(transactionDataDTO);
+                        }
+                    }else {
+                        map.put(transactionDataDTO.getTradeTime(),rate);
+
+                    }
                 }
+                tempMap.forEach((minStr,minlist)->{
+                    for (int j = 0; j < minlist.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(j);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        map.put(minStr+ SymbolConstants.UNDERLINE + (j+1),rate);
+                    }
+                    if(minlist.size()<20){
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(minlist.size()-1);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        for (int j = 20; j > minlist.size() ; j--) {
+                            map.put(minStr+ SymbolConstants.UNDERLINE + j,rate);
+                        }
+                    }
+                });
                 dataList.add(map);
             }
 
@@ -203,13 +232,14 @@ public class PositionOwnReplayComponent {
         headList.add("count");
         headList.add("sealPr");
         headList.add("09:25");
-        headList.add("09:30");
-        Date date = DateUtil.parseDate("20210818093000", DateUtil.yyyyMMddHHmmss);
+        Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
-        while (count< 30){
+        while (count< 10){
             date = DateUtil.addMinutes(date, 1);
             count++;
-            headList.add(DateUtil.format(date,"HH:mm"));
+            for (int i = 1; i < 21; i++) {
+                headList.add(DateUtil.format(date,"HH:mm") + SymbolConstants.UNDERLINE +i);
+            }
         }
         return headList.toArray(new String[]{});
     }

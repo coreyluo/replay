@@ -2,6 +2,7 @@ package com.bazinga.component;
 
 
 import com.bazinga.base.Sort;
+import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -336,14 +337,42 @@ public class MiddlePlankReplayComponent {
                 }*/
                 log.info("满足中位股条件 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                list = historyTransactionDataComponent.getPreOneHourData(list);
                 Map<String, Object> map = new HashMap<>();
                 map.put("stockCode",sellStockKbar.getStockCode());
                 map.put("stockName",sellStockKbar.getStockName());
                 map.put("kbarDate",sellStockKbar.getKbarDate());
+                Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
-                    map.put(transactionDataDTO.getTradeTime(),rate);
+                    if(!"09:25".equals(transactionDataDTO.getTradeTime())){
+                        List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
+                        if(minList == null){
+                            minList = new ArrayList<>();
+                            minList.add(transactionDataDTO);
+                            tempMap.put(transactionDataDTO.getTradeTime(),minList);
+                        }else {
+                            minList.add(transactionDataDTO);
+                        }
+                    }else {
+                        map.put(transactionDataDTO.getTradeTime(),rate);
+
+                    }
                 }
+                tempMap.forEach((minStr,minlist)->{
+                    for (int j = 0; j < minlist.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(j);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        map.put(minStr+ SymbolConstants.UNDERLINE + (j+1),rate);
+                    }
+                    if(minlist.size()<20){
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(minlist.size()-1);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        for (int j = 20; j > minlist.size() ; j--) {
+                            map.put(minStr+ SymbolConstants.UNDERLINE + j,rate);
+                        }
+                    }
+                });
                 dataList.add(map);
             }
         }
@@ -442,13 +471,14 @@ public class MiddlePlankReplayComponent {
         headList.add("kbarDate");
         headList.add("count");
         headList.add("09:25");
-        headList.add("09:30");
-        Date date = DateUtil.parseDate("20210818093000", DateUtil.yyyyMMddHHmmss);
+        Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
-        while (count< 30){
+        while (count< 10){
             date = DateUtil.addMinutes(date, 1);
             count++;
-            headList.add(DateUtil.format(date,"HH:mm"));
+            for (int i = 1; i < 21; i++) {
+                headList.add(DateUtil.format(date,"HH:mm") + SymbolConstants.UNDERLINE +i);
+            }
         }
      /*   headList.add("13:00");
         date = DateUtil.parseDate("20210531130000", DateUtil.yyyyMMddHHmmss);

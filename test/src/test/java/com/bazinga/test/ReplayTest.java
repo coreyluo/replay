@@ -68,6 +68,10 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test8(){
-        blockKbarReplayComponent.replay(5);
+        blockKbarReplayComponent.replay(14);
+   /*     for (int i = 24; i <= 60; i++) {
+            blockKbarReplayComponent.replay(i);
+        }*/
+      //  blockKbarReplayComponent.anaysisBest();
     }
 }
