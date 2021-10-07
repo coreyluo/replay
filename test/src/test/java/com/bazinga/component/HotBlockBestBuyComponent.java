@@ -125,7 +125,7 @@ public class HotBlockBestBuyComponent {
         }
 
 
-        bestBuyStockMap = openRateLevel(bestBuyStockMap);
+        //bestBuyStockMap = openRateLevel(bestBuyStockMap);
         List<Object[]> dataStocks = Lists.newArrayList();
         for(String key:bestBuyStockMap.keySet()){
             BestBuyStockDTO dto = bestBuyStockMap.get(key);
@@ -236,9 +236,10 @@ public class HotBlockBestBuyComponent {
                                 bestBuyDTO.setProfit(divide);
                                 bestBuyDTO.setRedRate(new BigDecimal(redCount).divide(new BigDecimal(count),4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
                             }
-                            if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("2.5"))==1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("50"))==1) {
-                                buys.add(bestBuyDTO);
-                                //if(i==10 && j==8 && k==3 && m==1 && n==10) {
+                            //if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("5"))!=-1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("100"))==0) {
+                              if(count>=200) {
+                                if((i>=5) && (j==3) && (k>=8) && (m==6) && n==4) {
+                                    buys.add(bestBuyDTO);
                                     for (String key : iMaps.keySet()) {
                                         Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
                                         Map<String, LevelDTO> kMaps = stockDropDayExchangesMaps.get(String.valueOf(k));
@@ -266,7 +267,7 @@ public class HotBlockBestBuyComponent {
                                             }
                                         }
                                     }
-                                //}
+                                }
                             }
                         }
                     }
