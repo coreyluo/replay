@@ -92,6 +92,13 @@ public class HotBlockDropBuyDTO {
     private boolean dropDayEndPlank;
     private int score=0;
 
+    private BigDecimal blockDropDayTotalExchangeMoney;
+    private BigDecimal blockInterDayEndRate;
+    private BigDecimal blockInterDayRelativeRate;
+    private BigDecimal blockInterDayTotalExchangeMoney;
+    private BigDecimal blockRaiseDayTotalExchangeMoney;
+    private BigDecimal blockRaiseDayBeforeDay5AvgExchangeMoney;
+
 
 
     private BigDecimal profit;

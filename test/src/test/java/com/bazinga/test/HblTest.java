@@ -41,7 +41,7 @@ public class HblTest extends BaseTestCase {
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
         synExcelComponent.hotBlockDrop();
-       // hotBlockDropBuyScoreComponent.hotDrop();
+        hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
 
     }

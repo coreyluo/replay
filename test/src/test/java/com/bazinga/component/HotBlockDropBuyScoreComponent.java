@@ -153,6 +153,26 @@ public class HotBlockDropBuyScoreComponent {
         }
     }
 
+    public List<HotBlockDropBuyDTO> blockInfo(List<HotBlockDropBuyDTO> dailys){
+        Map<String,HotBlockDropBuyDTO>  map = new HashMap<>();
+        for (HotBlockDropBuyDTO daily:dailys){
+            String key = daily.getTradeDate() + daily.getBlockCode();
+            Date tradeDate = DateUtil.parseDate(daily.getTradeDate(), DateUtil.yyyyMMdd);
+            TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
+            tradeDatePoolQuery.setTradeDateTo(tradeDate);
+            tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.DESC);
+            List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
+
+            ThsBlockStockDetailQuery query = new ThsBlockStockDetailQuery();
+            query.setBlockCode(daily.getBlockCode());
+            List<ThsBlockStockDetail> details = thsBlockStockDetailService.listByCondition(query);
+            for (ThsBlockStockDetail detail:details){
+
+            }
+        }
+        return null;
+    }
+
     public List<HotBlockDropBuyDTO> score(List<HotBlockDropBuyDTO> dailys){
         Map<String,List<HotBlockDropBuyDTO>>  map = new HashMap<>();
         for (HotBlockDropBuyDTO daily:dailys){
@@ -171,17 +191,61 @@ public class HotBlockDropBuyScoreComponent {
         for (String mapKey:map.keySet()){
             List<HotBlockDropBuyDTO> stocks = map.get(mapKey);
             HotBlockDropBuyDTO.beforeRate5Sort(stocks);
-            int score = stocks.get(0).getScore();
-            stocks.get(0).setScore(score+1);
+            if(stocks.size()>=1) {
+                int score0 = stocks.get(0).getScore();
+                stocks.get(0).setScore(score0 + 3);
+            }
+            if(stocks.size()>=2) {
+                int score1 = stocks.get(1).getScore();
+                stocks.get(1).setScore(score1 + 2);
+            }
+            if(stocks.size()>=3) {
+                int score2 = stocks.get(2).getScore();
+                stocks.get(2).setScore(score2 + 1);
+            }
+
             HotBlockDropBuyDTO.dropDayExchangeSort(stocks);
-            score = stocks.get(0).getScore();
-            stocks.get(0).setScore(score+1);
+            int score = stocks.get(0).getScore();
+            if(stocks.size()>=1) {
+                int score0 = stocks.get(0).getScore();
+                stocks.get(0).setScore(score0 + 3);
+            }
+            if(stocks.size()>=2) {
+                int score1 = stocks.get(1).getScore();
+                stocks.get(1).setScore(score1 + 2);
+            }
+            if(stocks.size()>=3) {
+                int score2 = stocks.get(2).getScore();
+                stocks.get(2).setScore(score2 + 1);
+            }
+
             HotBlockDropBuyDTO.beforePlankDay5Sort(stocks);
-            score = stocks.get(0).getScore();
-            stocks.get(0).setScore(score+1);
+            if(stocks.size()>=1) {
+                int score0 = stocks.get(0).getScore();
+                stocks.get(0).setScore(score0 + 3);
+            }
+            if(stocks.size()>=2) {
+                int score1 = stocks.get(1).getScore();
+                stocks.get(1).setScore(score1 + 2);
+            }
+            if(stocks.size()>=3) {
+                int score2 = stocks.get(2).getScore();
+                stocks.get(2).setScore(score2 + 1);
+            }
+
             HotBlockDropBuyDTO.plankTimeSort(stocks);
-            score = stocks.get(0).getScore();
-            stocks.get(0).setScore(score+1);
+            if(stocks.size()>=1) {
+                int score0 = stocks.get(0).getScore();
+                stocks.get(0).setScore(score0 + 3);
+            }
+            if(stocks.size()>=2) {
+                int score1 = stocks.get(1).getScore();
+                stocks.get(1).setScore(score1 + 2);
+            }
+            if(stocks.size()>=3) {
+                int score2 = stocks.get(2).getScore();
+                stocks.get(2).setScore(score2 + 1);
+            }
         }
         List<HotBlockDropBuyDTO> list = Lists.newArrayList();
         for (String mapKey:map.keySet()){
