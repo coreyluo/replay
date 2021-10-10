@@ -1,7 +1,6 @@
 package com.bazinga.test;
 
 import com.bazinga.replay.component.*;
-import com.bazinga.replay.model.StockKbar;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.tradex.enums.KCate;
@@ -14,7 +13,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 单元测试基类<p/>

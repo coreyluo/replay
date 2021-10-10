@@ -2,6 +2,7 @@ package com.bazinga.util;
 
 
 import com.bazinga.annotation.ExcelElement;
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
@@ -284,6 +285,10 @@ public final class Excel2JavaPojoUtil {
             throws ClassCastException {
         try {
             if (value == null) {
+                return null;
+            }
+            String valueStr = String.valueOf(value);
+            if(StringUtils.isBlank(valueStr)){
                 return null;
             }
             if (String.class.equals(clazz)) {

@@ -86,9 +86,9 @@ public class OtherBuyStockComponent {
                 }
                 PlankExchangeDailyDTO dto = findDays(adjStockBars, excelDTO, circulateInfo);
                 dailys.add(dto);
-                if(dailys.size()>=3){
+                /*if(dailys.size()>=10){
                     break;
-                }
+                }*/
             }catch (Exception e){
                 log.info("复盘数据 异常 stockCode:{} stockName:{} e：{}", stockCode, stockName,e);
             }
@@ -165,16 +165,24 @@ public class OtherBuyStockComponent {
         }
         Map<String, BlockLevelDTO> stringBlockLevelDTOMap = levelMap.get(kBarDTO.getDateStr());
         if(stringBlockLevelDTOMap==null||stringBlockLevelDTOMap.size()<=1) {
+            Map<String, StockKbar> map = new HashMap<>();
+            String date = DateUtil.format(preKbarDTO.getDate(), DateUtil.yyyyMMdd);
+            StockKbarQuery query = new StockKbarQuery();
+            query.setKbarDate(date);
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+            for(StockKbar kbar:stockKbars){
+                map.put(kbar.getStockCode(),kbar);
+            }
             List<StockRateDTO> rates = Lists.newArrayList();
             CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
             List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
             for (CirculateInfo circulateInfo : circulateInfos) {
+                System.out.println("=================="+circulateInfo.getStockCode()+"==================");
                 List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), kBarDTO.getDate());
                 if (CollectionUtils.isEmpty(datas)) {
                     continue;
                 }
-                String preUniqueKey = circulateInfo.getStockCode() + "_" + DateUtil.format(preKbarDTO.getDate(), DateUtil.yyyyMMdd);
-                StockKbar preUniqueKbar = stockKbarService.getByUniqueKey(preUniqueKey);
+                StockKbar preUniqueKbar = map.get(circulateInfo.getStockCode());
                 if (preUniqueKbar == null) {
                     continue;
                 }
@@ -214,14 +222,28 @@ public class OtherBuyStockComponent {
         if(preKbarDTO==null||prePreKbarDTO==null){
             return;
         }
+        Map<String, StockKbar> preMap = new HashMap<>();
+        Map<String, StockKbar> prePreMap = new HashMap<>();
+        String preDate = DateUtil.format(preKbarDTO.getDate(), DateUtil.yyyyMMdd);
+        String prePreDate = DateUtil.format(prePreKbarDTO.getDate(), DateUtil.yyyyMMdd);
+        StockKbarQuery preQuery = new StockKbarQuery();
+        preQuery.setKbarDate(preDate);
+        List<StockKbar> preStockKbars = stockKbarService.listByCondition(preQuery);
+        for(StockKbar kbar:preStockKbars){
+            preMap.put(kbar.getStockCode(),kbar);
+        }
+        StockKbarQuery prePreQuery = new StockKbarQuery();
+        prePreQuery.setKbarDate(prePreDate);
+        List<StockKbar> prePreStockKbars = stockKbarService.listByCondition(prePreQuery);
+        for(StockKbar kbar:prePreStockKbars){
+            prePreMap.put(kbar.getStockCode(),kbar);
+        }
         List<StockRateDTO> rates = Lists.newArrayList();
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         for (CirculateInfo circulateInfo:circulateInfos){
-            String preUnique = circulateInfo.getStockCode()+"_"+DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd);
-            String prePreUnique = circulateInfo.getStockCode()+"_"+DateUtil.format(prePreKbarDTO.getDate(),DateUtil.yyyyMMdd);
-            StockKbar stockKbar = stockKbarService.getByUniqueKey(preUnique);
-            StockKbar preStockKbar = stockKbarService.getByUniqueKey(prePreUnique);
+            StockKbar stockKbar = preMap.get(circulateInfo.getStockCode());
+            StockKbar preStockKbar = prePreMap.get(circulateInfo.getStockCode());
             if(stockKbar==null||preStockKbar==null){
                 continue;
             }
@@ -248,14 +270,31 @@ public class OtherBuyStockComponent {
         if(preKbarDTO==null||preKbarDTO==null){
             return;
         }
+        Map<String, StockKbar> map = new HashMap<>();
+        Map<String, StockKbar> preMap = new HashMap<>();
+        String currentDate = DateUtil.format(kbarDTO.getDate(),DateUtil.yyyyMMdd);
+        String preDate = DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd);
+        StockKbarQuery currentQuery = new StockKbarQuery();
+        currentQuery.setKbarDate(currentDate);
+        List<StockKbar> currentStockKbars = stockKbarService.listByCondition(currentQuery);
+        for(StockKbar kbar:currentStockKbars){
+            map.put(kbar.getStockCode(),kbar);
+        }
+
+        StockKbarQuery preQuery = new StockKbarQuery();
+        preQuery.setKbarDate(preDate);
+        List<StockKbar> preStockKbars = stockKbarService.listByCondition(preQuery);
+        for(StockKbar kbar:preStockKbars){
+            preMap.put(kbar.getStockCode(),kbar);
+        }
+
+
         List<StockRateDTO> rates = Lists.newArrayList();
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         for (CirculateInfo circulateInfo:circulateInfos){
-            String uniqueKey = circulateInfo.getStockCode()+"_"+DateUtil.format(kbarDTO.getDate(),DateUtil.yyyyMMdd);
-            String preUniqueKey = circulateInfo.getStockCode()+"_"+DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd);
-            StockKbar uniqueKbar = stockKbarService.getByUniqueKey(uniqueKey);
-            StockKbar preUniqueKbar = stockKbarService.getByUniqueKey(preUniqueKey);
+            StockKbar uniqueKbar = map.get(circulateInfo.getStockCode());
+            StockKbar preUniqueKbar = map.get(circulateInfo.getStockCode());
             if(uniqueKbar==null||preUniqueKbar==null){
                 continue;
             }

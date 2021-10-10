@@ -99,10 +99,19 @@ public class StockKbarComponent {
             log.info("stockCode ={} http方式获取复权因子失败", stockCode);
             return;
         }
-        if(adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate())==null){
+        AdjFactorDTO adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate());
+        if(adjFactorDTO==null){
+            for(int i = 1;i<stockKbarList.size();i++) {
+                adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - i).getKbarDate());
+                if(adjFactorDTO!=null){
+                    break;
+                }
+            }
+        }
+        if(adjFactorDTO==null){
             return;
         }
-        BigDecimal maxAdjFactor = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate()).getAdjFactor();
+        BigDecimal maxAdjFactor =adjFactorDTO.getAdjFactor();
         transactionTemplate.execute((TransactionCallback<Void>) status -> {
             try {
                 stockKbarList.forEach(item -> {
@@ -243,7 +252,7 @@ public class StockKbarComponent {
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 400);
+                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 250);
             }
         });
     }
