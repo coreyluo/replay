@@ -3,21 +3,20 @@ package com.bazinga.replay.model;
 import java.math.BigDecimal;
 import java.math.BigDecimal;
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈StockCommonReplay〉<p>
+ * 〈ThsBlockKbar〉<p>
  *
  * @author
- * @date 2021-08-15
+ * @date 2021-09-29
  */
 @lombok.Data
 @lombok.ToString
-public class StockCommonReplay implements Serializable {
+public class ThsBlockKbar implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -31,31 +30,31 @@ public class StockCommonReplay implements Serializable {
     private Long id;
 
     /**
-     * 
-     *
-     * @最大长度   10
-     * @允许为空   NO
-     * @是否索引   YES
-     */
-    private String stockCode;
-
-    /**
-     * 
-     *
-     * @最大长度   20
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private String stockName;
-
-    /**
-     * k线时间
+     * 股票代码
      *
      * @最大长度   10
      * @允许为空   NO
      * @是否索引   NO
      */
-    private String kbarDate;
+    private String blockCode;
+
+    /**
+     * 股票名称
+     *
+     * @最大长度   60
+     * @允许为空   NO
+     * @是否索引   NO
+     */
+    private String blockName;
+
+    /**
+     * 交易时间
+     *
+     * @最大长度   10
+     * @允许为空   NO
+     * @是否索引   NO
+     */
+    private String tradeDate;
 
     /**
      * 唯一索引
@@ -68,52 +67,31 @@ public class StockCommonReplay implements Serializable {
     private String uniqueKey;
 
     /**
-     * 上午1个小时均价
+     * 开盘涨幅
      *
-     * @允许为空   YES
+     * @允许为空   NO
      * @是否索引   NO
      */
-    private BigDecimal avgPre1Price;
+    private BigDecimal openRate;
 
     /**
-     * 上午均价涨幅
+     * 收盘涨幅
      *
-     * @允许为空   YES
+     * @允许为空   NO
      * @是否索引   NO
      */
-    private BigDecimal avgPre1Rate;
+    private BigDecimal closeRate;
 
     /**
-     * 2点55到收盘涨幅
+     * 板块5日涨幅
      *
-     * @允许为空   YES
+     * @允许为空   NO
      * @是否索引   NO
      */
-    private BigDecimal endRaiseRate55;
+    private BigDecimal closeRateDay5;
 
     /**
-     * 明天板价除以10日内最低价格
-     *
-     * @允许为空   YES
-     * @是否索引   NO
-     */
-    private BigDecimal plankPriceThanLow10;
-
-    /**
-     * 10日内平均换手
-     *
-     * @允许为空   YES
-     * @是否索引   NO
-     */
-    private Long avgExchange10;
-
-    private BigDecimal rateDay5;
-    private BigDecimal rateDay3;
-    private BigDecimal gatherPriceThanLow10;
-    private Long planksDay10;
-
-    /**
-     * 
+     * 创建时间
      *
      * @允许为空   NO
      * @是否索引   NO
@@ -121,7 +99,7 @@ public class StockCommonReplay implements Serializable {
     private Date createTime;
 
     /**
-     * 
+     * 更新时间
      *
      * @允许为空   YES
      * @是否索引   NO

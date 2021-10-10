@@ -25,12 +25,11 @@ public class StockKbarComponentTest extends BaseTestCase {
     public void test(){
 
         stockKbarComponent.batchKbarDataInit();
-       // stockCommonReplayComponent.saveCommonReplay(new Date());
+        //stockCommonReplayComponent.saveCommonReplay(new Date());
     }
 
     @Test
     public void test2(){
-        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("300827", "20210827");
-        System.out.println(data);
+        stockKbarComponent.batchcalAvgLine();
     }
 }
