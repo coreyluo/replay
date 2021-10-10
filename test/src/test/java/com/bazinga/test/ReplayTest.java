@@ -31,6 +31,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private BlockKbarReplayComponent blockKbarReplayComponent;
 
+    @Autowired
+    private BestAvgLineReplayComponent bestAvgLineReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -73,5 +76,10 @@ public class ReplayTest extends BaseTestCase {
             blockKbarReplayComponent.replay(i);
         }*/
       //  blockKbarReplayComponent.anaysisBest();
+    }
+
+    @Test
+    public void test9(){
+        bestAvgLineReplayComponent.invokeStrategy();
     }
 }
