@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.DropFactorDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.DropFactor">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="factor_type" jdbcType="TINYINT" property="factorType"/>
+        <result column="block_drop_rate" jdbcType="DECIMAL" property="blockDropRate"/>
+        <result column="block_raise_rate" jdbcType="DECIMAL" property="blockRaiseRate"/>
+        <result column="stock_drop_day_exchange" jdbcType="BIGINT" property="stockDropDayExchange"/>
+        <result column="block_raise_day5_rate" jdbcType="DECIMAL" property="blockRaiseDay5Rate"/>
+        <result column="stock_raise_rate" jdbcType="DECIMAL" property="stockRaiseRate"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            factor_type,
+            block_drop_rate,
+            block_raise_rate,
+            stock_drop_day_exchange,
+            block_raise_day5_rate,
+            stock_raise_rate,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from drop_factor
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.DropFactor" useGeneratedKeys="true" keyProperty="id">
+        insert into drop_factor (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{factorType, jdbcType=TINYINT},
+            #{blockDropRate, jdbcType=DECIMAL},
+            #{blockRaiseRate, jdbcType=DECIMAL},
+            #{stockDropDayExchange, jdbcType=BIGINT},
+            #{blockRaiseDay5Rate, jdbcType=DECIMAL},
+            #{stockRaiseRate, jdbcType=DECIMAL},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.DropFactor">
+        update drop_factor
+        <set>
+            <if test="factorType != null">
+                factor_type = #{factorType, jdbcType=TINYINT},
+            </if>
+            <if test="blockDropRate != null">
+                block_drop_rate = #{blockDropRate, jdbcType=DECIMAL},
+            </if>
+            <if test="blockRaiseRate != null">
+                block_raise_rate = #{blockRaiseRate, jdbcType=DECIMAL},
+            </if>
+            <if test="stockDropDayExchange != null">
+                stock_drop_day_exchange = #{stockDropDayExchange, jdbcType=BIGINT},
+            </if>
+            <if test="blockRaiseDay5Rate != null">
+                block_raise_day5_rate = #{blockRaiseDay5Rate, jdbcType=DECIMAL},
+            </if>
+            <if test="stockRaiseRate != null">
+                stock_raise_rate = #{stockRaiseRate, jdbcType=DECIMAL},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="factorType != null">
+            and factor_type = #{factorType, jdbcType=TINYINT}
+        </if>
+        <if test="blockDropRate != null">
+            and block_drop_rate = #{blockDropRate, jdbcType=DECIMAL}
+        </if>
+        <if test="blockRaiseRate != null">
+            and block_raise_rate = #{blockRaiseRate, jdbcType=DECIMAL}
+        </if>
+        <if test="stockDropDayExchange != null">
+            and stock_drop_day_exchange = #{stockDropDayExchange, jdbcType=BIGINT}
+        </if>
+        <if test="blockRaiseDay5Rate != null">
+            and block_raise_day5_rate = #{blockRaiseDay5Rate, jdbcType=DECIMAL}
+        </if>
+        <if test="stockRaiseRate != null">
+            and stock_raise_rate = #{stockRaiseRate, jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.DropFactorQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from drop_factor
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.DropFactorQuery" resultType="java.lang.Integer">
+        select count(1)
+        from drop_factor
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>
