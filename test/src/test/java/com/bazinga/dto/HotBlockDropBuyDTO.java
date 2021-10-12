@@ -52,6 +52,7 @@ public class HotBlockDropBuyDTO {
     private String blockRaiseDateStr;
     private Integer raiseDays;
     private BigDecimal blockDropRate;
+    private Integer blockDropLevel;
 
     private BigDecimal openRate;
 
