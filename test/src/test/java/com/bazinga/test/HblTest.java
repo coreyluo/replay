@@ -25,6 +25,8 @@ public class HblTest extends BaseTestCase {
     private HotBlockDropBuyScoreComponent hotBlockDropBuyScoreComponent;
     @Autowired
     private YesterdayPlankRateComponent yesterdayPlankRateComponent;
+    @Autowired
+    private ZhongZheng500Component zhongZheng500Component;
     @Test
     public void test(){
         zhongWeiDiXiReplayComponent.middle();
@@ -40,7 +42,7 @@ public class HblTest extends BaseTestCase {
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
-        //synExcelComponent.hotBlockDrop();
+        synExcelComponent.hotBlockDrop();
         hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
 
@@ -48,7 +50,8 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test3(){
-        yesterdayPlankRateComponent.yesterdayPlankRate();
+        //yesterdayPlankRateComponent.yesterdayPlankRate();
+        zhongZheng500Component.zz500Buy();
 
     }
 }

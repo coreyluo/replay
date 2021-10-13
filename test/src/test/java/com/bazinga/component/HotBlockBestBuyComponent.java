@@ -233,8 +233,8 @@ public class HotBlockBestBuyComponent {
                                 bestBuyDTO.setProfit(divide);
                                 bestBuyDTO.setRedRate(new BigDecimal(redCount).divide(new BigDecimal(count),4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
                             }
-                            if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("5"))!=-1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("80"))==0) {
-                                //if((i>=5) && (j==3) && (k>=8) && (m==6) && n==4) {
+                            //if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("5"))!=-1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("80"))==0) {
+                                if((i==7 && j==3 && k==10 && m==6 && n==7)||(i==8 && j==3 && k==10 && m==6 && n==7)) {
                                     buys.add(bestBuyDTO);
                                 BigDecimal dropValue = new BigDecimal(regionValueMap.get("drop" + i));
                                 BigDecimal raiseValue = new BigDecimal(regionValueMap.get("raise" + j));
