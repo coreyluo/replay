@@ -50,8 +50,8 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test3(){
-        //yesterdayPlankRateComponent.yesterdayPlankRate();
-        zhongZheng500Component.zz500Buy();
+        yesterdayPlankRateComponent.yesterdayPlankRate();
+        //zhongZheng500Component.zz500Buy();
 
     }
 }
