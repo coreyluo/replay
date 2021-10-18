@@ -234,7 +234,7 @@ public class HotBlockBestBuyComponent {
                                 bestBuyDTO.setRedRate(new BigDecimal(redCount).divide(new BigDecimal(count),4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
                             }
                             if(count>10 && bestBuyDTO.getProfit().compareTo(new BigDecimal("5"))!=-1 && bestBuyDTO.getRedRate().compareTo(new BigDecimal("80"))==0) {
-                                //if((i==7 && j==3 && k==10 && m==6 && n==7)||(i==8 && j==3 && k==10 && m==6 && n==7)) {
+                              //  if(i==1 && j==1 && k==1 && m==2 && n==1) {
                                     buys.add(bestBuyDTO);
                                 BigDecimal dropValue = new BigDecimal(regionValueMap.get("drop" + i));
                                 BigDecimal raiseValue = new BigDecimal(regionValueMap.get("raise" + j));
@@ -249,12 +249,12 @@ public class HotBlockBestBuyComponent {
                                 dropFactor.setBlockRaiseDay5Rate(rate5Value);
                                 dropFactor.setStockRaiseRate(raiseDayValue);
                                 dropFactor.setCreateTime(new Date());
-                                if(dropFactor.getBlockDropRate().compareTo(new BigDecimal("-1.51"))==0 &&dropFactor.getBlockRaiseRate().compareTo(new BigDecimal("3.69"))==0&&
+                                /*if(dropFactor.getBlockDropRate().compareTo(new BigDecimal("-1.51"))==0 &&dropFactor.getBlockRaiseRate().compareTo(new BigDecimal("3.69"))==0&&
                                 dropFactor.getStockDropDayExchange()==53709&&dropFactor.getBlockRaiseDay5Rate().compareTo(new BigDecimal("4.84"))==0&&
                                         dropFactor.getStockRaiseRate().compareTo(new BigDecimal("2.92"))==0){
                                     System.out.println("11111111111");
-                                }
-                                //dropFactorService.save(dropFactor);
+                                }*/
+                                dropFactorService.save(dropFactor);
                                 for (String key : iMaps.keySet()) {
                                         Map<String, LevelDTO> jMaps = blockRaisesMaps.get(String.valueOf(j));
                                         Map<String, LevelDTO> kMaps = stockDropDayExchangesMaps.get(String.valueOf(k));
