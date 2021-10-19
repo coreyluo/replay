@@ -53,8 +53,6 @@ public class HotBlockBestBuyComponent {
 
     public static Map<String,BlockLevelDTO> levelMap = new ConcurrentHashMap<>(8192);
 
-
-
     public void hotBlockBestBuy(List<HotBlockDropBuyExcelDTO> dailys){
         List<BestBuyDTO> buys = Lists.newArrayList();
         List<BestBuyStockDTO> stockBuys = Lists.newArrayList();
