@@ -82,9 +82,9 @@ public class ZhongZheng500TwoComponent {
         List<ZhongZhengBestDTO> dtos = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-            if(!circulateInfo.getStockCode().equals("300514")){
+           /* if(!circulateInfo.getStockCode().equals("300514")){
                 continue;
-            }
+            }*/
             Map<String,ZhongZhengBestDTO> map = new HashMap<>();
             List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 150);
             if(CollectionUtils.isEmpty(stockKbars)){
