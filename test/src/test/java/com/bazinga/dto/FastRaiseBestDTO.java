@@ -21,5 +21,8 @@ public class FastRaiseBestDTO {
     private String raiseTime;
     private BigDecimal exchangeMoney;
     private boolean endPlank;
+    private int planks;
+    private boolean plankBack = false;
+    private BigDecimal raiseMoney;
     private BigDecimal profit;
 }

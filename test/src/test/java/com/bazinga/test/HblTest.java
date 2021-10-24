@@ -59,8 +59,8 @@ public class HblTest extends BaseTestCase {
         //yesterdayPlankRateComponent.yesterdayPlankRate();
         //zhongZheng500Component.zz500Buy();
         //zhongZheng500TwoComponent.zz500BuyTwo();
-        //choaDieComponent.chaoDie();
-        fastRaiseComponent.fastRaise();
+        choaDieComponent.chaoDie();
+        //fastRaiseComponent.fastRaise();
 
     }
 }

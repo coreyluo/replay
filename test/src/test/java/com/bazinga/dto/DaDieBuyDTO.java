@@ -14,5 +14,8 @@ public class DaDieBuyDTO {
     private StockKbar stockKbar;
     private BigDecimal endRate;
     private BigDecimal lowerRate;
+    private BigDecimal buyThanHighRate;
+    private int buyThanHighDays;
+    private int planks;
     private BigDecimal profit;
 }

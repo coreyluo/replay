@@ -67,6 +67,9 @@ public class ChoaDieComponent {
                 list.add(buyDTO.getNegLineEndRate());
                 list.add(buyDTO.getEndRate());
                 list.add(buyDTO.getLowerRate());
+                list.add(buyDTO.getBuyThanHighRate());
+                list.add(buyDTO.getBuyThanHighDays());
+                list.add(buyDTO.getPlanks());
                 list.add(buyDTO.getProfit());
                 Object[] objects = list.toArray();
                 datas.add(objects);
@@ -87,6 +90,9 @@ public class ChoaDieComponent {
                 list.add(buyDTO.getNegLineEndRate());
                 list.add(buyDTO.getEndRate());
                 list.add(buyDTO.getLowerRate());
+                list.add(buyDTO.getBuyThanHighRate());
+                list.add(buyDTO.getBuyThanHighDays());
+                list.add(buyDTO.getPlanks());
                 list.add(buyDTO.getProfit());
                 Object[] objects = list.toArray();
                 datas.add(objects);
@@ -95,7 +101,8 @@ public class ChoaDieComponent {
 
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","最高点日期","最高点涨幅","最高点前最高连板","最高点一字板数","买入日期","最大成交金额","阴线成交金额","阴线收盘涨幅","买入阳线收盘涨幅","买入阳线触发前最低点跌幅","溢价"};
+        String[] rowNames = {"index","股票代码","股票名称","流通z","最高点日期","最高点涨幅","最高点前最高连板","最高点一字板数","买入日期","最大成交金额","阴线成交金额","阴线收盘涨幅","买入阳线收盘涨幅","买入阳线触发前最低点跌幅",
+                "买入日相对最高点涨幅","买入日与最高点间隔日期","买入日与最高点之间成功涨停数量","溢价"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("大涨回调低吸",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("大涨回调低吸");
@@ -107,7 +114,7 @@ public class ChoaDieComponent {
         List<DaDieBestDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-           /* if(!circulateInfo.getStockCode().equals("000731")){
+            /*if(!circulateInfo.getStockCode().equals("000731")){
                 continue;
             }*/
             List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 300);
@@ -173,6 +180,7 @@ public class ChoaDieComponent {
         boolean lowFlag  = false;
         int lowTimes = 0;
         BigDecimal lowerPrice = null;
+        int planks = 0;
 
         boolean flag  = false;
         int i = 0;
@@ -210,6 +218,10 @@ public class ChoaDieComponent {
                             buyDTO.setLowerRate(lowPercent);
                             buyDTO.setNegLineEndRate(bestDTO.getNegLineEndRate());
                             buyDTO.setNegLineExchangeMoney(bestDTO.getNegLineExchangeMoney());
+                            BigDecimal buyThanHighRate = PriceUtil.getPricePercentRate(stockKbar.getAdjHighPrice().subtract(bestDTO.getStockKbar().getAdjHighPrice()), bestDTO.getStockKbar().getAdjHighPrice());
+                            buyDTO.setBuyThanHighRate(buyThanHighRate);
+                            buyDTO.setBuyThanHighDays(i);
+                            buyDTO.setPlanks(planks);
                             if(lowTimes==0) {
                                 if(bestDTO.getBuys1().size()<3) {
                                     bestDTO.getBuys1().add(buyDTO);
@@ -229,24 +241,51 @@ public class ChoaDieComponent {
                 }
 
                 //寻找阴线
-                if(stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice())==-1&&
-                        stockKbar.getTradeAmount().divide(bestDTO.getMaxExchangeMoney(),2,BigDecimal.ROUND_HALF_UP).compareTo(new BigDecimal("0.6"))==-1){
-                    boolean suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
-                    if(!suddenPrice){
-                        suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(),stockKbar.getAdjClosePrice(),preKbar.getAdjClosePrice());
-                    }
-                    if(!suddenPrice){
-                        lowFlag = true;
-                        if(bestDTO.getBuys1().size()>0) {
-                            lowTimes++;
+                if(!lowFlag) {
+                    if (stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice()) == -1 &&
+                            stockKbar.getTradeAmount().divide(bestDTO.getMaxExchangeMoney(), 2, BigDecimal.ROUND_HALF_UP).compareTo(new BigDecimal("0.6")) == -1) {
+                        boolean suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
+                        if (!suddenPrice) {
+                            suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getAdjClosePrice(), preKbar.getAdjClosePrice());
                         }
-                        if(lowTimes>=3){
-                            return;
+                        if (!suddenPrice) {
+                            lowFlag = true;
+                            if (bestDTO.getBuys1().size() > 0) {
+                                lowTimes++;
+                            }
+                            if (lowTimes >= 3) {
+                                return;
+                            }
+                            BigDecimal endRate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
+                            bestDTO.setNegLineEndRate(endRate);
+                            bestDTO.setNegLineExchangeMoney(stockKbar.getTradeAmount());
                         }
-                        BigDecimal endRate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
-                        bestDTO.setNegLineEndRate(endRate);
-                        bestDTO.setNegLineExchangeMoney(stockKbar.getTradeAmount());
                     }
+                }else{
+                    if (stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice()) == -1) {
+                        boolean suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
+                        if (!suddenPrice) {
+                            suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getAdjClosePrice(), preKbar.getAdjClosePrice());
+                        }
+                        if (!suddenPrice) {
+                            lowFlag = true;
+                            if (bestDTO.getBuys1().size() > 0) {
+                                lowTimes++;
+                            }
+                            if (lowTimes >= 3) {
+                                return;
+                            }
+                            BigDecimal endRate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
+                            bestDTO.setNegLineEndRate(endRate);
+                            bestDTO.setNegLineExchangeMoney(stockKbar.getTradeAmount());
+                        }
+                    }
+                }
+            }
+            if(i>=1){
+                boolean upperPrice = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
+                if(upperPrice){
+                    planks++;
                 }
             }
             if(stockKbar.getKbarDate().equals(bestDTO.getHighDate())){
@@ -319,7 +358,6 @@ public class ChoaDieComponent {
                 if(currentPlanks>continuePlanks){
                     continuePlanks = currentPlanks;
                 }
-
             }
             lastKbar = kbar;
             preKbar = kbar;
