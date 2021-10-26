@@ -274,8 +274,7 @@ public class ChoaDieComponent {
                 //寻找阴线
                 if(!lowFlag) {
                     if (stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice()) == -1 &&
-                            stockKbar.getTradeAmount().divide(bestDTO.getMaxExchangeMoney(), 2, BigDecimal.ROUND_HALF_UP).compareTo(new BigDecimal("0.6")) == -1&&
-                            (lowestExchangeMoney==null||stockKbar.getTradeAmount().compareTo(lowestExchangeMoney)==-1)) {
+                            stockKbar.getTradeAmount().divide(bestDTO.getMaxExchangeMoney(), 2, BigDecimal.ROUND_HALF_UP).compareTo(new BigDecimal("0.3")) == -1) {
                         boolean suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
                         if (!suddenPrice) {
                             suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getAdjClosePrice(), preKbar.getAdjClosePrice());
@@ -294,7 +293,7 @@ public class ChoaDieComponent {
                         }
                     }
                 }else{
-                    if (stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice()) == -1&&(lowestExchangeMoney==null||stockKbar.getTradeAmount().compareTo(lowestExchangeMoney)==-1)) {
+                    if (stockKbar.getClosePrice().compareTo(stockKbar.getOpenPrice()) == -1) {
                         boolean suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
                         if (!suddenPrice) {
                             suddenPrice = PriceUtil.isSuddenPrice(bestDTO.getStockCode(), stockKbar.getAdjClosePrice(), preKbar.getAdjClosePrice());
