@@ -35,6 +35,8 @@ public class HblTest extends BaseTestCase {
     private FastRaiseComponent fastRaiseComponent;
     @Autowired
     private FastRateBankComponent fastRateBankComponent;
+    @Autowired
+    private LowExchangePercentComponent lowExchangePercentComponent;
     @Test
     public void test(){
         zhongWeiDiXiReplayComponent.middle();
@@ -63,7 +65,8 @@ public class HblTest extends BaseTestCase {
         //zhongZheng500TwoComponent.zz500BuyTwo();
         //choaDieComponent.chaoDie();
         //fastRaiseComponent.fastRaise();
-        fastRateBankComponent.fastRaiseBanker();
+        //fastRateBankComponent.fastRaiseBanker();
+        lowExchangePercentComponent.lowExchangeAvg();
 
     }
 }

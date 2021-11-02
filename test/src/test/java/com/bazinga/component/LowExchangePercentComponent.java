@@ -2,7 +2,7 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.dto.FastRaiseBankerDTO;
-import com.bazinga.dto.FastRaiseBestDTO;
+import com.bazinga.dto.LowExchangeDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -35,7 +35,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class FastRateBankComponent {
+public class LowExchangePercentComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -50,10 +50,10 @@ public class FastRateBankComponent {
     private BlockLevelReplayComponent blockLevelReplayComponent;
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
-    public void fastRaiseBanker(){
-        List<FastRaiseBankerDTO> daDies = fastRaiseInfo();
+    public void lowExchangeAvg(){
+        List<LowExchangeDTO> daDies = judgeDownInfo();
         List<Object[]> datas = Lists.newArrayList();
-        for(FastRaiseBankerDTO dto:daDies){
+        for(LowExchangeDTO dto:daDies){
             List<Object> list = new ArrayList<>();
             list.add(dto.getStockCode());
             list.add(dto.getStockCode());
@@ -61,76 +61,69 @@ public class FastRateBankComponent {
             list.add(dto.getCirculateZ());
             list.add(dto.getMarketMoney());
             list.add(dto.getTradeDate());
-            list.add(dto.getExchangeMoney());
-            list.add(dto.getRaiseRate());
-            list.add(dto.getRaiseTime());
-            list.add(dto.isEndPlank());
-            list.add(dto.getPlanks());
-            list.add(dto.isPlankBack());
-            list.add(dto.getRaiseMoney());
-            list.add(dto.getOpenRate());
-            list.add(dto.getBuyPrice());
-            list.add(dto.getOpenExchange());
-            list.add(dto.getPlankTime());
-            list.add(dto.getPlankExchangeMoney());
-            list.add(dto.getEightExchangeMoney());
+            if(dto.isEndPlank()) {
+                list.add(1);
+            }else{
+                list.add(0);
+            }
+            list.add(dto.getLwoExchangePercent());
+            list.add(dto.getDownRate());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","市值","交易日期","异常前成交额","大涨幅度","大涨时间","尾盘是否板","连板高","是否回封","跳变成交金额","开盘涨幅","买入价格","开盘成交额","涨停时间","涨停前成交额","8个点前成交额","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("庄逼",rowNames,datas);
+        String[] rowNames = {"index","股票代码","股票名称","流通z","市值","交易日期","尾盘是否封住","量能比例","相对最高点跌幅","溢价"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("缩量模型",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("庄逼");
+            poiExcelUtil.exportExcelUseExcelTitle("缩量模型");
         }catch (Exception e){
             log.info(e.getMessage());
         }
     }
-    public List<FastRaiseBankerDTO> fastRaiseInfo(){
-        List<FastRaiseBankerDTO> list = Lists.newArrayList();
+    public List<LowExchangeDTO> judgeDownInfo(){
+        List<LowExchangeDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-            /*if(!circulateInfo.getStockCode().equals("603041")){
+           /* if(!circulateInfo.getStockCode().equals("002815")){
                 continue;
             }*/
             System.out.println(circulateInfo.getStockCode());
-            List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 300);
+            List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 380);
             if(CollectionUtils.isEmpty(stockKbars)){
                 continue;
             }
             /*if(list.size()>20){
                 break;
             }*/
-            LimitQueue<StockKbar> limitQueue = new LimitQueue<>(11);
+            LimitQueue<StockKbar> limitQueue = new LimitQueue<>(61);
             StockKbar preKbar = null;
+            int planks = 0;
             for (StockKbar stockKbar:stockKbars){
                 limitQueue.offer(stockKbar);
                 if(preKbar!=null) {
-                    boolean upperFlag = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice());
+                    boolean highPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice());
                     boolean endPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
-                    BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
-                    if (upperFlag) {
-                        List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd));
-                        if (!CollectionUtils.isEmpty(datas)) {
-                            FastRaiseBankerDTO bestDTO = isFastRaise(datas, stockKbar, preKbar.getClosePrice());
-                            if(bestDTO!=null&&bestDTO.getRaiseRate()!=null&&bestDTO.getPlankTime()!=null) {
-                                bestDTO.setStockCode(circulateInfo.getStockCode());
-                                bestDTO.setStockName(circulateInfo.getStockName());
-                                bestDTO.setCirculateZ(circulateInfo.getCirculateZ());
-                                bestDTO.setMarketMoney(new BigDecimal(circulateInfo.getCirculateZ()).multiply(stockKbar.getHighPrice()));
-                                bestDTO.setStockKbar(stockKbar);
-                                bestDTO.setTradeDate(stockKbar.getKbarDate());
-                                bestDTO.setEndPlank(endPlank);
-                                bestDTO.setOpenRate(openRate);
-                                bestDTO.setBuyPrice(stockKbar.getHighPrice());
-                                calProfit(stockKbars, bestDTO);
-                                if(limitQueue.size()>=5) {
-                                    judgePlanks(limitQueue,bestDTO);
-                                    list.add(bestDTO);
-                                }
+                    if(highPlank){
+                        if(planks<=1) {
+                            LowExchangeDTO lowExchangeDTO = judgeDownExchange(limitQueue);
+                            if (lowExchangeDTO != null) {
+                                lowExchangeDTO.setStockCode(circulateInfo.getStockCode());
+                                lowExchangeDTO.setStockName(circulateInfo.getStockName());
+                                lowExchangeDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                                lowExchangeDTO.setMarketMoney(new BigDecimal(circulateInfo.getCirculateZ()).multiply(stockKbar.getHighPrice()));
+                                lowExchangeDTO.setStockKbar(stockKbar);
+                                lowExchangeDTO.setTradeDate(stockKbar.getKbarDate());
+                                lowExchangeDTO.setEndPlank(endPlank);
+                                calProfit(stockKbars, lowExchangeDTO);
+                                list.add(lowExchangeDTO);
                             }
                         }
+                    }
+                    if(endPlank){
+                        planks++;
+                    }else{
+                        planks=0;
                     }
                 }
                 preKbar = stockKbar;
@@ -139,9 +132,9 @@ public class FastRateBankComponent {
         return list;
     }
 
-    public int judgePlanks(LimitQueue<StockKbar> limitQueue, FastRaiseBankerDTO bestDTO){
-        if(limitQueue==null||limitQueue.size()<5){
-            return 0;
+    public LowExchangeDTO judgeDownExchange(LimitQueue<StockKbar> limitQueue){
+        if(limitQueue==null||limitQueue.size()<61){
+            return null;
         }
         List<StockKbar> list = Lists.newArrayList();
         Iterator<StockKbar> iterator = limitQueue.iterator();
@@ -149,30 +142,62 @@ public class FastRateBankComponent {
             StockKbar next = iterator.next();
             list.add(next);
         }
-        StockKbar nextKbar = null;
-        List<StockKbar> reverse = Lists.reverse(list);
         int i=0;
-        int planks = 1;
-        for (StockKbar stockKbar:reverse){
+        StockKbar highKbar = null;
+        StockKbar lowKbar = null;
+        StockKbar lowKbar57 = null;
+        Long nearExchangeTotal = 0l;
+        int nearCount = 0;
+        Long farExchangeTotal = 0l;
+        int farCount = 0;
+        boolean threeDayLow = false;
+        for (StockKbar stockKbar:list){
             i++;
-            if(i>=3){
-                boolean upperPrice = PriceUtil.isUpperPrice(nextKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice());
-                if(!upperPrice){
-                    upperPrice = PriceUtil.isUpperPrice(nextKbar.getStockCode(),nextKbar.getAdjClosePrice(),stockKbar.getAdjClosePrice());
+            if(i<=60){
+                if(highKbar==null||stockKbar.getAdjHighPrice().compareTo(highKbar.getAdjHighPrice())==1){
+                    highKbar = stockKbar;
                 }
-                if(upperPrice){
-                    planks++;
-                }else{
-                    break;
+                if(lowKbar==null||stockKbar.getAdjLowPrice().compareTo(lowKbar.getAdjLowPrice())<1){
+                    lowKbar = stockKbar;
+                }
+                if(i<=30){
+                    farCount++;
+                    farExchangeTotal = farExchangeTotal+stockKbar.getTradeQuantity();
+                }
+                if(i>30&&i<=60){
+                    nearCount++;
+                    nearExchangeTotal = nearExchangeTotal+stockKbar.getTradeQuantity();
                 }
             }
-            nextKbar = stockKbar;
+            if(i<=57){
+                if(lowKbar57==null||stockKbar.getAdjLowPrice().compareTo(lowKbar57.getAdjLowPrice())<1){
+                    lowKbar57 = stockKbar;
+                }
+            }
+
+            if(i>57&&i<=60){
+                if(stockKbar.getAdjLowPrice().compareTo(lowKbar57.getAdjLowPrice())<1){
+                    threeDayLow = true;
+                }
+            }
         }
-        bestDTO.setPlanks(planks);
-        return planks;
+        if(threeDayLow&&nearCount>0&&farCount>0){
+            LowExchangeDTO lowExchangeDTO = new LowExchangeDTO();
+            BigDecimal downRate = PriceUtil.getPricePercentRate(highKbar.getAdjHighPrice().subtract(lowKbar.getAdjLowPrice()), highKbar.getAdjHighPrice());
+            BigDecimal nearExchange = new BigDecimal(nearExchangeTotal).divide(new BigDecimal(nearCount), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal farExchange = new BigDecimal(farExchangeTotal).divide(new BigDecimal(farCount), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal divide = nearExchange.divide(farExchange, 2, BigDecimal.ROUND_HALF_UP);
+            lowExchangeDTO.setDownRate(downRate);
+            lowExchangeDTO.setLwoExchangePercent(divide);
+            if(divide.compareTo(new BigDecimal("0.6"))==-1){
+                return lowExchangeDTO;
+            }
+        }
+        return null;
+
     }
 
-    public void calProfit(List<StockKbar> stockKbars,FastRaiseBankerDTO bestDTO){
+    public void calProfit(List<StockKbar> stockKbars,LowExchangeDTO bestDTO){
         boolean flag = false;
         int i=0;
         for (StockKbar stockKbar:stockKbars){

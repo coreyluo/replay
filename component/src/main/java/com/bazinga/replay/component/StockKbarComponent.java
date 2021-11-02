@@ -405,7 +405,7 @@ public class StockKbarComponent {
             int count = stockAverageLineService.countByCondition(query);
             if (count == 0) {
                 //calAvgLine(item.getStock(), item.getStockName(), 60);
-                for (int i = 5; i <=60 ; i++) {
+                for (int i = 5; i <=5 ; i++) {
                     calAvgLine(item.getStockCode(), item.getStockName(), i);
                 }
                 //calAvgLine(item.getStock(), item.getStockName(), 10);

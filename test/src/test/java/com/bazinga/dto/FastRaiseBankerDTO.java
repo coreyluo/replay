@@ -25,5 +25,9 @@ public class FastRaiseBankerDTO {
     private int planks;
     private boolean plankBack = false;
     private BigDecimal raiseMoney;
+
+    private String plankTime;
+    private BigDecimal  plankExchangeMoney;
+    private BigDecimal eightExchangeMoney;
     private BigDecimal profit;
 }

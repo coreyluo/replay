@@ -15,5 +15,6 @@ public class YesterdayPlankDTO {
     private StockKbar buyKbar;
     private BigDecimal startRate;
     private BigDecimal endRate;
+    private int planks;
 
 }
