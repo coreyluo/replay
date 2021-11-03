@@ -18,5 +18,8 @@ public class LowExchangeDTO {
     private BigDecimal lwoExchangePercent;
     private BigDecimal downRate;
     private boolean endPlank;
+    private String plankTime;
+    private int planks;
+    private BigDecimal buyRateThanHigh;
     private BigDecimal profit;
 }

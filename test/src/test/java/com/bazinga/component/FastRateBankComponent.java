@@ -91,7 +91,7 @@ public class FastRateBankComponent {
         List<FastRaiseBankerDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-            /*if(!circulateInfo.getStockCode().equals("603041")){
+            /*if(!circulateInfo.getStockCode().equals("002096")){
                 continue;
             }*/
             System.out.println(circulateInfo.getStockCode());
@@ -182,8 +182,10 @@ public class FastRateBankComponent {
             if(i==1){
                 BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(stockKbar.getStockCode(), DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd));
                 avgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
-                BigDecimal profit = PriceUtil.getPricePercentRate(avgPrice.subtract(bestDTO.getStockKbar().getAdjHighPrice()), bestDTO.getStockKbar().getAdjHighPrice());
-                bestDTO.setProfit(profit);
+                if(avgPrice!=null) {
+                    BigDecimal profit = PriceUtil.getPricePercentRate(avgPrice.subtract(bestDTO.getStockKbar().getAdjHighPrice()), bestDTO.getStockKbar().getAdjHighPrice());
+                    bestDTO.setProfit(profit);
+                }
             }
             if(stockKbar.getKbarDate().equals(bestDTO.getStockKbar().getKbarDate())){
                 flag = true;
@@ -203,7 +205,7 @@ public class FastRateBankComponent {
         BigDecimal allExchange = BigDecimal.ZERO;
         BigDecimal eightExchange = null;
         boolean eightFlag = false;
-        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue = new LimitQueue<>(20);
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue = new LimitQueue<>(40);
         FastRaiseBankerDTO bestDTO = new FastRaiseBankerDTO();
         for (ThirdSecondTransactionDataDTO data:datas){
             Integer tradeType = data.getTradeType();

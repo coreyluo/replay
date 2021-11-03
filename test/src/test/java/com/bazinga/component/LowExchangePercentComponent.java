@@ -68,12 +68,15 @@ public class LowExchangePercentComponent {
             }
             list.add(dto.getLwoExchangePercent());
             list.add(dto.getDownRate());
+            list.add(dto.getPlankTime());
+            list.add(dto.getPlanks());
+            list.add(dto.getBuyRateThanHigh());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","市值","交易日期","尾盘是否封住","量能比例","相对最高点跌幅","溢价"};
+        String[] rowNames = {"index","股票代码","股票名称","流通z","市值","交易日期","尾盘是否封住","量能比例","最低点相对最高点跌幅","上板时间","连板高度","买入时候相距最高点涨幅","溢价"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("缩量模型",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("缩量模型");
@@ -85,9 +88,9 @@ public class LowExchangePercentComponent {
         List<LowExchangeDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-           /* if(!circulateInfo.getStockCode().equals("002815")){
+            if(!circulateInfo.getStockCode().equals("300612")){
                 continue;
-            }*/
+            }
             System.out.println(circulateInfo.getStockCode());
             List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 380);
             if(CollectionUtils.isEmpty(stockKbars)){
@@ -106,7 +109,7 @@ public class LowExchangePercentComponent {
                     boolean endPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
                     if(highPlank){
                         if(planks<=1) {
-                            LowExchangeDTO lowExchangeDTO = judgeDownExchange(limitQueue);
+                            LowExchangeDTO lowExchangeDTO = judgeDownExchange(limitQueue,stockKbar);
                             if (lowExchangeDTO != null) {
                                 lowExchangeDTO.setStockCode(circulateInfo.getStockCode());
                                 lowExchangeDTO.setStockName(circulateInfo.getStockName());
@@ -115,8 +118,14 @@ public class LowExchangePercentComponent {
                                 lowExchangeDTO.setStockKbar(stockKbar);
                                 lowExchangeDTO.setTradeDate(stockKbar.getKbarDate());
                                 lowExchangeDTO.setEndPlank(endPlank);
-                                calProfit(stockKbars, lowExchangeDTO);
-                                list.add(lowExchangeDTO);
+                                lowExchangeDTO.setPlanks(planks+1);
+                                String plankTime = isPlank(stockKbar, preKbar.getClosePrice());
+                                if(plankTime!=null) {
+                                    plankTime = plankTime.replace(":", "");
+                                    lowExchangeDTO.setPlankTime(plankTime);
+                                    calProfit(stockKbars, lowExchangeDTO);
+                                    list.add(lowExchangeDTO);
+                                }
                             }
                         }
                     }
@@ -132,7 +141,30 @@ public class LowExchangePercentComponent {
         return list;
     }
 
-    public LowExchangeDTO judgeDownExchange(LimitQueue<StockKbar> limitQueue){
+    public String isPlank(StockKbar stockKbar,BigDecimal preEndPrice){
+        List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd));
+        if(CollectionUtils.isEmpty(datas)){
+            return null;
+        }
+        boolean isPlank = true;
+        for (ThirdSecondTransactionDataDTO data:datas){
+            if(data.getTradeType()!=0&&data.getTradeType()!=1){
+                continue;
+            }
+            BigDecimal tradePrice = data.getTradePrice();
+            Integer tradeType = data.getTradeType();
+            boolean upperPrice = PriceUtil.isUpperPrice(stockKbar.getStockCode(), tradePrice, preEndPrice);
+            if(tradeType!=1||!upperPrice){
+                isPlank = false;
+            }
+            if(!isPlank&&(tradeType==1&&upperPrice)){
+                return data.getTradeTime();
+            }
+        }
+        return null;
+    }
+
+    public LowExchangeDTO judgeDownExchange(LimitQueue<StockKbar> limitQueue,StockKbar buyKbar){
         if(limitQueue==null||limitQueue.size()<61){
             return null;
         }
@@ -181,7 +213,7 @@ public class LowExchangePercentComponent {
                 }
             }
         }
-        if(threeDayLow&&nearCount>0&&farCount>0){
+        if(nearCount>0&&farCount>0){
             LowExchangeDTO lowExchangeDTO = new LowExchangeDTO();
             BigDecimal downRate = PriceUtil.getPricePercentRate(highKbar.getAdjHighPrice().subtract(lowKbar.getAdjLowPrice()), highKbar.getAdjHighPrice());
             BigDecimal nearExchange = new BigDecimal(nearExchangeTotal).divide(new BigDecimal(nearCount), 2, BigDecimal.ROUND_HALF_UP);
@@ -189,6 +221,8 @@ public class LowExchangePercentComponent {
             BigDecimal divide = nearExchange.divide(farExchange, 2, BigDecimal.ROUND_HALF_UP);
             lowExchangeDTO.setDownRate(downRate);
             lowExchangeDTO.setLwoExchangePercent(divide);
+            BigDecimal intelRate = PriceUtil.getPricePercentRate(highKbar.getAdjHighPrice().subtract(buyKbar.getAdjHighPrice()), buyKbar.getAdjHighPrice());
+            lowExchangeDTO.setBuyRateThanHigh(intelRate);
             if(divide.compareTo(new BigDecimal("0.6"))==-1){
                 return lowExchangeDTO;
             }

@@ -65,8 +65,8 @@ public class HblTest extends BaseTestCase {
         //zhongZheng500TwoComponent.zz500BuyTwo();
         //choaDieComponent.chaoDie();
         //fastRaiseComponent.fastRaise();
-        //fastRateBankComponent.fastRaiseBanker();
-        lowExchangePercentComponent.lowExchangeAvg();
+        fastRateBankComponent.fastRaiseBanker();
+        //lowExchangePercentComponent.lowExchangeAvg();
 
     }
 }
