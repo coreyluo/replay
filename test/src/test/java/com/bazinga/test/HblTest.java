@@ -39,13 +39,14 @@ public class HblTest extends BaseTestCase {
     private LowExchangePercentComponent lowExchangePercentComponent;
     @Test
     public void test(){
-        zhongWeiDiXiReplayComponent.middle();
+        //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
-       synExcelComponent.otherStockBuy();
+       /*synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        synExcelComponent.graphBuy();
+        synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
+        synExcelComponent.zhuanZaiBuy();
     }
     @Test
     public void test2(){
