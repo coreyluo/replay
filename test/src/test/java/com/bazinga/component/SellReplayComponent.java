@@ -52,7 +52,7 @@ public class SellReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
 
-        File file = new File("E:/trendData/前1小时票.xlsx");
+        File file = new File("E:/excelExport/陈持仓20211014.xlsx");
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
             for (SellReplayImportDTO sellReplayImportDTO : importList) {
@@ -116,7 +116,71 @@ public class SellReplayComponent {
             excelExportUtil.writeMainData(1);
 
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\卖出前1小时票均值.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\卖出陈持仓20211014.xls");
+                workbook.write(output);
+                output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+
+    public void replayStock(){
+        Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
+        ExcelExportUtil excelExportUtil = new ExcelExportUtil();
+        excelExportUtil.setWorkbook(workbook);
+        excelExportUtil.setTitle("");
+        excelExportUtil.setSheet(workbook.createSheet("sheet1"));
+        List<Map> dataList = new ArrayList<>();
+        //  excelExportUtil.setData(dataList);
+        // excelExportUtil.set
+        String[] headList = getHeadList();
+        excelExportUtil.setHeadKey(headList);
+
+        File file = new File("E:/excelExport/烂板2板.xlsx");
+        try {
+            List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+            for (SellReplayImportDTO sellReplayImportDTO : importList) {
+                String currentKbarString = DateUtil.format(sellReplayImportDTO.getKbarDate(),DateUtil.yyyyMMdd);
+                String uniqueKey =  sellReplayImportDTO.getStockCode() + SymbolConstants.UNDERLINE + currentKbarString;
+                StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
+
+                Date sellDate = commonComponent.afterTradeDate(sellReplayImportDTO.getKbarDate());
+                String sellDateString = DateUtil.format(sellDate,DateUtil.yyyyMMdd);
+                Map<String,Object> map = new HashMap<>();
+                map.put("stockCode",sellReplayImportDTO.getStockCode());
+                map.put("stockName",sellReplayImportDTO.getStockName());
+                BigDecimal openPrice = BigDecimal.ZERO;
+                map.put("sellDate",sellDateString);
+                map.put("buyDate",currentKbarString);
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellReplayImportDTO.getStockCode(), sellDateString);
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
+                    if("09:25".equals(transactionDataDTO.getTradeTime())){
+                        openPrice = transactionDataDTO.getTradePrice();
+                    }
+                    BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                    map.put(transactionDataDTO.getTradeTime(),rate);
+                }
+                map.put("openRate", PriceUtil.getPricePercentRate(openPrice.subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice()));
+                dataList.add(map);
+            }
+
+
+
+
+            excelExportUtil.setData(dataList);
+            excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
+            excelExportUtil.writeMainData(1);
+
+            try {
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\卖出烂板2板均值.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
@@ -133,23 +197,22 @@ public class SellReplayComponent {
 
     private  String[] getHeadList(){
         List<String> headList = Lists.newArrayList();
-      //  headList.add("stockCode");
+     //   headList.add("stockCode");
      //   headList.add("stockName");
-      //  headList.add("openRate");
+     //   headList.add("openRate");
         headList.add("sellDate");
         headList.add("count");
-     //   headList.add("buyDate");
+        headList.add("buyDate");
         headList.add("09:25");
-        headList.add("09:30");
-        Date date = DateUtil.parseDate("20210531093000", DateUtil.yyyyMMddHHmmss);
+        Date date = DateUtil.parseDate("20210531092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
         while (count< 120){
             date = DateUtil.addMinutes(date, 1);
             count++;
             headList.add(DateUtil.format(date,"HH:mm"));
         }
-        headList.add("13:00");
-        date = DateUtil.parseDate("20210531130000", DateUtil.yyyyMMddHHmmss);
+
+        date = DateUtil.parseDate("20210531125900", DateUtil.yyyyMMddHHmmss);
         count = 0;
         while (count< 120){
             date = DateUtil.addMinutes(date, 1);

@@ -4,33 +4,35 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.jsoup.Jsoup;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MainTest {
 
 
-    public static void main(String[] args) {
-    /*    List<String> list = Lists.newArrayList();
+    public static void main(String[] args) throws IOException {
 
-        list.add("1:1");
-        list.add("3");
-        list.add("2");
-        System.out.println(JSONObject.toJSONString(list));
-        List<String> sortList = list.stream().sorted(Comparator.comparing(String::toString,(x,y)->{return Integer.parseInt(x) > Integer.parseInt(y)?1:-1;})).collect(Collectors.toList());
+            Map<String,String> paramMap = new HashMap<>();
+            paramMap.put("method","get_billboard_list");
+            // 获取当前token
+           // paramMap.put("mob","13588205347");
+            // 标的类型
+          //  paramMap.put("pwd","Lily5200!");
+            paramMap.put("stock_list","None");
+            paramMap.put("start_date","None");
+            paramMap.put("end_date","2021-11-03");
+            paramMap.put("count","1");
 
-        System.out.println(JSONObject.toJSONString(sortList));*/
+            String result = Jsoup.connect("https://dataapi.joinquant.com/apis").ignoreContentType(true)
+                    .header("Content-Type", "application/json")
+                    .requestBody(JSONObject.toJSONString(paramMap)).post().text();
+            System.out.println(result);
 
-        Set<String> set = new HashSet<>();
-        set.add("09:25");
-        set.add("09:56");
-        set.add("09:45");
-        set.add("09:33");
-        TreeSet<String> treeSet = Sets.newTreeSet(set);
-        for (String s : treeSet) {
-            System.out.println(s);
-        }
+
+
 
     }
 }

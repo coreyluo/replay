@@ -1,9 +1,14 @@
 package com.bazinga.test;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.component.*;
+import com.bazinga.dto.BlockCompeteDTO;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import sun.text.resources.no.JavaTimeSupplementary_no;
+
+import java.util.Map;
 
 public class ReplayTest extends BaseTestCase {
 
@@ -33,6 +38,15 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private BestAvgLineReplayComponent bestAvgLineReplayComponent;
+
+    @Autowired
+    private RotPlankReplayComponent rotPlankReplayComponent;
+
+    @Autowired
+    private SelfExcelReplayComponent selfExcelReplayComponent;
+
+    @Autowired
+    private BlockReplayComponent blockReplayComponent;
 
     @Test
     public void test(){
@@ -66,20 +80,32 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test7(){
-        sellReplayComponent.replay();
+       // sellReplayComponent.replay();
+        selfExcelReplayComponent.replay();
     }
 
     @Test
     public void test8(){
         blockKbarReplayComponent.replay(14);
    /*     for (int i = 24; i <= 60; i++) {
-            blockKbarReplayComponent.replay(i);
+         a   blockKbarReplayComponent.replay(i);
         }*/
-      //  blockKbarReplayComponent.anaysisBest();
+      //  blockKbarRaeplayComponent.anaysisBest();
     }
 
     @Test
     public void test9(){
         bestAvgLineReplayComponent.invokeStrategy();
+    }
+
+    @Test
+    public void test10(){
+       // rotPlankReplayComponent.replay(2);
+       // rotPlankReplayComponent.replay(3);
+      //  rotPlankReplayComponent.replay(4);
+       // rotPlankReplayComponent.replay(5);
+
+        Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
+        System.out.println(JSONObject.toJSONString(blockRateMap));
     }
 }

@@ -63,6 +63,20 @@ public class HistoryTransactionDataComponent {
 
     }
 
+    public List<ThirdSecondTransactionDataDTO> getMorningData(List<ThirdSecondTransactionDataDTO> list){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = list.size();
+        for(int i=0; i<list.size(); i++){
+            if("11:30".equals(list.get(i).getTradeTime())){
+                index = i;
+                break;
+            }
+        }
+        return list.subList(0,index);
+    }
+
     public List<ThirdSecondTransactionDataDTO> getPreOneHourData(List<ThirdSecondTransactionDataDTO> list){
         if(CollectionUtils.isEmpty(list)){
             return list;
