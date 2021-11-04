@@ -117,6 +117,7 @@ public class StockPlankDailyComponent {
         daily.setBeforeRateTen(plankTypeDTO.getBeforeRate10());
         daily.setBeforeRateFifteen(plankTypeDTO.getBeforeRate15());
         daily.setExchangeQuantity(plankTypeDTO.getExchangeQuantity());
+        daily.setBadPlankType(0);
         daily.setTradeDate(date);
         daily.setCreateTime(new Date());
         stockPlankDailyService.save(daily);

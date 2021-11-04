@@ -66,6 +66,17 @@ public class CommonComponent {
         return true;
     }
 
+    public Date afterTradeDate(Date date){
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate235959(date));
+        query.addOrderBy("trade_date",Sort.SortType.ASC);
+        List<TradeDatePool> dates = tradeDatePoolService.listByCondition(query);
+        if(CollectionUtils.isEmpty(dates)){
+            return null;
+        }
+        return dates.get(0).getTradeDate();
+    }
+
     public List<StockKbar> getStockKBars(String stockCode){
         try {
             StockKbarQuery query = new StockKbarQuery();
