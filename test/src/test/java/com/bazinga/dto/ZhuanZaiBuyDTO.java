@@ -26,6 +26,8 @@ public class ZhuanZaiBuyDTO {
 
     private int havePlank;
 
+    private Integer level;
+
     private BigDecimal profit;
 
 }
