@@ -1,8 +1,10 @@
 package com.bazinga.component;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.SelfExcelImportDTO;
 import com.bazinga.dto.SellReplayImportDTO;
+import com.bazinga.dto.ZhuanZaiDTO;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
@@ -24,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -37,6 +40,21 @@ public class SelfExcelReplayComponent {
 
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
+
+
+    public void zhuanzhai(){
+
+        File file = new File("E:/excelExport/可转债(1).xlsx");
+        try {
+            List<ZhuanZaiDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiDTO.class);
+            List<String> resultList = importList.stream().map(ZhuanZaiDTO::getStockCode).collect(Collectors.toList());
+            log.info("{}",JSONObject.toJSONString(resultList));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     public void replay(){
 

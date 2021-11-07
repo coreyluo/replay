@@ -81,7 +81,8 @@ public class ReplayTest extends BaseTestCase {
     @Test
     public void test7(){
        // sellReplayComponent.replay();
-        selfExcelReplayComponent.replay();
+       // selfExcelReplayComponent.replay();
+        selfExcelReplayComponent.zhuanzhai();
     }
 
     @Test
