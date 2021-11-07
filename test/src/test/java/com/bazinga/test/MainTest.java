@@ -1,5 +1,6 @@
 package com.bazinga.test;
 
+<<<<<<< HEAD
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
@@ -7,30 +8,31 @@ import com.google.common.collect.Sets;
 
 import java.util.*;
 import java.util.stream.Collectors;
+=======
+import com.bazinga.replay.util.JoinQuantUtil;
+
+import java.io.IOException;
+
+>>>>>>> master
 
 public class MainTest {
 
 
     public static void main(String[] args) {
-    /*    List<String> list = Lists.newArrayList();
 
-        list.add("1:1");
-        list.add("3");
-        list.add("2");
-        System.out.println(JSONObject.toJSONString(list));
-        List<String> sortList = list.stream().sorted(Comparator.comparing(String::toString,(x,y)->{return Integer.parseInt(x) > Integer.parseInt(y)?1:-1;})).collect(Collectors.toList());
+        try {
+            String token = JoinQuantUtil.getToken();
+            System.out.println(token);
 
-        System.out.println(JSONObject.toJSONString(sortList));*/
-
-        Set<String> set = new HashSet<>();
-        set.add("09:25");
-        set.add("09:56");
-        set.add("09:45");
-        set.add("09:33");
-        TreeSet<String> treeSet = Sets.newTreeSet(set);
-        for (String s : treeSet) {
-            System.out.println(s);
+            String dragonTiger = JoinQuantUtil.getDragonTiger("300745.XSHE", "2021-11-04", token);
+            //System.out.println(dragonTiger);
+           // String allSecurities = JoinQuantUtil.getAllSecurities(token);
+            String[] array = dragonTiger.split(" ");
+            for (String s : array) {
+                System.out.println(s);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 }

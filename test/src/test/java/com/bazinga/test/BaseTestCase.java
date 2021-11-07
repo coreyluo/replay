@@ -51,6 +51,8 @@ public class BaseTestCase {
     private BadPlankComponent badPlankComponent;
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
+    @Autowired
+    private BlockKbarSelfComponent blockKbarSelfComponent;
     @Test
     public void test1() {
         //无敌数据
@@ -102,9 +104,10 @@ public class BaseTestCase {
         //hotBlockDropInfoComponent.thsBlockKbar(DateUtil.parseDate("20211018",DateUtil.yyyyMMdd));
         //hotBlockDropInfoComponent.getAvgPrice();
         //badPlankComponent.badPlankJudge(new Date());
-        DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, "128094", 0,100);
+        /*DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, "128094", 0,100);
         List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123048", "20211102");
-        System.out.println(data);
+        System.out.println(data);*/
+        blockKbarSelfComponent.initBlockKbarSelf();
     }
 
 
