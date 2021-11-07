@@ -491,7 +491,7 @@ public class HotBlockDropBuyComponent {
         Map<String,Map<String, BlockLevelDTO>> allOpenLevelMap = new HashMap<>();
 
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("2021-01-01",DateUtil.yyyy_MM_dd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("2021-09-01",DateUtil.yyyy_MM_dd));
         tradeDatePoolQuery.setTradeDateTo(DateUtil.parseDate("2021-09-15",DateUtil.yyyy_MM_dd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);

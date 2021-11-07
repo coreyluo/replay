@@ -25,15 +25,28 @@ public class HblTest extends BaseTestCase {
     private HotBlockDropBuyScoreComponent hotBlockDropBuyScoreComponent;
     @Autowired
     private YesterdayPlankRateComponent yesterdayPlankRateComponent;
+    @Autowired
+    private ZhongZheng500Component zhongZheng500Component;
+    @Autowired
+    private ZhongZheng500TwoComponent zhongZheng500TwoComponent;
+    @Autowired
+    private ChoaDieComponent choaDieComponent;
+    @Autowired
+    private FastRaiseComponent fastRaiseComponent;
+    @Autowired
+    private FastRateBankComponent fastRateBankComponent;
+    @Autowired
+    private LowExchangePercentComponent lowExchangePercentComponent;
     @Test
     public void test(){
-        zhongWeiDiXiReplayComponent.middle();
+        //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
-       synExcelComponent.otherStockBuy();
+       /*synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        synExcelComponent.graphBuy();
+        synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
+        synExcelComponent.zhuanZaiBuy();
     }
     @Test
     public void test2(){
@@ -41,14 +54,20 @@ public class HblTest extends BaseTestCase {
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
         synExcelComponent.hotBlockDrop();
-        hotBlockDropBuyScoreComponent.hotDrop();
+        //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
 
     }
 
     @Test
     public void test3(){
-        yesterdayPlankRateComponent.yesterdayPlankRate();
+        //yesterdayPlankRateComponent.yesterdayPlankRate();
+        //zhongZheng500Component.zz500Buy();
+        //zhongZheng500TwoComponent.zz500BuyTwo();
+        choaDieComponent.chaoDie();
+        //fastRaiseComponent.fastRaise();
+        //fastRateBankComponent.fastRaiseBanker();
+        lowExchangePercentComponent.lowExchangeAvg();
 
     }
 }

@@ -94,6 +94,7 @@ public class HotBlockDropBuyScoreComponent {
             }
         }
         dailys = score(dailys);
+        blockInfo(dailys);
         List<Object[]> datas = Lists.newArrayList();
         for(HotBlockDropBuyDTO dto:dailys){
             List<Object> list = new ArrayList<>();
@@ -135,6 +136,13 @@ public class HotBlockDropBuyScoreComponent {
             list.add(dto.isDropDayEndPlank());
             list.add(dto.isBeforePlankDay3());
             list.add(dto.getScore());
+            list.add(dto.getBlockDropLevel());
+            list.add(dto.getBlockDropDayTotalExchangeMoney());
+            list.add(dto.getBlockRaiseDayTotalExchangeMoney());
+            list.add(dto.getBlockRaiseDayBeforeDay5AvgExchangeMoney());
+            list.add(dto.getBlockInterDayEndRate());
+            list.add(dto.getBlockInterDayRelativeRate());
+            list.add(dto.getBlockInterDayTotalExchangeMoney());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
@@ -144,7 +152,8 @@ public class HotBlockDropBuyScoreComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","交易日期","板块代码","板块名称","大涨涨幅","大涨时排名","大涨间隔日期","大跌幅度","买入日开盘板块涨幅","买入日开盘板块排名",
                 "股票买入日开盘涨幅","股票买入日开盘排名","股票大涨日涨幅","股票大涨日排名",
                 "股票大跌日涨幅","股票大跌日排名","股票大跌日成交量","买入前3日涨跌幅","买入前5日涨跌幅","买入前10日涨跌幅","大涨日上板时间","买入前5日平均成交量","大跌日板块内收盘上涨数量","大跌日板块内收盘下跌数量","大跌日板块内板数",
-                "买入前5日板数","大涨次日是否开一字","大涨次日开盘涨幅","大涨日板块5日涨幅","大涨日板块10日涨幅","买入前5日开一字次数","大跌日是否触及涨停","大跌日尾盘是否封住","买入前3天是否涨停","得分","盈利"};
+                "买入前5日板数","大涨次日是否开一字","大涨次日开盘涨幅","大涨日板块5日涨幅","大涨日板块10日涨幅","买入前5日开一字次数","大跌日是否触及涨停","大跌日尾盘是否封住","买入前3天是否涨停","得分",
+                "板块大跌日排名","板块大跌日成交总金额","板块大涨日成交总金额","板块大涨日前5天平均成交金额","板块大涨大跌中间日涨幅","板块大涨大跌中间日相对涨幅","板块大涨大跌中间日成交金额","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("热门大跌",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("热门大跌");
@@ -153,24 +162,149 @@ public class HotBlockDropBuyScoreComponent {
         }
     }
 
-    public List<HotBlockDropBuyDTO> blockInfo(List<HotBlockDropBuyDTO> dailys){
+    public void blockInfo(List<HotBlockDropBuyDTO> dailys){
         Map<String,HotBlockDropBuyDTO>  map = new HashMap<>();
         for (HotBlockDropBuyDTO daily:dailys){
+            Integer raiseDays = daily.getRaiseDays();
             String key = daily.getTradeDate() + daily.getBlockCode();
-            Date tradeDate = DateUtil.parseDate(daily.getTradeDate(), DateUtil.yyyyMMdd);
-            TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-            tradeDatePoolQuery.setTradeDateTo(tradeDate);
-            tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.DESC);
-            List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
+            HotBlockDropBuyDTO buyDto = map.get(key);
+            if(buyDto==null) {
+                buyDto = new HotBlockDropBuyDTO();
+                Date tradeDate = DateUtil.parseDate(daily.getTradeDate(), DateUtil.yyyyMMdd);
+                TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
+                tradeDatePoolQuery.setTradeDateTo(tradeDate);
+                tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.DESC);
+                List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
 
-            ThsBlockStockDetailQuery query = new ThsBlockStockDetailQuery();
-            query.setBlockCode(daily.getBlockCode());
-            List<ThsBlockStockDetail> details = thsBlockStockDetailService.listByCondition(query);
-            for (ThsBlockStockDetail detail:details){
+                ThsBlockStockDetailQuery query = new ThsBlockStockDetailQuery();
+                query.setBlockCode(daily.getBlockCode());
+                List<ThsBlockStockDetail> details = thsBlockStockDetailService.listByCondition(query);
+                BigDecimal blockDropDayExchangeAmount = BigDecimal.ZERO;
+                BigDecimal blockRaiseDayExchangeAmount = BigDecimal.ZERO;
+                int nextDayCount = 0;
+                BigDecimal blockRaiseNextDayRateTotal = BigDecimal.ZERO;
+                BigDecimal blockRaiseNextDayRelativeRateTotal = BigDecimal.ZERO;
 
+                BigDecimal blockRaiseNextDayExchange = BigDecimal.ZERO;
+
+                BigDecimal beforeRaiseDay1ExchangeAmount = BigDecimal.ZERO;
+                BigDecimal beforeRaiseDay2ExchangeAmount = BigDecimal.ZERO;
+                BigDecimal beforeRaiseDay3ExchangeAmount = BigDecimal.ZERO;
+                BigDecimal beforeRaiseDay4ExchangeAmount = BigDecimal.ZERO;
+                BigDecimal beforeRaiseDay5ExchangeAmount = BigDecimal.ZERO;
+
+                for (ThsBlockStockDetail detail : details) {
+                    StockKbarQuery stockKbarQuery = new StockKbarQuery();
+                    stockKbarQuery.setStockCode(detail.getStockCode());
+                    stockKbarQuery.setKbarDateTo(DateUtil.format(tradeDatePools.get(0).getTradeDate(), DateUtil.yyyyMMdd));
+                    stockKbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    stockKbarQuery.setLimit(10);
+                    List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+                    int i = 0;
+                    StockKbar intKbar = null;
+                    for (StockKbar stockKbar : stockKbars) {
+                        i++;
+                        if (i == 1) {
+                            blockDropDayExchangeAmount = blockDropDayExchangeAmount.add(stockKbar.getTradeAmount());
+                        }
+                        if (i == 2) {
+                            intKbar = stockKbar;
+                        }
+                        if (raiseDays == 1) {
+                            if (i == 2) {
+                                blockRaiseDayExchangeAmount = blockRaiseDayExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 3) {
+                                beforeRaiseDay1ExchangeAmount = beforeRaiseDay1ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 4) {
+                                beforeRaiseDay2ExchangeAmount = beforeRaiseDay2ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 5) {
+                                beforeRaiseDay3ExchangeAmount = beforeRaiseDay3ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 6) {
+                                beforeRaiseDay4ExchangeAmount = beforeRaiseDay4ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 7) {
+                                beforeRaiseDay5ExchangeAmount = beforeRaiseDay5ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                        }
+                        if (raiseDays == 2) {
+                            if (i == 2) {
+                                blockRaiseNextDayExchange = blockRaiseNextDayExchange.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 3) {
+                                blockRaiseDayExchangeAmount = blockRaiseDayExchangeAmount.add(stockKbar.getTradeAmount());
+                                BigDecimal closeRate = PriceUtil.getPricePercentRate(intKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
+                                BigDecimal relativeRate = PriceUtil.getPricePercentRate(intKbar.getAdjClosePrice().subtract(intKbar.getAdjOpenPrice()), stockKbar.getAdjClosePrice());
+                                blockRaiseNextDayRateTotal = blockRaiseNextDayRateTotal.add(closeRate);
+                                blockRaiseNextDayRelativeRateTotal = blockRaiseNextDayRelativeRateTotal.add(relativeRate);
+                                nextDayCount++;
+                            }
+                            if (i == 4) {
+                                beforeRaiseDay1ExchangeAmount = beforeRaiseDay1ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 5) {
+                                beforeRaiseDay2ExchangeAmount = beforeRaiseDay2ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 6) {
+                                beforeRaiseDay3ExchangeAmount = beforeRaiseDay3ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 7) {
+                                beforeRaiseDay4ExchangeAmount = beforeRaiseDay4ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                            if (i == 8) {
+                                beforeRaiseDay5ExchangeAmount = beforeRaiseDay5ExchangeAmount.add(stockKbar.getTradeAmount());
+                            }
+                        }
+                    }
+                }
+                int days = 0;
+                BigDecimal total = BigDecimal.ZERO;
+                if (beforeRaiseDay1ExchangeAmount.compareTo(BigDecimal.ZERO) == 1) {
+                    days++;
+                    total = total.add(beforeRaiseDay1ExchangeAmount);
+                }
+                if (beforeRaiseDay2ExchangeAmount.compareTo(BigDecimal.ZERO) ==1 ) {
+                    days++;
+                    total = total.add(beforeRaiseDay2ExchangeAmount);
+                }
+                if (beforeRaiseDay3ExchangeAmount.compareTo(BigDecimal.ZERO) == 1) {
+                    days++;
+                    total = total.add(beforeRaiseDay3ExchangeAmount);
+                }
+                if (beforeRaiseDay4ExchangeAmount.compareTo(BigDecimal.ZERO) == 1) {
+                    days++;
+                    total = total.add(beforeRaiseDay4ExchangeAmount);
+                }
+                if (beforeRaiseDay5ExchangeAmount.compareTo(BigDecimal.ZERO) == 1) {
+                    days++;
+                    total = total.add(beforeRaiseDay5ExchangeAmount);
+                }
+                if (days > 0) {
+                    BigDecimal avgTotal = total.divide(new BigDecimal(days), 2, BigDecimal.ROUND_HALF_UP);
+                    buyDto.setBlockRaiseDayBeforeDay5AvgExchangeMoney(avgTotal);
+
+                }
+                if (nextDayCount > 0) {
+                    BigDecimal nextDayRate = blockRaiseNextDayRateTotal.divide(new BigDecimal(nextDayCount), 2, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal nextDayRelativeRate = blockRaiseNextDayRelativeRateTotal.divide(new BigDecimal(nextDayCount), 2, BigDecimal.ROUND_HALF_UP);
+                    buyDto.setBlockInterDayEndRate(nextDayRate);
+                    buyDto.setBlockInterDayRelativeRate(nextDayRelativeRate);
+                    buyDto.setBlockInterDayTotalExchangeMoney(blockRaiseNextDayExchange);
+                }
+                buyDto.setBlockDropDayTotalExchangeMoney(blockDropDayExchangeAmount);
+                buyDto.setBlockRaiseDayTotalExchangeMoney(blockRaiseDayExchangeAmount);
+                map.put(key,buyDto);
             }
+            daily.setBlockRaiseDayTotalExchangeMoney(buyDto.getBlockRaiseDayTotalExchangeMoney());
+            daily.setBlockDropDayTotalExchangeMoney(buyDto.getBlockDropDayTotalExchangeMoney());
+            daily.setBlockInterDayTotalExchangeMoney(buyDto.getBlockInterDayTotalExchangeMoney());
+            daily.setBlockInterDayEndRate(buyDto.getBlockInterDayEndRate());
+            daily.setBlockInterDayRelativeRate(buyDto.getBlockInterDayRelativeRate());
+            daily.setBlockRaiseDayBeforeDay5AvgExchangeMoney(buyDto.getBlockRaiseDayBeforeDay5AvgExchangeMoney());
         }
-        return null;
     }
 
     public List<HotBlockDropBuyDTO> score(List<HotBlockDropBuyDTO> dailys){
@@ -205,7 +339,6 @@ public class HotBlockDropBuyScoreComponent {
             }
 
             HotBlockDropBuyDTO.dropDayExchangeSort(stocks);
-            int score = stocks.get(0).getScore();
             if(stocks.size()>=1) {
                 int score0 = stocks.get(0).getScore();
                 stocks.get(0).setScore(score0 + 3);
@@ -289,6 +422,7 @@ public class HotBlockDropBuyScoreComponent {
             buyDTO.setOpenBlockRate(dto.getOpenBlockRate());
             buyDTO.setBlockRaiseRate(dto.getBlockRaiseRate());
             buyDTO.setBlockRaiseLevel(dto.getBlockRaiseLevel());
+            buyDTO.setBlockDropLevel(dto.getBlockDropLevel());
             buyDTO.setRaiseDays(dto.getRaiseDays());
             buyDTO.setBlockDropRate(dto.getBlockDropRate());
             openRate(buyDTO,kbars);
@@ -692,6 +826,7 @@ public class HotBlockDropBuyScoreComponent {
                     }
 
                     hotBlockDropBuyDTO.setBlockDropRate(blockLevelDTO.getAvgRate());
+                    hotBlockDropBuyDTO.setBlockDropLevel(blockLevelDTO.getLevel());
                     hotBlockDropBuyDTO.setBlockRaiseRate(raiseLevelDTO.getAvgRate());
                     hotBlockDropBuyDTO.setBlockRaiseLevel(raiseLevelDTO.getLevel());
                     hotBlockDropBuyDTO.setRaiseDays(days);

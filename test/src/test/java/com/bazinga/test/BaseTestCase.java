@@ -1,6 +1,8 @@
 package com.bazinga.test;
 
 import com.bazinga.replay.component.*;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.StockKbar;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.tradex.enums.KCate;
@@ -13,6 +15,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 单元测试基类<p/>
@@ -44,6 +47,10 @@ public class BaseTestCase {
     private BlockKbarComponent blockKbarComponent;
     @Autowired
     private HotBlockDropInfoComponent hotBlockDropInfoComponent;
+    @Autowired
+    private BadPlankComponent badPlankComponent;
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
     @Test
     public void test1() {
         //无敌数据
@@ -67,7 +74,10 @@ public class BaseTestCase {
         stockCommonReplayComponent.highRaiseStockInfo(new Date());
         stockCommonReplayComponent.forTwoPlankWuDi(new Date());
         stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        badPlankComponent.badPlankJudge(new Date());
         stockPlankDailyComponent.superFactor(new Date());
+        blockKbarComponent.thsBlockKbar(DateTimeUtils.getDate000000(new Date()));
+        hotBlockDropInfoComponent.thsBlockKbar(DateTimeUtils.getDate000000(new Date()));
     }
 
     @Test
@@ -88,10 +98,13 @@ public class BaseTestCase {
         //stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
         /*List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNew("605588", 3, 50);
         System.out.println(kbars);*/
-        //blockKbarComponent.thsBlockKbar(DateUtil.parseDate("20211008",DateUtil.yyyyMMdd));
-        //hotBlockDropInfoComponent.thsBlockKbar(DateUtil.parseDate("20211008",DateUtil.yyyyMMdd));
-        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","昨日涨停",200);
-
+        //blockKbarComponent.thsBlockKbar(DateUtil.parseDate("20211018",DateUtil.yyyyMMdd));
+        //hotBlockDropInfoComponent.thsBlockKbar(DateUtil.parseDate("20211018",DateUtil.yyyyMMdd));
+        //hotBlockDropInfoComponent.getAvgPrice();
+        //badPlankComponent.badPlankJudge(new Date());
+        DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, "128094", 0,100);
+        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123048", "20211102");
+        System.out.println(data);
     }
 
 

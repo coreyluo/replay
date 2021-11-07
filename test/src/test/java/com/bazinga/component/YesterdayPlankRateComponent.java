@@ -61,7 +61,7 @@ public class YesterdayPlankRateComponent {
         Map<String, List<YesterdayPlankDTO>> map = new HashMap<>();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-            List<StockKbar> stockKBars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 200);
+            List<StockKbar> stockKBars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 300);
             if(CollectionUtils.isEmpty(stockKBars)){
                 continue;
             }
@@ -77,6 +77,9 @@ public class YesterdayPlankRateComponent {
         }
         List<YesterdayPlankDTO> planks = Lists.newArrayList();
         for (String key:map.keySet()){
+            if(key.equals("20211029")){
+                System.out.println("11111111111");
+            }
             List<YesterdayPlankDTO> plankDTOS = map.get(key);
             BigDecimal totalEndRate = BigDecimal.ZERO;
             BigDecimal totalStartRate = BigDecimal.ZERO;
@@ -94,7 +97,7 @@ public class YesterdayPlankRateComponent {
                 YesterdayPlankDTO plankDTO = new YesterdayPlankDTO();
                 Date date = commonComponent.afterTradeDate(DateUtil.parseDate(key, DateUtil.yyyyMMdd));
                 plankDTO.setTradeDate(DateUtil.format(date,DateUtil.yyyy_MM_dd));
-                if(plankDTO.getTradeDate().equals("2021-09-27")){
+                if(plankDTO.getTradeDate().equals("2021-11-01")){
                     System.out.println(11111);
                 }
                 plankDTO.setEndRate(endRate);
@@ -117,9 +120,9 @@ public class YesterdayPlankRateComponent {
 
         String[] rowNames = {"index","日期","开盘涨幅","收盘涨幅"};
 
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("昨日涨停",rowNames,datas);
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("昨曾连板涨停",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("昨日涨停");
+            poiExcelUtil.exportExcelUseExcelTitle("昨曾连板涨停");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -129,17 +132,26 @@ public class YesterdayPlankRateComponent {
     public List<YesterdayPlankDTO>  plankInfo(List<StockKbar> stockKbars){
         List<YesterdayPlankDTO> list = Lists.newArrayList();
         StockKbar preStockKbar = null;
+        int planks = 0;
         for (StockKbar stockKbar:stockKbars){
             if(preStockKbar!=null){
                 boolean endUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preStockKbar.getClosePrice());
                 boolean adjEndUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getAdjClosePrice(), preStockKbar.getAdjClosePrice());
-                if(endUpper||adjEndUpper){
+                boolean highUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preStockKbar.getClosePrice());
+                if(highUpper){
+                    planks++;
                     YesterdayPlankDTO plankDTO = new YesterdayPlankDTO();
                     plankDTO.setStockCode(stockKbar.getStockCode());
                     plankDTO.setTradeDate(stockKbar.getKbarDate());
                     plankDTO.setBuyKbar(stockKbar);
-                    nextDayRateInfo(stockKbars,plankDTO);
-                    list.add(plankDTO);
+                    plankDTO.setPlanks(planks);
+                    if(plankDTO.getPlanks()>=2 && plankDTO.getPlanks()<=4) {
+                        nextDayRateInfo(stockKbars, plankDTO);
+                        list.add(plankDTO);
+                    }
+                }
+                if(!endUpper&&!adjEndUpper){
+                    planks = 0;
                 }
             }
             preStockKbar = stockKbar;

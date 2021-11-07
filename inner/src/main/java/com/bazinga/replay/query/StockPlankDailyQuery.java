@@ -88,6 +88,11 @@ public class StockPlankDailyQuery extends PagingQuery implements Serializable {
     private Integer seriesPlanks;
 
     /**
+     * 0 正常  1烂板
+     */
+    private Integer badPlankType;
+
+    /**
      *  开始
      */
     private Date createTimeFrom;

@@ -71,6 +71,12 @@ public class StockUtils {
             if (stockCode.startsWith("688")||stockCode.startsWith("689")) {
                 return "SH.KC";
             }
+            if (stockCode.startsWith("11")) {
+                return "SH.ZZ";
+            }
+            if (stockCode.startsWith("12")) {
+                return "SZ.ZZ";
+            }
         }
         throw new IllegalArgumentException("股票代码(" + stockCode + ")不属于中国大陆证券代码.");
     }

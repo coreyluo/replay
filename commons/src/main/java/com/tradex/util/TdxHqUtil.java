@@ -736,6 +736,7 @@ public class TdxHqUtil extends TdxHqPollManager {
                     }
                     // 最后一次
                     if (i == LOOP_TIMES - 1) {
+                        System.out.println(stockCode);
                         throw new TradeException("调用l1行情服务器失败！原因是:" + error);
                     }
                 }
