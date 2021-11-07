@@ -53,5 +53,11 @@ public class SelfExcelImportDTO {
     @ExcelElement("收益")
     private BigDecimal premium;
 
+    @ExcelElement("开盘涨幅")
+    private BigDecimal openRate;
+
+    @ExcelElement("集合成交金额")
+    private BigDecimal openTradeAmount;
+
 
 }

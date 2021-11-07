@@ -1,6 +1,7 @@
 package com.bazinga.component;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.SelfExcelImportDTO;
 import com.bazinga.dto.SellReplayImportDTO;
@@ -58,7 +59,7 @@ public class SelfExcelReplayComponent {
 
     public void replay(){
 
-        File file = new File("E:/excelExport/上塘路.xlsx");
+        File file = new File("E:/excelExport/龙虎/招商深南东路.xlsx");
         try {
             List<SelfExcelImportDTO> resultList = Lists.newArrayList();
             List<SelfExcelImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SelfExcelImportDTO.class);
@@ -68,10 +69,13 @@ public class SelfExcelReplayComponent {
                 if(importDTO.getAbnormalName().startsWith("连续三个交易日")){
                     continue;
                 }
+                String dragonDate = DateUtil.format(importDTO.getDragonDate(),DateUtil.yyyyMMdd);
                 Date buyDate = commonComponent.afterTradeDate(importDTO.getDragonDate());
                 Date sellDate = commonComponent.afterTradeDate(buyDate);
                 String buyUniqueKey = stockCode + SymbolConstants.UNDERLINE + DateUtil.format(buyDate,DateUtil.yyyyMMdd);
                 StockKbar buyStockKbar = stockKbarService.getByUniqueKey(buyUniqueKey);
+                String dragonUniqueKey = stockCode + SymbolConstants.UNDERLINE + dragonDate;
+                StockKbar dragonKbar = stockKbarService.getByUniqueKey(dragonUniqueKey);
                 if(buyStockKbar ==null){
                     log.info("为获取到K线stockCode{} kbarDate{}",stockCode,DateUtil.format(buyDate,DateUtil.yyyyMMdd));
                     continue;
@@ -80,17 +84,21 @@ public class SelfExcelReplayComponent {
                 importDTO.setBuyDate(DateUtil.format(buyDate,DateUtil.yyyyMMdd));
                 importDTO.setBuyPrice(buyStockKbar.getOpenPrice());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockCode, sellDate);
+                List<ThirdSecondTransactionDataDTO> buyList = historyTransactionDataComponent.getData(stockCode, buyDate);
                 if(!CollectionUtils.isEmpty(list)){
                     list = historyTransactionDataComponent.getMorningData(list);
                     Float sellPricef = historyTransactionDataComponent.calAveragePrice(list);
                     BigDecimal sellPrice = new BigDecimal(sellPricef.toString());
                     importDTO.setSellDate(DateUtil.format(sellDate,DateUtil.yyyyMMdd));
                     importDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(importDTO.getBuyPrice()),importDTO.getBuyPrice()));
+                    ThirdSecondTransactionDataDTO open = buyList.get(0);
+                    importDTO.setOpenTradeAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
+                    importDTO.setOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
                 }
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\上塘席位次日集合买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\招商深南东路席位次日集合买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();
