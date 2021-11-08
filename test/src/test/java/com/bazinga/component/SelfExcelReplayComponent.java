@@ -81,7 +81,7 @@ public class SelfExcelReplayComponent {
                 StockKbar buyStockKbar = stockKbarService.getByUniqueKey(buyUniqueKey);
                 String dragonUniqueKey = stockCode + SymbolConstants.UNDERLINE + dragonDate;
                 StockKbar dragonKbar = stockKbarService.getByUniqueKey(dragonUniqueKey);
-                if(buyStockKbar ==null){
+                if(buyStockKbar ==null || dragonKbar == null){
                     log.info("为获取到K线stockCode{} kbarDate{}",stockCode,DateUtil.format(buyDate,DateUtil.yyyyMMdd));
                     continue;
                 }
