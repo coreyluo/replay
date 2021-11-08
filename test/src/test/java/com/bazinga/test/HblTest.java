@@ -37,6 +37,8 @@ public class HblTest extends BaseTestCase {
     private FastRateBankComponent fastRateBankComponent;
     @Autowired
     private LowExchangePercentComponent lowExchangePercentComponent;
+    @Autowired
+    private BlockChoaDieComponent blockChoaDieComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -46,7 +48,8 @@ public class HblTest extends BaseTestCase {
         synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
-        synExcelComponent.zhuanZaiBuy();
+        //synExcelComponent.zhuanZaiBuy();
+        blockChoaDieComponent.chaoDie();
     }
     @Test
     public void test2(){
