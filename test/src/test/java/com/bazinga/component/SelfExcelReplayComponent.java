@@ -1,8 +1,10 @@
 package com.bazinga.component;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
+import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.dto.SelfExcelImportDTO;
 import com.bazinga.dto.SellReplayImportDTO;
 import com.bazinga.dto.ZhuanZaiDTO;
@@ -10,9 +12,12 @@ import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.StockKbarService;
+import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
+import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.xuxueli.poi.excel.ExcelExportUtil;
@@ -59,7 +64,7 @@ public class SelfExcelReplayComponent {
 
     public void replay(){
 
-        File file = new File("E:/excelExport/龙虎/招商深南东路.xlsx");
+        File file = new File("E:/excelExport/龙虎/龙虎榜1年挑选席位.xlsx");
         try {
             List<SelfExcelImportDTO> resultList = Lists.newArrayList();
             List<SelfExcelImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SelfExcelImportDTO.class);
@@ -94,11 +99,28 @@ public class SelfExcelReplayComponent {
                     ThirdSecondTransactionDataDTO open = buyList.get(0);
                     importDTO.setOpenTradeAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
                     importDTO.setOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
+
+                    StockKbarQuery query = new StockKbarQuery();
+                    query.setKbarDateTo(dragonDate);
+                    query.setStockCode(stockCode);
+                    query.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    query.setLimit(11);
+                    List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+                    if(kbarList.size()<11){
+                        continue;
+                    }
+                    importDTO.setDay3Rate(StockKbarUtil.getNDaysUpperRateDesc(kbarList,3));
+                    importDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRateDesc(kbarList,5));
+                    importDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRateDesc(kbarList,10));
+                    PlankHighDTO plankHighDTO = PlankHighUtil.calCommonPlank(Lists.reverse(kbarList));
+                    importDTO.setPlankHigh(plankHighDTO.getPlankHigh());
+                    importDTO.setUnPlank(plankHighDTO.getUnPlank());
+
                 }
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\招商深南东路席位次日集合买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎榜1年挑选席位席位次日集合买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();

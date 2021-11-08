@@ -37,6 +37,9 @@ public class SelfExcelImportDTO {
     @ExcelElement("rank")
     private Integer rank;
 
+    @ExcelElement("sales_depart_name")
+    private String salesDepartName;
+
     @ExcelElement("abnormal_name")
     private String abnormalName;
 
@@ -59,5 +62,19 @@ public class SelfExcelImportDTO {
     @ExcelElement("集合成交金额")
     private BigDecimal openTradeAmount;
 
+    @ExcelElement("3日涨幅")
+    private BigDecimal day3Rate;
+
+    @ExcelElement("3日涨幅")
+    private BigDecimal day5Rate;
+
+    @ExcelElement("3日涨幅")
+    private BigDecimal day10Rate;
+
+    @ExcelElement("板高")
+    private Integer plankHigh;
+
+    @ExcelElement("断板")
+    private Integer unPlank;
 
 }
