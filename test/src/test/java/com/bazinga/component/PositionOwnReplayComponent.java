@@ -118,14 +118,14 @@ public class PositionOwnReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
 
-        File file = new File("E:/excelExport/1030以前.xlsx");
+        File file = new File("E:/excelExport/陈1109.xlsx");
         try {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             log.info("data{}", JSONObject.toJSONString(dataList));
 
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-               /* if("20210907".equals(kbarDate)){
+            /*    if(!"20210728".equals(kbarDate)){
                     continue;
                 }*/
                 Date afterTradeDate = commonComponent.afterTradeDate(stockPosition.getKbarDate());
@@ -211,7 +211,7 @@ public class PositionOwnReplayComponent {
             excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
             excelExportUtil.writeMainData(1);
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\afterDay1030.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\1109.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {

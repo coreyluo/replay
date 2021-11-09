@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.BestAvgDTO;
+import com.bazinga.dto.SelfExcelImportDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockAverageLine;
 import com.bazinga.replay.model.StockKbar;
@@ -16,6 +17,7 @@ import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.Excel2JavaPojoUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.xuxueli.poi.excel.ExcelExportUtil;
@@ -24,6 +26,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.List;
 
 @Component
@@ -47,6 +50,25 @@ public class BestAvgLineReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             replay(circulateInfo.getStockCode());
         }
+    }
+
+    public Integer calBestAvgDay(String stockCode){
+
+        File file = new File("E:\\trendData\\均线\\均线买入stockCode"+stockCode+".xls");
+        try {
+            List<SelfExcelImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SelfExcelImportDTO.class);
+
+
+
+
+
+        } catch (Exception e) {
+
+            log.info(e.getMessage(),e);
+        }
+
+
+        return 0;
     }
 
     public void replay(String stockCode){

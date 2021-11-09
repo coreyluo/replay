@@ -48,6 +48,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private BlockReplayComponent blockReplayComponent;
 
+    @Autowired
+    private Month2RateReplayComponent month2RateReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -106,7 +109,8 @@ public class ReplayTest extends BaseTestCase {
       //  rotPlankReplayComponent.replay(4);
        // rotPlankReplayComponent.replay(5);
 
-        Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
-        System.out.println(JSONObject.toJSONString(blockRateMap));
+       /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
+        System.out.println(JSONObject.toJSONString(blockRateMap));*/
+       month2RateReplayComponent.invokeStrategy();
     }
 }

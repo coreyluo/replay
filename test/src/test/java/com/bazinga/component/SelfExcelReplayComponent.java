@@ -120,7 +120,7 @@ public class SelfExcelReplayComponent {
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎榜1年挑选席位席位次日集合买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎1年挑选席位席位次日集合买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();

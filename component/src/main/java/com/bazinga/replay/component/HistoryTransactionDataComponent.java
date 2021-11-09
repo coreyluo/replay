@@ -35,7 +35,7 @@ public class HistoryTransactionDataComponent {
         while (loopTimes<30 &&(CollectionUtils.isEmpty(resultList) || !"09:25".equals(resultList.get(0).getTradeTime()))){
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
             if(historyTransactionData ==null ){
-                continue;
+                break;
             }
             List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
             resultList.addAll(0,list);
