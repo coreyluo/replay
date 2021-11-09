@@ -100,9 +100,9 @@ public class BlockChoaDieComponent {
         }
         List<ThsBlockInfo> thsBlockInfos = thsBlockInfoService.listByCondition(new ThsBlockInfoQuery());
         for (ThsBlockInfo thsBlockInfo:thsBlockInfos){
-            if(!thsBlockInfo.getBlockCode().equals("CA9F")){
+            /*if(!thsBlockInfo.getBlockCode().equals("CA9F")){
                 continue;
-            }
+            }*/
             System.out.println(thsBlockInfo.getBlockCode()+thsBlockInfo.getBlockName());
             List<BlockKbarSelf> blockKbars = getBlockKbars(thsBlockInfo.getBlockCode());
             if(CollectionUtils.isEmpty(blockKbars)){
