@@ -26,4 +26,16 @@ public class FirstMinuteBuyDTO {
     private BigDecimal beforeBuyAmount;
     private BigDecimal beforeBuyPercent;
     private BigDecimal profit;
+
+
+    private BigDecimal highDropRate;
+    private String highTime;
+    private BigDecimal highRange;
+    private BigDecimal lowRange;
+    private BigDecimal realRangeAvg;
+
+    private BigDecimal maxTradeMoney;
+    private Integer maxTradeQuantity;
+    private BigDecimal avgTradeMoney;
+    private Integer avgTradeQuantity;
 }

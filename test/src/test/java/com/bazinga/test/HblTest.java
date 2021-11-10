@@ -41,6 +41,10 @@ public class HblTest extends BaseTestCase {
     private BlockChoaDieComponent blockChoaDieComponent;
     @Autowired
     private OneMinutePlankComponent oneMinutePlankComponent;
+    @Autowired
+    private BadChungYePlankInfoComponent badChungYePlankInfoComponent;
+    @Autowired
+    private HighExchangeChungYePlankInfoComponent highExchangeChungYePlankInfoComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -73,7 +77,9 @@ public class HblTest extends BaseTestCase {
         //fastRaiseComponent.fastRaise();
         //fastRateBankComponent.fastRaiseBanker();
         //lowExchangePercentComponent.lowExchangeAvg();
-        oneMinutePlankComponent.firstMinutePlankInfo();
+        //oneMinutePlankComponent.firstMinutePlankInfo();
+        //badChungYePlankInfoComponent.badPlankInfo();
+        highExchangeChungYePlankInfoComponent.badPlankInfo();
 
     }
 }
