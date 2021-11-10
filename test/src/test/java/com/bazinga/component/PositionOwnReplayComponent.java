@@ -125,9 +125,9 @@ public class PositionOwnReplayComponent {
 
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-            /*    if(!"20210728".equals(kbarDate)){
+                if("20211109".equals(kbarDate)){
                     continue;
-                }*/
+                }
                 Date afterTradeDate = commonComponent.afterTradeDate(stockPosition.getKbarDate());
                 log.info("满足中条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockPosition.getStockCode(), afterTradeDate);

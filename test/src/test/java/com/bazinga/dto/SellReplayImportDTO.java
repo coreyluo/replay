@@ -34,4 +34,7 @@ public class SellReplayImportDTO {
     @ExcelElement("委托时间")
     private Date orderTime;
 
+    @ExcelElement("是否炸板")
+    private Integer sealType;
+
 }
