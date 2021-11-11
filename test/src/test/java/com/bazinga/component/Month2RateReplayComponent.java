@@ -1,8 +1,10 @@
 package com.bazinga.component;
 
 import com.bazinga.base.Sort;
+import com.bazinga.dto.Fast300UpperDTO;
 import com.bazinga.dto.Month2RateDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.query.CirculateInfoQuery;
@@ -19,8 +21,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -35,6 +39,86 @@ public class Month2RateReplayComponent {
 
     @Autowired
     private CirculateInfoService circulateInfoService;
+
+    public void  replay(){
+        List<Fast300UpperDTO> resultList = Lists.newArrayList();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            query.setKbarDateFrom("20210101");
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+
+            for (int i = 2; i < kbarList.size()-1; i++) {
+
+                StockKbar stockKbar = kbarList.get(i);
+                StockKbar preStockKbar = kbarList.get(i-1);
+                StockKbar sellKbar = kbarList.get(i+1);
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                    continue;
+                }
+
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                int index = 0;
+                String plankTime= "";
+                for (int j = 1; j < list.size(); j++) {
+                    ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                    ThirdSecondTransactionDataDTO preDto = list.get(j-1);
+                    if(transactionDataDTO.getTradeType()==1 && transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
+                        if(preDto.getTradePrice().compareTo(stockKbar.getHighPrice())<0 || preDto.getTradeType()!=1){
+                           // log.info("判断为涨停stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                            index = j;
+                            plankTime = transactionDataDTO.getTradeTime();
+                            break;
+                        }
+
+                    }
+
+                }
+
+
+                if(index==0){
+                    continue;
+                }
+                int rateBeginIndex = index-40 <0? 0:index -40 ;
+                ThirdSecondTransactionDataDTO begin = list.get(rateBeginIndex);
+                BigDecimal rate2min = PriceUtil.getPricePercentRate(stockKbar.getHighPrice().subtract(begin.getTradePrice()),preStockKbar.getClosePrice());
+
+                List<ThirdSecondTransactionDataDTO> subList = list.subList(0, index);
+
+                BigDecimal avgPrice = new BigDecimal(historyTransactionDataComponent.calAveragePrice(subList).toString());
+                BigDecimal relativeAvgPriceRate = PriceUtil.getPricePercentRate(stockKbar.getHighPrice().subtract(avgPrice), preStockKbar.getClosePrice());
+                if(relativeAvgPriceRate.compareTo(new BigDecimal("6"))> 0 ){
+                    log.info("满足条件 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                    Fast300UpperDTO exportDTO = new Fast300UpperDTO();
+                    exportDTO.setStockCode(stockKbar.getStockCode());
+                    exportDTO.setStockName(stockKbar.getStockName());
+                    exportDTO.setBuykbarDate(stockKbar.getKbarDate());
+                    exportDTO.setSellkbarDate(sellKbar.getKbarDate());
+                    exportDTO.setBuyPrice(stockKbar.getHighPrice());
+                    exportDTO.setRelativeAvgRate(relativeAvgPriceRate);
+                    exportDTO.setPlankTime(plankTime);
+                    exportDTO.setRate2min(rate2min);
+                    BigDecimal sellAvgPrice = historyTransactionDataComponent.calMorningAvgPrice(sellKbar.getStockCode(), sellKbar.getKbarDate());
+                    if(sellAvgPrice == null ){
+                        continue;
+                    }
+                    exportDTO.setPremium(PriceUtil.getPricePercentRate(sellAvgPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice()));
+                    resultList.add(exportDTO);
+                }
+
+            }
+
+
+        }
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\主板相对均价买入回测.xls");
+
+
+    }
+
+
 
     public void invokeStrategy(){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());

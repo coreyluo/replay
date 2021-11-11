@@ -111,6 +111,6 @@ public class ReplayTest extends BaseTestCase {
 
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
-       month2RateReplayComponent.invokeStrategy();
+       month2RateReplayComponent.replay();
     }
 }

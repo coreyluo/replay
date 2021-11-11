@@ -191,6 +191,21 @@ public class HistoryTransactionDataComponent {
         }
     }
 
+    public BigDecimal calMorningAvgPrice(String stockCode, String tradeDate) {
+        try{
+            List<ThirdSecondTransactionDataDTO> datas = getData(stockCode, tradeDate);
+            datas = getMorningData(datas);
+            if(CollectionUtils.isEmpty(datas)){
+                return null;
+            }
+            BigDecimal avgPrice = new BigDecimal(calAveragePrice(datas)).setScale(2,BigDecimal.ROUND_HALF_UP);
+            return avgPrice;
+        } catch (Exception e) {
+            log.info("计算均价异常 stockCode:{} tradeDate:{}",stockCode,tradeDate);
+            return null;
+        }
+    }
+
     public BigDecimal calAvgPrice(String stockCode, String kbarDate) {
         try{
             List<ThirdSecondTransactionDataDTO> datas = getData(stockCode, kbarDate);
