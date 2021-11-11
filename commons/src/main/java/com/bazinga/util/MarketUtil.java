@@ -49,4 +49,17 @@ public class MarketUtil {
         return true;
     }
 
+    public static boolean isSHMarket(String stockCode){
+        if(stockCode.startsWith("60")){
+            return true;
+        }
+        if(stockCode.startsWith("68")){
+            return true;
+        }
+        if(stockCode.startsWith("11")){
+            return true;
+        }
+        return false;
+    }
+
 }

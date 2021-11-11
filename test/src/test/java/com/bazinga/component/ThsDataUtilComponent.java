@@ -2,8 +2,14 @@ package com.bazinga.component;
 
 
 import Ths.JDIBridge;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.bazinga.util.MarketUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author yunshan
@@ -11,8 +17,45 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class ThsDataTestComponent {
+public class ThsDataUtilComponent {
+    public void quoteInfo(String stockCode,String tradeDate){
+        int ret = thsLogin();
+        String stockKey = getStockKey(stockCode);
+        String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume","","2021-11-10 09:25:00","2021-11-10 15:00:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            List<String> times = timeArray.toJavaList(String.class);
+
+
+            System.out.println("111");
+        }
+    }
+    public int thsLogin(){
+        try {
+            System.load("E://iFinDJava.dll");
+            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            return ret;
+        }catch (Exception e){
+            log.error("同花顺登录失败",e);
+            return -1;
+        }
+    }
+
+    public static String getStockKey(String stockCode){
+        boolean shMarket = MarketUtil.isSHMarket(stockCode);
+        if(shMarket){
+            return stockCode+".SH";
+        }else {
+            return stockCode+".SZ";
+        }
+    }
+
     public static void main(String[] args) {
+
+        new ThsDataUtilComponent().quoteInfo("603533","");
         System.out.println(System.getProperty("java.library.path"));
         System.load("E://iFinDJava.dll");
         int ret = -1;

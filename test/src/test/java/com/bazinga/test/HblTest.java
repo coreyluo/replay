@@ -7,6 +7,8 @@ import com.bazinga.util.DateUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.AbstractCollection;
+
 public class HblTest extends BaseTestCase {
 
     @Autowired
@@ -45,6 +47,10 @@ public class HblTest extends BaseTestCase {
     private BadChungYePlankInfoComponent badChungYePlankInfoComponent;
     @Autowired
     private HighExchangeChungYePlankInfoComponent highExchangeChungYePlankInfoComponent;
+    @Autowired
+    private ChungYePlankReturnInfoComponent chungYePlankReturnInfoComponent;
+    @Autowired
+    private ChungYePlankFirstInfoComponent chungYePlankFirstInfoComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -79,7 +85,9 @@ public class HblTest extends BaseTestCase {
         //lowExchangePercentComponent.lowExchangeAvg();
         //oneMinutePlankComponent.firstMinutePlankInfo();
         //badChungYePlankInfoComponent.badPlankInfo();
-        highExchangeChungYePlankInfoComponent.badPlankInfo();
+        //highExchangeChungYePlankInfoComponent.badPlankInfo();
+        chungYePlankReturnInfoComponent.chuangYePlankTwo();
+        chungYePlankFirstInfoComponent.chuangYePlankFirst();
 
     }
 }
