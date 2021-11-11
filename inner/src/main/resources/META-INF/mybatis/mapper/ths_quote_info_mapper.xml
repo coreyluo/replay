@@ -13,6 +13,10 @@
         <result column="bid2" jdbcType="DECIMAL" property="bid2"/>
         <result column="ask1" jdbcType="DECIMAL" property="ask1"/>
         <result column="ask2" jdbcType="DECIMAL" property="ask2"/>
+        <result column="bid_size1" jdbcType="BIGINT" property="bidSize1"/>
+        <result column="bid_size2" jdbcType="BIGINT" property="bidSize2"/>
+        <result column="ask_size1" jdbcType="BIGINT" property="askSize1"/>
+        <result column="ask_size2" jdbcType="BIGINT" property="askSize2"/>
         <result column="total_sell_volume" jdbcType="BIGINT" property="totalSellVolume"/>
         <result column="total_buy_volume" jdbcType="BIGINT" property="totalBuyVolume"/>
         <result column="avg_buy_price" jdbcType="DECIMAL" property="avgBuyPrice"/>
@@ -37,6 +41,10 @@
             bid2,
             ask1,
             ask2,
+            bid_size1,
+            bid_size2,
+            ask_size1,
+            ask_size2,
             total_sell_volume,
             total_buy_volume,
             avg_buy_price,
@@ -70,6 +78,10 @@
             #{bid2, jdbcType=DECIMAL},
             #{ask1, jdbcType=DECIMAL},
             #{ask2, jdbcType=DECIMAL},
+            #{bidSize1, jdbcType=BIGINT},
+            #{bidSize2, jdbcType=BIGINT},
+            #{askSize1, jdbcType=BIGINT},
+            #{askSize2, jdbcType=BIGINT},
             #{totalSellVolume, jdbcType=BIGINT},
             #{totalBuyVolume, jdbcType=BIGINT},
             #{avgBuyPrice, jdbcType=DECIMAL},
@@ -112,6 +124,18 @@
             </if>
             <if test="ask2 != null">
                 ask2 = #{ask2, jdbcType=DECIMAL},
+            </if>
+            <if test="bidSize1 != null">
+                bid_size1 = #{bidSize1, jdbcType=BIGINT},
+            </if>
+            <if test="bidSize2 != null">
+                bid_size2 = #{bidSize2, jdbcType=BIGINT},
+            </if>
+            <if test="askSize1 != null">
+                ask_size1 = #{askSize1, jdbcType=BIGINT},
+            </if>
+            <if test="askSize2 != null">
+                ask_size2 = #{askSize2, jdbcType=BIGINT},
             </if>
             <if test="totalSellVolume != null">
                 total_sell_volume = #{totalSellVolume, jdbcType=BIGINT},
@@ -174,6 +198,18 @@
         </if>
         <if test="ask2 != null">
             and ask2 = #{ask2, jdbcType=DECIMAL}
+        </if>
+        <if test="bidSize1 != null">
+            and bid_size1 = #{bigSize1, jdbcType=BIGINT}
+        </if>
+        <if test="bidSize2 != null">
+            and bid_size2 = #{bigSize2, jdbcType=BIGINT}
+        </if>
+        <if test="askSize1 != null">
+            and ask_size1 = #{askSize1, jdbcType=BIGINT}
+        </if>
+        <if test="askSize2 != null">
+            and ask_size2 = #{bigSize2, jdbcType=BIGINT}
         </if>
         <if test="totalSellVolume != null">
             and total_sell_volume = #{totalSellVolume, jdbcType=BIGINT}

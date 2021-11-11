@@ -76,6 +76,14 @@ public class ThsQuoteInfoQuery extends PagingQuery implements Serializable {
      */
     private BigDecimal ask2;
 
+    private Long bidSize1;
+
+    private Long bidSize2;
+
+    private Long askSize1;
+
+    private Long askSize2;
+
     /**
      * 总卖数量
      */
