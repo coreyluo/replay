@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.SocketUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -56,9 +57,10 @@ public class BlockKbarSelfComponent {
     public void initBlockKbarSelf(){
         List<ThsBlockInfo> thsBlockInfos = thsBlockInfoService.listByCondition(new ThsBlockInfoQuery());
         for (ThsBlockInfo thsBlockInfo:thsBlockInfos){
-            /*if(!thsBlockInfo.getBlockCode().equals("DB98")){
+            /*if(!thsBlockInfo.getBlockCode().equals("CA9F")){
                 continue;
             }*/
+            System.out.println(thsBlockInfo.getBlockCode());
             String blockCode = thsBlockInfo.getBlockCode();
             String blockName = thsBlockInfo.getBlockName();
             try {
@@ -130,6 +132,9 @@ public class BlockKbarSelfComponent {
             if(blockTotalInfoDTO==null){
                 continue;
             }
+            if(DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd).equals("20211101")){
+                System.out.println(11);
+            }
             if(blockTotalInfoDTO.getCount()>0){
                 BigDecimal avgOpenRate = blockTotalInfoDTO.getOpenTotalRate().divide(new BigDecimal(blockTotalInfoDTO.getCount()), 2, BigDecimal.ROUND_HALF_UP);
                 BigDecimal avgCloseRate = blockTotalInfoDTO.getCloseTotalRate().divide(new BigDecimal(blockTotalInfoDTO.getCount()), 2, BigDecimal.ROUND_HALF_UP);
@@ -145,6 +150,7 @@ public class BlockKbarSelfComponent {
                 blockKbarSelfQuery.setBlockCode(blockInfo.getBlockCode());
                 blockKbarSelfQuery.setKbarDateTo(key);
                 blockKbarSelfQuery.setLimit(1);
+                blockKbarSelfQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
                 List<BlockKbarSelf> blockKbars = blockKbarSelfService.listByCondition(blockKbarSelfQuery);
                 BigDecimal preEndPirce = new BigDecimal("100.00");
                 if(!CollectionUtils.isEmpty(blockKbars)) {

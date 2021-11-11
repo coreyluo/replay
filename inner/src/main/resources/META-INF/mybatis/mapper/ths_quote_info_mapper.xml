@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.ThsQuoteInfoDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.ThsQuoteInfo">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
+        <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
+        <result column="quote_date" jdbcType="VARCHAR" property="quoteDate"/>
+        <result column="quote_time" jdbcType="VARCHAR" property="quoteTime"/>
+        <result column="current_price" jdbcType="DECIMAL" property="currentPrice"/>
+        <result column="bid1" jdbcType="DECIMAL" property="bid1"/>
+        <result column="bid2" jdbcType="DECIMAL" property="bid2"/>
+        <result column="ask1" jdbcType="DECIMAL" property="ask1"/>
+        <result column="ask2" jdbcType="DECIMAL" property="ask2"/>
+        <result column="total_sell_volume" jdbcType="BIGINT" property="totalSellVolume"/>
+        <result column="total_buy_volume" jdbcType="BIGINT" property="totalBuyVolume"/>
+        <result column="avg_buy_price" jdbcType="DECIMAL" property="avgBuyPrice"/>
+        <result column="avg_sell_price" jdbcType="DECIMAL" property="avgSellPrice"/>
+        <result column="amt" jdbcType="DECIMAL" property="amt"/>
+        <result column="vol" jdbcType="BIGINT" property="vol"/>
+        <result column="amount" jdbcType="DECIMAL" property="amount"/>
+        <result column="volume" jdbcType="BIGINT" property="volume"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            stock_code,
+            stock_name,
+            quote_date,
+            quote_time,
+            current_price,
+            bid1,
+            bid2,
+            ask1,
+            ask2,
+            total_sell_volume,
+            total_buy_volume,
+            avg_buy_price,
+            avg_sell_price,
+            amt,
+            vol,
+            amount,
+            volume,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from ths_quote_info
+        where id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.ThsQuoteInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into ths_quote_info (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{stockCode, jdbcType=VARCHAR},
+            #{stockName, jdbcType=VARCHAR},
+            #{quoteDate, jdbcType=VARCHAR},
+            #{quoteTime, jdbcType=VARCHAR},
+            #{currentPrice, jdbcType=DECIMAL},
+            #{bid1, jdbcType=DECIMAL},
+            #{bid2, jdbcType=DECIMAL},
+            #{ask1, jdbcType=DECIMAL},
+            #{ask2, jdbcType=DECIMAL},
+            #{totalSellVolume, jdbcType=BIGINT},
+            #{totalBuyVolume, jdbcType=BIGINT},
+            #{avgBuyPrice, jdbcType=DECIMAL},
+            #{avgSellPrice, jdbcType=DECIMAL},
+            #{amt, jdbcType=DECIMAL},
+            #{vol, jdbcType=BIGINT},
+            #{amount, jdbcType=DECIMAL},
+            #{volume, jdbcType=BIGINT},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.ThsQuoteInfo">
+        update ths_quote_info
+        <set>
+            <if test="stockCode != null">
+                stock_code = #{stockCode, jdbcType=VARCHAR},
+            </if>
+            <if test="stockName != null">
+                stock_name = #{stockName, jdbcType=VARCHAR},
+            </if>
+            <if test="quoteDate != null">
+                quote_date = #{quoteDate, jdbcType=VARCHAR},
+            </if>
+            <if test="quoteTime != null">
+                quote_time = #{quoteTime, jdbcType=VARCHAR},
+            </if>
+            <if test="currentPrice != null">
+                current_price = #{currentPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="bid1 != null">
+                bid1 = #{bid1, jdbcType=DECIMAL},
+            </if>
+            <if test="bid2 != null">
+                bid2 = #{bid2, jdbcType=DECIMAL},
+            </if>
+            <if test="ask1 != null">
+                ask1 = #{ask1, jdbcType=DECIMAL},
+            </if>
+            <if test="ask2 != null">
+                ask2 = #{ask2, jdbcType=DECIMAL},
+            </if>
+            <if test="totalSellVolume != null">
+                total_sell_volume = #{totalSellVolume, jdbcType=BIGINT},
+            </if>
+            <if test="totalBuyVolume != null">
+                total_buy_volume = #{totalBuyVolume, jdbcType=BIGINT},
+            </if>
+            <if test="avgBuyPrice != null">
+                avg_buy_price = #{avgBuyPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="avgSellPrice != null">
+                avg_sell_price = #{avgSellPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="amt != null">
+                amt = #{amt, jdbcType=DECIMAL},
+            </if>
+            <if test="vol != null">
+                vol = #{vol, jdbcType=BIGINT},
+            </if>
+            <if test="amount != null">
+                amount = #{amount, jdbcType=DECIMAL},
+            </if>
+            <if test="volume != null">
+                volume = #{volume, jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="stockCode != null">
+            and stock_code = #{stockCode, jdbcType=VARCHAR}
+        </if>
+        <if test="stockName != null">
+            and stock_name = #{stockName, jdbcType=VARCHAR}
+        </if>
+        <if test="quoteDate != null">
+            and quote_date = #{quoteDate, jdbcType=VARCHAR}
+        </if>
+        <if test="quoteTime != null">
+            and quote_time = #{quoteTime, jdbcType=VARCHAR}
+        </if>
+        <if test="currentPrice != null">
+            and current_price = #{currentPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="bid1 != null">
+            and bid1 = #{bid1, jdbcType=DECIMAL}
+        </if>
+        <if test="bid2 != null">
+            and bid2 = #{bid2, jdbcType=DECIMAL}
+        </if>
+        <if test="ask1 != null">
+            and ask1 = #{ask1, jdbcType=DECIMAL}
+        </if>
+        <if test="ask2 != null">
+            and ask2 = #{ask2, jdbcType=DECIMAL}
+        </if>
+        <if test="totalSellVolume != null">
+            and total_sell_volume = #{totalSellVolume, jdbcType=BIGINT}
+        </if>
+        <if test="totalBuyVolume != null">
+            and total_buy_volume = #{totalBuyVolume, jdbcType=BIGINT}
+        </if>
+        <if test="avgBuyPrice != null">
+            and avg_buy_price = #{avgBuyPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="avgSellPrice != null">
+            and avg_sell_price = #{avgSellPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="amt != null">
+            and amt = #{amt, jdbcType=DECIMAL}
+        </if>
+        <if test="vol != null">
+            and vol = #{vol, jdbcType=BIGINT}
+        </if>
+        <if test="amount != null">
+            and amount = #{amount, jdbcType=DECIMAL}
+        </if>
+        <if test="volume != null">
+            and volume = #{volume, jdbcType=BIGINT}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.ThsQuoteInfoQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from ths_quote_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.ThsQuoteInfoQuery" resultType="java.lang.Integer">
+        select count(1)
+        from ths_quote_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

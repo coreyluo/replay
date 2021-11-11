@@ -89,16 +89,20 @@ public class DragonTigerDailyComponent {
                                     dragonTigerDailyService.save(dragonTiger);
                                 }
                             }
-                        }
-
-                        if("华鑫证券有限责任公司上海分公司".equals(dragonTiger.getChair())){
+                        }else if("华鑫证券有限责任公司上海分公司".equals(dragonTiger.getChair())){
                             if("106015".equals(dragonTiger.getAbnormalCode()) && dragonTiger.getRank()<5 ){
                                 DragonTigerDaily byUnique =  getByUniqueKey(circulateInfo.getStockCode(),kbarDate,dragonTiger.getAbnormalCode());
                                 if(byUnique == null){
                                     dragonTigerDailyService.save(dragonTiger);
                                 }
                             }
-
+                        }else if("招商证券交易单元(353800)".equals(dragonTiger.getChair())){
+                            if("106015".equals(dragonTiger.getAbnormalCode()) ){
+                                DragonTigerDaily byUnique =  getByUniqueKey(circulateInfo.getStockCode(),kbarDate,dragonTiger.getAbnormalCode());
+                                if(byUnique == null){
+                                    dragonTigerDailyService.save(dragonTiger);
+                                }
+                            }
                         }
                     }
                 }

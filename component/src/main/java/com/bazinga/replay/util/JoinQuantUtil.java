@@ -17,10 +17,12 @@ public class JoinQuantUtil {
         Map<String,String> paramMap = new HashMap<>();
         paramMap.put("method","get_token");
         // 获取当前token
-        paramMap.put("mob","13588205347");
+        paramMap.put("mob","13661608985");
         // 标的类型
-        paramMap.put("pwd","Lily5200!");
-
+        paramMap.put("pwd","Cw123456cw");
+      /*  paramMap.put("mob","13588205347");
+        // 标的类型
+        paramMap.put("pwd","Lily5200!");*/
 
         String result = Jsoup.connect("https://dataapi.joinquant.com/apis").ignoreContentType(true)
                 .header("Content-Type", "application/json")
@@ -48,6 +50,20 @@ public class JoinQuantUtil {
         paramMap.put("code",code);
         paramMap.put("date",date);
        // paramMap.put("end_date","2021-11-04");
+        return Jsoup.connect("https://dataapi.joinquant.com/apis").ignoreContentType(true)
+                .header("Content-Type", "application/json")
+                .requestBody(JSONObject.toJSONString(paramMap)).post().text();
+    }
+
+
+    public static String getTicks(String code, String date,String token) throws IOException {
+
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("method","get_ticks");
+        paramMap.put("token",token);
+        paramMap.put("code",code);
+        paramMap.put("end_date","2021-11-04");
+        paramMap.put("count",4800);
         return Jsoup.connect("https://dataapi.joinquant.com/apis").ignoreContentType(true)
                 .header("Content-Type", "application/json")
                 .requestBody(JSONObject.toJSONString(paramMap)).post().text();
