@@ -4,11 +4,19 @@ package com.bazinga.component;
 import Ths.JDIBridge;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.replay.model.ThsBlockInfo;
+import com.bazinga.replay.model.ThsQuoteInfo;
+import com.bazinga.replay.service.ThsQuoteInfoService;
+import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.sql.Time;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -18,18 +26,62 @@ import java.util.List;
 @Component
 @Slf4j
 public class ThsDataUtilComponent {
-    public void quoteInfo(String stockCode,String tradeDate){
+    @Autowired
+    private ThsQuoteInfoService thsQuoteInfoService;
+
+    public void quoteInfo(String stockCode,String stockName,String tradeDate){
         int ret = thsLogin();
         String stockKey = getStockKey(stockCode);
-        String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume","","2021-11-10 09:25:00","2021-11-10 15:00:00");
+        String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume;bidSize1;bidSize2;askSize1;askSize2","","2021-11-10 09:25:00","2021-11-10 15:10:00");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             JSONArray tables = jsonObject.getJSONArray("tables");
             JSONObject tableJson = tables.getJSONObject(0);
             JSONArray timeArray = tableJson.getJSONArray("time");
             List<String> times = timeArray.toJavaList(String.class);
-
-
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> amounts = tableInfo.getJSONArray("amount").toJavaList(BigDecimal.class);
+            List<BigDecimal> amts = tableInfo.getJSONArray("amt").toJavaList(BigDecimal.class);
+            List<BigDecimal> volumes = tableInfo.getJSONArray("volume").toJavaList(BigDecimal.class);
+            List<BigDecimal> vols = tableInfo.getJSONArray("vol").toJavaList(BigDecimal.class);
+            List<BigDecimal> totalSellVolumes = tableInfo.getJSONArray("totalSellVolume").toJavaList(BigDecimal.class);
+            List<BigDecimal> totalBuyVolumes = tableInfo.getJSONArray("totalBuyVolume").toJavaList(BigDecimal.class);
+            List<BigDecimal> avgSellPrices = tableInfo.getJSONArray("avgSellPrice").toJavaList(BigDecimal.class);
+            List<BigDecimal> avgBuyPrices = tableInfo.getJSONArray("avgBuyPrice").toJavaList(BigDecimal.class);
+            List<BigDecimal> latests = tableInfo.getJSONArray("latest").toJavaList(BigDecimal.class);
+            List<BigDecimal> bid1s = tableInfo.getJSONArray("bid1").toJavaList(BigDecimal.class);
+            List<BigDecimal> bid2s = tableInfo.getJSONArray("bid2").toJavaList(BigDecimal.class);
+            List<BigDecimal> ask1s = tableInfo.getJSONArray("ask1").toJavaList(BigDecimal.class);
+            List<BigDecimal> ask2s = tableInfo.getJSONArray("ask2").toJavaList(BigDecimal.class);
+            List<BigDecimal> bidSize1s = tableInfo.getJSONArray("bidSize1").toJavaList(BigDecimal.class);
+            List<BigDecimal> bidSize2s = tableInfo.getJSONArray("bidSize2").toJavaList(BigDecimal.class);
+            List<BigDecimal> askSize1s = tableInfo.getJSONArray("askSize1").toJavaList(BigDecimal.class);
+            List<BigDecimal> askSize2s = tableInfo.getJSONArray("askSize2").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.DEFAULT_FORMAT);
+                ThsQuoteInfo quote = new ThsQuoteInfo();
+                quote.setStockCode(stockCode);
+                quote.setStockName(stockName);
+                quote.setQuoteDate(DateUtil.format(date,DateUtil.yyyyMMdd));
+                quote.setQuoteTime(DateUtil.format(date,DateUtil.HHMMSS));
+                quote.setCurrentPrice(latests.get(i));
+                quote.setBid1(bid1s.get(i));
+                quote.setBid2(bid2s.get(i));
+                quote.setAsk1(ask1s.get(i));
+                quote.setAsk2(ask2s.get(i));
+                quote.setAmt(amts.get(i));
+                quote.setAmount(amounts.get(i));
+                quote.setVol(vols.get(i).longValue());
+                quote.setVolume(volumes.get(i).longValue());
+                quote.setTotalSellVolume(totalSellVolumes.get(i).longValue());
+                quote.setTotalBuyVolume(totalBuyVolumes.get(i).longValue());
+                quote.setAvgBuyPrice(avgBuyPrices.get(i));
+                quote.setAvgSellPrice(avgSellPrices.get(i));
+                thsQuoteInfoService.save(quote);
+                i++;
+                System.out.println(i);
+            }
             System.out.println("111");
         }
     }
@@ -54,8 +106,7 @@ public class ThsDataUtilComponent {
     }
 
     public static void main(String[] args) {
-
-        new ThsDataUtilComponent().quoteInfo("603533","");
+        new ThsDataUtilComponent().quoteInfo("603533","","");
         System.out.println(System.getProperty("java.library.path"));
         System.load("E://iFinDJava.dll");
         int ret = -1;

@@ -3,6 +3,7 @@ package com.bazinga.test;
 
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
+import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.util.DateUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,8 @@ public class HblTest extends BaseTestCase {
     private ChungYePlankReturnInfoComponent chungYePlankReturnInfoComponent;
     @Autowired
     private ChungYePlankFirstInfoComponent chungYePlankFirstInfoComponent;
+    @Autowired
+    private ThsDataUtilComponent thsDataUtilComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -68,9 +71,10 @@ public class HblTest extends BaseTestCase {
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
-        synExcelComponent.hotBlockDrop();
+        //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
+        thsDataUtilComponent.quoteInfo("000001","平安银行","");
 
     }
 
