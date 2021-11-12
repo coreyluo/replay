@@ -9,6 +9,7 @@ import com.bazinga.replay.query.ThsBlockInfoQuery;
 import com.bazinga.replay.query.ThsBlockStockDetailQuery;
 import com.bazinga.replay.service.ThsBlockInfoService;
 import com.bazinga.replay.service.ThsBlockStockDetailService;
+import com.bazinga.replay.service.ThsQuoteInfoService;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
 import com.google.common.collect.Lists;
@@ -38,6 +39,8 @@ public class SynExcelComponent {
     private HotBlockBestBuyComponent hotBlockBestBuyComponent;
     @Autowired
     private ZhuanZaiComponent zhuanZaiComponent;
+    @Autowired
+    private ThsDataUtilComponent thsDataUtilComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -182,6 +185,22 @@ public class SynExcelComponent {
         try {
             List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
             zhuanZaiComponent.zhuanZaiBuy(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void zhuanZaiQuoteInfo() {
+        File file = new File("D:\\circulate\\zhuanzai.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\zhuanzai.xlsx") + "不存在");
+        }
+        try {
+            List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
+            thsDataUtilComponent.zhuanZaiStocks(dataList);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);

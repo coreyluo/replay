@@ -63,8 +63,9 @@ public class HblTest extends BaseTestCase {
         synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
-        //synExcelComponent.zhuanZaiBuy();
+        synExcelComponent.zhuanZaiBuy();
         blockChoaDieComponent.chaoDie();
+
     }
     @Test
     public void test2(){
@@ -74,7 +75,9 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
-        thsDataUtilComponent.quoteInfo("000001","平安银行","");
+        //synExcelComponent.zhuanZaiQuoteInfo();
+        //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
+        synExcelComponent.zhuanZaiQuoteInfo();
 
     }
 

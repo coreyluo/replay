@@ -4,9 +4,14 @@ package com.bazinga.component;
 import Ths.JDIBridge;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.base.Sort;
+import com.bazinga.dto.ZhuanZaiExcelDTO;
 import com.bazinga.replay.model.ThsBlockInfo;
 import com.bazinga.replay.model.ThsQuoteInfo;
+import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.ThsQuoteInfoService;
+import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.sql.Time;
 import java.util.Date;
@@ -28,16 +34,41 @@ import java.util.List;
 public class ThsDataUtilComponent {
     @Autowired
     private ThsQuoteInfoService thsQuoteInfoService;
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
+
+    public void zhuanZaiStocks(List<ZhuanZaiExcelDTO> dataList){
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateTo(DateUtil.parseDate("2021-11-10 15:30:30",DateUtil.DEFAULT_FORMAT));
+        query.setTradeDateFrom(DateUtil.parseDate("20210901",DateUtil.yyyyMMdd));
+        query.addOrderBy("trade_date", Sort.SortType.DESC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        for(ZhuanZaiExcelDTO zhuanZai:dataList){
+            /*if(!zhuanZai.getStockCode().equals("113528")){
+                continue;
+            }*/
+            for(TradeDatePool tradeDatePool:tradeDatePools){
+                quoteInfo(zhuanZai.getStockCode(),zhuanZai.getStockName(),DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyy_MM_dd));
+            }
+        }
+    }
 
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate);
         int ret = thsLogin();
         String stockKey = getStockKey(stockCode);
-        String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume;bidSize1;bidSize2;askSize1;askSize2","","2021-11-10 09:25:00","2021-11-10 15:10:00");
+        String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume;bidSize1;bidSize2;askSize1;askSize2","",tradeDate+" 09:25:00",tradeDate+" 15:10:00");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
             JSONObject tableJson = tables.getJSONObject(0);
             JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
             List<String> times = timeArray.toJavaList(String.class);
             JSONObject tableInfo = tableJson.getJSONObject("table");
             List<BigDecimal> amounts = tableInfo.getJSONArray("amount").toJavaList(BigDecimal.class);
@@ -70,6 +101,10 @@ public class ThsDataUtilComponent {
                 quote.setBid2(bid2s.get(i));
                 quote.setAsk1(ask1s.get(i));
                 quote.setAsk2(ask2s.get(i));
+                quote.setBidSize1(bidSize1s.get(i).longValue());
+                quote.setBidSize2(bidSize2s.get(i).longValue());
+                quote.setAskSize1(askSize1s.get(i).longValue());
+                quote.setAskSize2(askSize2s.get(i).longValue());
                 quote.setAmt(amts.get(i));
                 quote.setAmount(amounts.get(i));
                 quote.setVol(vols.get(i).longValue());
@@ -80,12 +115,22 @@ public class ThsDataUtilComponent {
                 quote.setAvgSellPrice(avgSellPrices.get(i));
                 thsQuoteInfoService.save(quote);
                 i++;
-                System.out.println(i);
             }
-            System.out.println("111");
+            JDIBridge.THS_iFinDLogout();
         }
     }
     public int thsLogin(){
+        try {
+            System.load("E://iFinDJava.dll");
+            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            return ret;
+        }catch (Exception e){
+            log.error("同花顺登录失败",e);
+            return -1;
+        }
+    }
+
+    public int thsLoginOut(){
         try {
             System.load("E://iFinDJava.dll");
             int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
@@ -106,7 +151,7 @@ public class ThsDataUtilComponent {
     }
 
     public static void main(String[] args) {
-        new ThsDataUtilComponent().quoteInfo("603533","","");
+        new ThsDataUtilComponent().quoteInfo("113528","","");
         System.out.println(System.getProperty("java.library.path"));
         System.load("E://iFinDJava.dll");
         int ret = -1;
