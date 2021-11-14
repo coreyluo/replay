@@ -14,6 +14,7 @@ import com.bazinga.replay.service.ThsQuoteInfoService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
+import com.bazinga.util.ThreadPoolUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ import java.math.BigDecimal;
 import java.sql.Time;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yunshan
@@ -37,7 +40,29 @@ public class ThsDataUtilComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
 
+    public static final ExecutorService THREAD_POOL_QUOTE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
+
+    public void threadTest(List<ZhuanZaiExcelDTO> dataList) {
+        for(ZhuanZaiExcelDTO zhuanZaiExcelDTO:dataList) {
+            THREAD_POOL_QUOTE.execute(() -> {
+                String name = Thread.currentThread().getName();
+                System.out.println(zhuanZaiExcelDTO.getStockCode()+zhuanZaiExcelDTO.getStockName()+"==="+name);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        try {
+            THREAD_POOL_QUOTE.awaitTermination(10, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void zhuanZaiStocks(List<ZhuanZaiExcelDTO> dataList){
+        int ret = thsLogin();
         TradeDatePoolQuery query = new TradeDatePoolQuery();
         query.setTradeDateTo(DateUtil.parseDate("2021-11-10 15:30:30",DateUtil.DEFAULT_FORMAT));
         query.setTradeDateFrom(DateUtil.parseDate("20210901",DateUtil.yyyyMMdd));
@@ -48,14 +73,21 @@ public class ThsDataUtilComponent {
                 continue;
             }*/
             for(TradeDatePool tradeDatePool:tradeDatePools){
-                quoteInfo(zhuanZai.getStockCode(),zhuanZai.getStockName(),DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyy_MM_dd));
+                quoteInfo(zhuanZai.getStockCode(), zhuanZai.getStockName(), DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd));
+                /*THREAD_POOL_QUOTE.execute(() -> {
+                    quoteInfo(zhuanZai.getStockCode(), zhuanZai.getStockName(), DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd));
+                });*/
             }
         }
+       /* try {
+            THREAD_POOL_QUOTE.awaitTermination(10, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
     }
 
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
-        System.out.println(stockCode+"===="+stockName+"===="+tradeDate);
-        int ret = thsLogin();
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
         String stockKey = getStockKey(stockCode);
         String quote_str = JDIBridge.THS_Snapshot(stockKey,"bid1;bid2;ask1;ask2;totalSellVolume;totalBuyVolume;avgBuyPrice;avgSellPrice;latest;amt;vol;amount;volume;bidSize1;bidSize2;askSize1;askSize2","",tradeDate+" 09:25:00",tradeDate+" 15:10:00");
         if(!StringUtils.isEmpty(quote_str)){
@@ -116,7 +148,6 @@ public class ThsDataUtilComponent {
                 thsQuoteInfoService.save(quote);
                 i++;
             }
-            JDIBridge.THS_iFinDLogout();
         }
     }
     public int thsLogin(){

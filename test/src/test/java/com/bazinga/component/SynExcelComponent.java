@@ -201,6 +201,7 @@ public class SynExcelComponent {
         try {
             List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
             thsDataUtilComponent.zhuanZaiStocks(dataList);
+            //thsDataUtilComponent.threadTest(dataList);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
