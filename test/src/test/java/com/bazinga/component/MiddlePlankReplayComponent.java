@@ -54,6 +54,150 @@ public class MiddlePlankReplayComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    public void invokeSecond(){
+        Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
+        ExcelExportUtil excelExportUtil = new ExcelExportUtil();
+        excelExportUtil.setWorkbook(workbook);
+        excelExportUtil.setTitle("");
+        excelExportUtil.setSheet(workbook.createSheet("sheet1"));
+        List<Map> dataList = Lists.newArrayList();
+        // excelExportUtil.set
+        String[] headList = getHeadList();
+        excelExportUtil.setHeadKey(headList);
+
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
+        TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            query.setKbarDateFrom("20210401");
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+
+            if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
+                continue;
+            }
+            for (int i = 15; i < stockKbars.size()-1; i++) {
+
+                // StockKbar aftstockKbar = stockKbars.get(i+1);
+                StockKbar stockKbar = stockKbars.get(i);
+                StockKbar preStockKbar = stockKbars.get(i-1);
+                StockKbar sellStockKbar = stockKbars.get(i+1);
+                List<StockKbar> kbarList = stockKbars.subList(i - 7, i + 1);
+                List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
+                List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
+
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                    continue;
+                }
+              //  BigDecimal day10Rate = calDay10Rate(kbar10List);
+
+                int plank = calSerialsPlank(kbarList);
+                if(plank<2 || plank >4){
+                    continue;
+                }
+                String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
+
+
+                if(commonComponent.isNewStock(stockKbar.getStockCode(),stockKbar.getKbarDate())){
+                    log.info("新股判定 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                    continue;
+                }
+                BigDecimal highLowRatio = getHighLowRatio(kbar15List,stockKbar.getAdjHighPrice());
+                if(highLowRatio.compareTo(new BigDecimal("1.80"))>0){
+                    log.info("满足大于1.8系数 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
+                    continue;
+                }
+                log.info("满足中位股条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                list = historyTransactionDataComponent.getPreOneHourData(list);
+                Map<String, Object> map = new HashMap<>();
+                map.put("stockCode",sellStockKbar.getStockCode());
+                map.put("stockName",sellStockKbar.getStockName());
+                map.put("kbarDate",sellStockKbar.getKbarDate());
+                Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
+                    BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                    if(!"09:25".equals(transactionDataDTO.getTradeTime())){
+                        List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
+                        if(minList == null){
+                            minList = new ArrayList<>();
+                            minList.add(transactionDataDTO);
+                            tempMap.put(transactionDataDTO.getTradeTime(),minList);
+                        }else {
+                            minList.add(transactionDataDTO);
+                        }
+                    }else {
+                        map.put(transactionDataDTO.getTradeTime(),rate);
+                    }
+                //    map.put(transactionDataDTO.getTradeTime(),rate);
+
+                }
+                tempMap.forEach((minStr,minlist)->{
+                    for (int j = 0; j < minlist.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(j);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        map.put(minStr+ SymbolConstants.UNDERLINE + (j+1),rate);
+                    }
+                    if(minlist.size()<20){
+                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(minlist.size()-1);
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        for (int j = 20; j > minlist.size() ; j--) {
+                            map.put(minStr+ SymbolConstants.UNDERLINE + j,rate);
+                        }
+                    }
+                });
+                dataList.add(map);
+            }
+        }
+
+        Map<String,List<Map>> groupByMap = new HashMap<>();
+
+        for (Map map : dataList) {
+            List<Map> mapList = groupByMap.get(map.get("kbarDate").toString());
+            if(mapList == null){
+                mapList = new ArrayList<>();
+            }
+            mapList.add(map);
+            groupByMap.put(map.get("kbarDate").toString(),mapList);
+        }
+        List<Map> exportList = Lists.newArrayList();
+        groupByMap.forEach((key,list)->{
+            Map map = new HashMap<>();
+            map.put("kbarDate",key);
+            map.put("count",list.size());
+            for (int i = 2; i < headList.length; i++) {
+                String attrKey = headList[i];
+                BigDecimal totalRate = BigDecimal.ZERO;
+                BigDecimal preRate = BigDecimal.ZERO;
+                for (Map itemMap : list) {
+                    BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
+                    totalRate = totalRate.add(rate);
+                    if(itemMap.get(attrKey) != null){
+                        preRate = new BigDecimal(itemMap.get(attrKey).toString());
+                    }
+                }
+                map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
+            }
+            exportList.add(map);
+        });
+
+        excelExportUtil.setData(exportList);
+        excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
+        excelExportUtil.writeMainData(1);
+
+        try {
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank包含炸板纯粹连板去20天新股含1.8秒级.xls");
+            workbook.write(output);
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     public  void invokeOver3Rate(){
 
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
@@ -274,7 +418,7 @@ public class MiddlePlankReplayComponent {
     }
 
     public void invoke(){
-        Map<String, BlockCompeteDTO> blockCompeteMap = blockReplayComponent.getBlockRateMap();
+       // Map<String, BlockCompeteDTO> blockCompeteMap = blockReplayComponent.getBlockRateMap();
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
         ExcelExportUtil excelExportUtil = new ExcelExportUtil();
         excelExportUtil.setWorkbook(workbook);
@@ -289,7 +433,7 @@ public class MiddlePlankReplayComponent {
         circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
         TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
         for (CirculateInfo circulateInfo : circulateInfos) {
-           /* if(!"002539".equals(circulateInfo.getStockCode())){
+          /*  if(!"002011".equals(circulateInfo.getStockCode())){
                 continue;
             }*/
             StockKbarQuery query = new StockKbarQuery();
@@ -319,7 +463,7 @@ public class MiddlePlankReplayComponent {
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                         if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
-                            log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                           // log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                             stockKbar.setClosePrice(stockKbar.getHighPrice());
                             break;
                         }
@@ -327,7 +471,7 @@ public class MiddlePlankReplayComponent {
                 }
 
                 int plank = calSerialsPlank(kbarList);
-                if(plank<1 || plank >4){
+                if(plank<2 || plank >4){
                     continue;
                 }
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
@@ -346,10 +490,10 @@ public class MiddlePlankReplayComponent {
                     continue;
                 }
                 BigDecimal highLowRatio = getHighLowRatio(kbar15List,stockKbar.getAdjHighPrice());
-               /* if(highLowRatio.compareTo(new BigDecimal("1.80"))>0){
+                if(highLowRatio.compareTo(new BigDecimal("1.80"))>0){
                     log.info("满足大于1.8系数 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
-                }*/
+                }
               /*  if(isFirstPlankOneLine(kbarList,plank)){
                     log.info("满足首板1字开盘 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
@@ -358,7 +502,7 @@ public class MiddlePlankReplayComponent {
                     log.info("满足连续2字板开盘 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }*/
-                log.info("满足中位股条件 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
+                log.info("满足中位股条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                 list = historyTransactionDataComponent.getPreOneHourData(list);
                 Map<String, Object> map = new HashMap<>();
@@ -534,13 +678,13 @@ public class MiddlePlankReplayComponent {
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
-        while (count< 30){
+        while (count< 10){
             date = DateUtil.addMinutes(date, 1);
             count++;
-            headList.add(DateUtil.format(date,"HH:mm"));
-          /*  for (int i = 1; i < 21; i++) {
+           // headList.add(DateUtil.format(date,"HH:mm"));
+            for (int i = 1; i < 21; i++) {
                 headList.add(DateUtil.format(date,"HH:mm") + SymbolConstants.UNDERLINE +i);
-            }*/
+            }
         }
      /*   headList.add("13:00");
         date = DateUtil.parseDate("20210531130000", DateUtil.yyyyMMddHHmmss);
