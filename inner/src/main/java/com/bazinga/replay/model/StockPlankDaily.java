@@ -47,6 +47,9 @@ public class StockPlankDaily implements Serializable {
      */
     private String stockName;
 
+    private String uniqueKey;
+
+
     /**
      * 
      *

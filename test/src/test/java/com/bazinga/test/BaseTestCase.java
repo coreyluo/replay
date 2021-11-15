@@ -1,6 +1,8 @@
 package com.bazinga.test;
 
+import com.bazinga.enums.PlankTypeEnum;
 import com.bazinga.replay.component.*;
+import com.bazinga.replay.dto.PlankTypeDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.util.DateTimeUtils;
@@ -76,6 +78,7 @@ public class BaseTestCase {
         stockCommonReplayComponent.highRaiseStockInfo(new Date());
         stockCommonReplayComponent.forTwoPlankWuDi(new Date());
         stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
         badPlankComponent.badPlankJudge(new Date());
         stockPlankDailyComponent.superFactor(new Date());
         blockKbarComponent.thsBlockKbar(DateTimeUtils.getDate000000(new Date()));
@@ -95,6 +98,7 @@ public class BaseTestCase {
 
     @Test
     public void test3() {
+        //stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
         //stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
        //stockPlankDailyComponent.superFactor(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
         //stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
@@ -107,7 +111,7 @@ public class BaseTestCase {
         /*DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, "128094", 0,100);
         List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123048", "20211102");
         System.out.println(data);*/
-        blockKbarSelfComponent.initBlockKbarSelf();
+        //blockKbarSelfComponent.initBlockKbarSelf();
     }
 
 

@@ -34,6 +34,8 @@ public class StockPlankDailyQuery extends PagingQuery implements Serializable {
      */
     private String stockName;
 
+    private String uniqueKey;
+
     /**
      *  开始
      */
