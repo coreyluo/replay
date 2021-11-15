@@ -1,9 +1,12 @@
 package com.bazinga.component;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.Fast300UpperDTO;
 import com.bazinga.dto.Month2RateDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
@@ -14,11 +17,15 @@ import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import sun.text.resources.no.JavaTimeSupplementary_no;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -39,6 +46,32 @@ public class Month2RateReplayComponent {
 
     @Autowired
     private CirculateInfoService circulateInfoService;
+
+
+    public void szNeeddle(){
+        List<KBarDTO> list = Lists.newArrayList();
+        for (int i = 0; i < 400; i++) {
+            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, "999999", i, 1);
+            List<KBarDTO> kBarDTOS = KBarDTOConvert.convertKBar(dataTable);
+            list.add(kBarDTOS.get(0));
+        }
+      //  log.info("{}", JSONObject.toJSONString(list));
+        list = Lists.reverse(list);
+        for (int i = 11; i < list.size(); i++) {
+            KBarDTO kBarDTO = list.get(i);
+            KBarDTO preKBarDTO = list.get(i-1);
+            List<KBarDTO> subList = list.subList(i - 11, i );
+            KBarDTO first = subList.get(0);
+            BigDecimal day5Rate = PriceUtil.getPricePercentRate(subList.get(subList.size()-1).getEndPrice().subtract(first.getEndPrice()),first.getEndPrice());
+
+            BigDecimal minPrice = kBarDTO.getStartPrice().compareTo(kBarDTO.getEndPrice()) >0 ? kBarDTO.getEndPrice():kBarDTO.getStartPrice();
+            BigDecimal rate = PriceUtil.getPricePercentRate(kBarDTO.getLowestPrice().subtract(minPrice), preKBarDTO.getEndPrice());
+            if(rate.compareTo(new BigDecimal("-1"))<0){
+                log.info("满足上证下影线大于1个点kbarDate{} rate{} day10Rate{}", kBarDTO.getDateStr(),rate,day5Rate);
+            }
+
+        }
+    }
 
     public void  replay(){
         List<Fast300UpperDTO> resultList = Lists.newArrayList();
