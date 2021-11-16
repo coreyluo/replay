@@ -1,10 +1,7 @@
 package com.bazinga.component;
 
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
-import com.bazinga.dto.LevelDTO;
 import com.bazinga.dto.ZhuanZaiBuyDTO;
 import com.bazinga.dto.ZhuanZaiExcelDTO;
 import com.bazinga.queue.LimitQueue;
@@ -17,9 +14,7 @@ import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.ThsQuoteInfoService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
-import com.bazinga.util.MarketUtil;
 import com.bazinga.util.PriceUtil;
-import com.bazinga.util.ThreadPoolUtils;
 import com.google.common.collect.Lists;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
@@ -31,9 +26,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author yunshan
@@ -41,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
-public class ThsZhuanZaiComponent {
+public class ThsZhuanZaiChenWeiComponent {
     @Autowired
     private ThsQuoteInfoService thsQuoteInfoService;
     @Autowired
@@ -61,20 +57,17 @@ public class ThsZhuanZaiComponent {
             list.add(dto.getBuyTime());
             list.add(dto.getSellPrice());
             list.add(dto.getSellTime());
-            list.add(dto.getBeforeBuyTotalSell());
-            list.add(dto.getBeforeBuyFenShi());
-            list.add(dto.getBuyTotalSell());
-            list.add(dto.getBuyFenShi());
-            list.add(dto.getBeforeAvgFenShi());
+            list.add(dto.getGatherFenShi());
+            list.add(dto.getRaiseVolFlag());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","市值","交易日期","买入价格","买入时间","买出价格","买出时间","买入前总卖","买入前分时","买入时总卖","买入时分时","买入前10跳平均分时","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("转债无敌",rowNames,datas);
+        String[] rowNames = {"index","股票代码","股票名称","市值","交易日期","买入价格","买入时间","买出价格","买出时间","集合成交量","成交是否递增","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("转债陈威",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("转债无敌");
+            poiExcelUtil.exportExcelUseExcelTitle("转债陈威");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -105,53 +98,52 @@ public class ThsZhuanZaiComponent {
                     datas.addAll(buyDTOS);
                 }
             }
-           /* if(datas.size()>=10){
+            if(datas.size()>=10){
                 return datas;
-            }*/
+            }
         }
         return datas;
     }
 
     public List<ZhuanZaiBuyDTO> quoteBuyInfo(List<ThsQuoteInfo> list,BigDecimal preEndPrice,ZhuanZaiExcelDTO excelDTO,String tradeDate){
         List<ZhuanZaiBuyDTO> datas = Lists.newArrayList();
-        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(3);
-        LimitQueue<ThsQuoteInfo> limitQueue4 = new LimitQueue<>(5);
-        LimitQueue<ThsQuoteInfo> limitQueue10 = new LimitQueue<>(10);
+        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(4);
+        LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(3);
         boolean buyFlag = false;
         ThsQuoteInfo quoteLast = null;
+        Long gatherChenJiao =null;
+        Date date930 = DateUtil.parseDate("093000", DateUtil.HHMMSS);
         for (ThsQuoteInfo quote:list){
-            Long totalSellVolume = quote.getTotalSellVolume();
+            if(StringUtils.isBlank(quote.getQuoteTime())){
+                continue;
+            }
+            Date date = DateUtil.parseDate(quote.getQuoteTime(), DateUtil.HHMMSS);
+            if(date.before(date930)&&(gatherChenJiao==null||gatherChenJiao<=0)){
+                gatherChenJiao = quote.getVol()/10;
+            }
             if(quote.getCurrentPrice()==null||quote.getTotalSellVolume()==null||quote.getTotalSellVolume()==0){
                 continue;
             }
             quoteLast = quote;
             limitQueue.offer(quote);
-            if (totalSellVolume != null && totalSellVolume > 50000 && !buyFlag) {
-                ZhuanZaiBuyDTO buyDTO = new ZhuanZaiBuyDTO();
-                BigDecimal rate = calRate(limitQueue, preEndPrice,buyDTO);
-                if(rate!=null&&rate.compareTo(new BigDecimal("0.1"))>=0){
-                    BigDecimal dropPercent = new BigDecimal(buyDTO.getBeforeBuyTotalSell() - buyDTO.getBuyTotalSell()).divide(new BigDecimal(buyDTO.getBeforeBuyTotalSell()),2,BigDecimal.ROUND_HALF_UP);
-                    if(dropPercent.compareTo(new BigDecimal("0.08"))==1) {
-                        buyDTO.setStockCode(excelDTO.getStockCode());
-                        buyDTO.setStockName(excelDTO.getStockName());
-                        buyDTO.setMarketAmount(excelDTO.getMarketAmount());
-                        buyDTO.setTradeDate(tradeDate);
-                        buyDTO.setBuyTime(quote.getQuoteTime());
-                        buyDTO.setBuyPrice(quote.getCurrentPrice());
-                        beforeAvgFenShi(limitQueue10,buyDTO);
-                        //quoteBuyInfo(list,preEndPrice,buyDTO);
-                        datas.add(buyDTO);
-                        buyFlag = true;
-                    }
-                }
-
+            ZhuanZaiBuyDTO buyDTO = new ZhuanZaiBuyDTO();
+            boolean haveRaise = calRate(limitQueue,buyDTO);
+            if (haveRaise && !buyFlag) {
+                buyDTO.setStockCode(excelDTO.getStockCode());
+                buyDTO.setStockName(excelDTO.getStockName());
+                buyDTO.setMarketAmount(excelDTO.getMarketAmount());
+                buyDTO.setGatherFenShi(gatherChenJiao);
+                buyDTO.setTradeDate(tradeDate);
+                buyDTO.setBuyTime(quote.getQuoteTime());
+                buyDTO.setBuyPrice(quote.getCurrentPrice());
+                datas.add(buyDTO);
+                buyFlag = true;
             }
-            limitQueue10.offer(quote);
             if(buyFlag){
-                limitQueue4.offer(quote);
-                boolean continueDrop = haveContinueDrop(limitQueue4);
+                limitQueueSell.offer(quote);
+                boolean continueDrop = haveContinueDrop(limitQueueSell);
                 if(continueDrop){
-                    limitQueue4.clear();
+                    limitQueueSell.clear();
                     buyFlag = false;
                     ZhuanZaiBuyDTO buy = datas.get(datas.size() - 1);
                     buy.setSellTime(quote.getQuoteTime());
@@ -173,97 +165,56 @@ public class ThsZhuanZaiComponent {
         return datas;
     }
 
-    public BigDecimal  calRate(LimitQueue<ThsQuoteInfo> limitQueue,BigDecimal preEndPrice,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<3){
-            return null;
+    public boolean  calRate(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
+        if(limitQueue==null||limitQueue.size()<4){
+            return false;
         }
+        ThsQuoteInfo preThsQuoteInfo = null;
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
-        ThsQuoteInfo lowQuoteInfo = null;
-        ThsQuoteInfo lastQuoteInfo = null;
+        boolean isRaiseVol = true;
         int i = 0;
         while (iterator.hasNext()){
             i++;
             ThsQuoteInfo next = iterator.next();
-            if(i<=2){
-                if(lowQuoteInfo==null||next.getCurrentPrice().compareTo(lowQuoteInfo.getCurrentPrice())==-1) {
-                    lowQuoteInfo = next;
+            if(i<=3){
+                if(next.getVol()<1000){
+                    return false;
+                }
+                if(i>1){
+                    if(next.getVol()<=preThsQuoteInfo.getVol()){
+                        isRaiseVol = false;
+                    }
+                    if(next.getCurrentPrice().compareTo(preThsQuoteInfo.getCurrentPrice())!=1){
+                        return false;
+                    }
                 }
             }
-            lastQuoteInfo = next;
+            preThsQuoteInfo = next;
         }
-        buyDTO.setBeforeBuyTotalSell(lowQuoteInfo.getTotalSellVolume()/10);
-        buyDTO.setBuyTotalSell(lastQuoteInfo.getTotalSellVolume()/10);
-        buyDTO.setBeforeBuyFenShi(lowQuoteInfo.getVol()/10);
-        buyDTO.setBuyFenShi(lastQuoteInfo.getVol()/10);
-        BigDecimal rate = PriceUtil.getPricePercentRate(lastQuoteInfo.getCurrentPrice().subtract(lowQuoteInfo.getCurrentPrice()), preEndPrice);
-        return rate;
-    }
-    public void  beforeAvgFenShi(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<2){
-            return;
+        if(isRaiseVol) {
+            buyDTO.setRaiseVolFlag(1);
         }
-        Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
-        int i = 0;
-        Long totalFenShi = 0L;
-        while (iterator.hasNext()){
-            ThsQuoteInfo next = iterator.next();
-            Long vol = next.getVol();
-            if(vol!=null) {
-                i++;
-                totalFenShi = totalFenShi + (vol/10);
-            }
-        }
-        if(i>0){
-            long avg = totalFenShi / i;
-            buyDTO.setBeforeAvgFenShi(avg);
-        }
+        return true;
     }
 
+
     public boolean  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue){
-        if(limitQueue==null||limitQueue.size()<5){
+        if(limitQueue==null||limitQueue.size()<3){
             return false;
         }
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
         ThsQuoteInfo preQuote = null;
         while (iterator.hasNext()){
             ThsQuoteInfo next = iterator.next();
+            if(next.getVol()<1000){
+                return false;
+            }
             if(preQuote!=null && next.getCurrentPrice().compareTo(preQuote.getCurrentPrice())!=-1){
                 return false;
             }
             preQuote = next;
         }
         return true;
-    }
-
-    public void quoteBuyInfo(List<ThsQuoteInfo> list,BigDecimal preEndPrice,ZhuanZaiBuyDTO buyDTO){
-        ThsQuoteInfo preQuote = null;
-        boolean flag = false;
-        ThsQuoteInfo lastQuote = null;
-        for (ThsQuoteInfo quote:list){
-           if(quote.getCurrentPrice()==null||quote.getTotalSellVolume()==null||quote.getTotalSellVolume()==0){
-               continue;
-           }
-           lastQuote = quote;
-           if(flag){
-               if(preQuote!=null){
-                   BigDecimal percent = new BigDecimal(quote.getTotalSellVolume() - preQuote.getTotalSellVolume()).divide(new BigDecimal(preQuote.getTotalSellVolume()), 2, BigDecimal.ROUND_HALF_UP);
-                   if(percent.compareTo(new BigDecimal(0.1))>0){
-                       BigDecimal rate = PriceUtil.getPricePercentRate(quote.getCurrentPrice().subtract(buyDTO.getBuyPrice()), preEndPrice);
-                       buyDTO.setProfit(rate);
-                       buyDTO.setSellPrice(quote.getCurrentPrice());
-                       buyDTO.setSellTime(quote.getQuoteTime());
-                       return;
-                   }
-               }
-               preQuote = quote;
-           }
-           if(quote.getQuoteTime().equals(buyDTO.getBuyTime())){
-               flag = true;
-           }
-        }
-        BigDecimal rate = PriceUtil.getPricePercentRate(lastQuote.getCurrentPrice().subtract(buyDTO.getBuyPrice()), preEndPrice);
-        buyDTO.setProfit(rate);
-        buyDTO.setSellPrice(lastQuote.getCurrentPrice());
     }
 
 
@@ -306,6 +257,10 @@ public class ThsZhuanZaiComponent {
             Integer timeInt = Integer.valueOf(quoteTime);
             if(timeInt>=93000&&timeInt<=150006){
                 list.add(quote);
+            }else{
+                if(quote.getVol()>0){
+                    list.add(quote);
+                }
             }
         }
         return list;

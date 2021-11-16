@@ -43,6 +43,8 @@ public class SynExcelComponent {
     private ThsDataUtilComponent thsDataUtilComponent;
     @Autowired
     private ThsZhuanZaiComponent thsZhuanZaiComponent;
+    @Autowired
+    private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -220,6 +222,22 @@ public class SynExcelComponent {
         try {
             List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
             thsZhuanZaiComponent.zhuanZaiBuy(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void zhuanZaiChenWeiInfo() {
+        File file = new File("D:\\circulate\\zhuanzai.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\zhuanzai.xlsx") + "不存在");
+        }
+        try {
+            List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
+            thsZhuanZaiChenWeiComponent.zhuanZaiBuy(dataList);
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
