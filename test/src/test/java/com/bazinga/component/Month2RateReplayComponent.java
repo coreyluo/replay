@@ -47,6 +47,13 @@ public class Month2RateReplayComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
 
+    public void replay300(){
+
+
+
+    }
+
+
 
     public void szNeeddle(){
         List<KBarDTO> list = Lists.newArrayList();

@@ -4,6 +4,7 @@ package com.bazinga.test;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockCompeteDTO;
+import com.bazinga.dto.OpenCompeteDTO;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.text.resources.no.JavaTimeSupplementary_no;
@@ -51,6 +52,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private Month2RateReplayComponent month2RateReplayComponent;
 
+    @Autowired
+    private CommonReplayComponent commonReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -84,7 +88,7 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test7(){
-        sellReplayComponent.replayMarket();
+        sellReplayComponent.replay300();
        // selfExcelReplayComponent.replay();
        // selfExcelReplayComponent.zhuanzhai();
     }
@@ -113,5 +117,10 @@ public class ReplayTest extends BaseTestCase {
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
        month2RateReplayComponent.szNeeddle();
+    }
+
+    @Test
+    public void test11(){
+        Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
     }
 }
