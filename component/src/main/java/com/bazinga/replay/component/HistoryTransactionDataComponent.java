@@ -34,12 +34,13 @@ public class HistoryTransactionDataComponent {
         int count =600;
         while (loopTimes<30 &&(CollectionUtils.isEmpty(resultList) || !"09:25".equals(resultList.get(0).getTradeTime()))){
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
+            loopTimes++;
             if(historyTransactionData ==null ){
                 break;
             }
             List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
             resultList.addAll(0,list);
-            loopTimes++;
+
         }
         return resultList;
 
@@ -52,12 +53,12 @@ public class HistoryTransactionDataComponent {
         int count =600;
         while (loopTimes<30 &&(CollectionUtils.isEmpty(resultList) || !"09:25".equals(resultList.get(0).getTradeTime()))){
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
+            loopTimes++;
             if(historyTransactionData ==null ){
                 break;
             }
             List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
             resultList.addAll(0,list);
-            loopTimes++;
         }
         return resultList;
 

@@ -120,4 +120,13 @@ public class CommonComponent {
         return stockKbarList.size() < 20;
     }
 
+    public Date getCurrentTradeDate(){
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateTo(DateTimeUtils.getDate235959(new Date()));
+        query.addOrderBy("trade_date",Sort.SortType.DESC);
+        query.setLimit(1);
+        List<TradeDatePool> dates = tradeDatePoolService.listByCondition(query);
+        return dates.get(0).getTradeDate();
+    }
+
 }

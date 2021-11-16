@@ -39,6 +39,7 @@ public class DateUtil {
 	public final static String yyyyMMddHHmmssSSS = "yyyyMMddHHmmssSSS";
 	public final static String YY_MM_DD = "yy-MM-dd";
 	public final static String HH_MM = "HH:mm";
+	public final static String HHMMSS = "HHmmss";
 	public final static String yyyyMMddHHmmss = "yyyyMMddHHmmss";
 	public final static DecimalFormat decimalFormat = new DecimalFormat("00");
 	public final static String TIME_SPLIT = ":";

@@ -120,6 +120,7 @@ public class StockPlankDailyComponent {
         daily.setBadPlankType(0);
         daily.setTradeDate(date);
         daily.setCreateTime(new Date());
+        daily.setUniqueKey(stockCode+"_"+DateUtil.format(date,DateUtil.yyyyMMdd));
         stockPlankDailyService.save(daily);
     }
 

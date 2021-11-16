@@ -28,6 +28,15 @@ public class ZhuanZaiBuyDTO {
 
     private Integer level;
 
+    private Long gatherFenShi;
+    private Long beforeBuyTotalSell;
+    private Long buyTotalSell;
+    private Long beforeBuyFenShi;
+    private Long buyFenShi;
+    private String sellTime;
+    private BigDecimal sellPrice;
+    private Long beforeAvgFenShi;
+    private int raiseVolFlag = 0;
     private BigDecimal profit;
 
 }

@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.BlockKbarSelfDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.BlockKbarSelf">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="block_code" jdbcType="VARCHAR" property="blockCode"/>
+        <result column="block_name" jdbcType="VARCHAR" property="blockName"/>
+        <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
+        <result column="unique_key" jdbcType="VARCHAR" property="uniqueKey"/>
+        <result column="open_price" jdbcType="DECIMAL" property="openPrice"/>
+        <result column="high_price" jdbcType="DECIMAL" property="highPrice"/>
+        <result column="low_price" jdbcType="DECIMAL" property="lowPrice"/>
+        <result column="close_price" jdbcType="DECIMAL" property="closePrice"/>
+        <result column="trade_amount" jdbcType="DECIMAL" property="tradeAmount"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            block_code,
+            block_name,
+            kbar_date,
+            unique_key,
+            open_price,
+            high_price,
+            low_price,
+            close_price,
+            trade_amount,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from block_kbar_self
+        where id = #{id}
+    </select>
+
+
+    <select id="selectByUniqueKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from block_kbar_self
+        where unique_key = #{uniqueKey} limit 1
+    </select>
+
+    <update id="updateByUniqueKey" parameterType="com.bazinga.replay.model.BlockKbarSelf">
+        update block_kbar_self
+        <set>
+        <if test="blockCode != null">
+            block_code = #{blockCode, jdbcType=VARCHAR},
+        </if>
+        <if test="blockName != null">
+            block_name = #{blockName, jdbcType=VARCHAR},
+        </if>
+        <if test="kbarDate != null">
+            kbar_date = #{kbarDate, jdbcType=VARCHAR},
+        </if>
+        <if test="openPrice != null">
+            open_price = #{openPrice, jdbcType=DECIMAL},
+        </if>
+        <if test="highPrice != null">
+            high_price = #{highPrice, jdbcType=DECIMAL},
+        </if>
+        <if test="lowPrice != null">
+            low_price = #{lowPrice, jdbcType=DECIMAL},
+        </if>
+        <if test="closePrice != null">
+            close_price = #{closePrice, jdbcType=DECIMAL},
+        </if>
+        <if test="tradeAmount != null">
+            trade_amount = #{tradeAmount, jdbcType=DECIMAL},
+        </if>
+        <if test="createTime != null">
+            create_time = #{createTime, jdbcType=TIMESTAMP},
+        </if>
+        <if test="updateTime != null">
+            update_time = #{updateTime, jdbcType=TIMESTAMP},
+        </if>
+        </set>
+        where unique_key = #{uniqueKey} limit 1
+    </update>
+    <insert id="insert" parameterType="com.bazinga.replay.model.BlockKbarSelf" useGeneratedKeys="true" keyProperty="id">
+        insert into block_kbar_self (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{blockCode, jdbcType=VARCHAR},
+            #{blockName, jdbcType=VARCHAR},
+            #{kbarDate, jdbcType=VARCHAR},
+            #{uniqueKey, jdbcType=VARCHAR},
+            #{openPrice, jdbcType=DECIMAL},
+            #{highPrice, jdbcType=DECIMAL},
+            #{lowPrice, jdbcType=DECIMAL},
+            #{closePrice, jdbcType=DECIMAL},
+            #{tradeAmount, jdbcType=DECIMAL},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.BlockKbarSelf">
+        update block_kbar_self
+        <set>
+            <if test="blockCode != null">
+                block_code = #{blockCode, jdbcType=VARCHAR},
+            </if>
+            <if test="blockName != null">
+                block_name = #{blockName, jdbcType=VARCHAR},
+            </if>
+            <if test="kbarDate != null">
+                kbar_date = #{kbarDate, jdbcType=VARCHAR},
+            </if>
+            <if test="uniqueKey != null">
+                unique_key = #{uniqueKey, jdbcType=VARCHAR},
+            </if>
+            <if test="openPrice != null">
+                open_price = #{openPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="highPrice != null">
+                high_price = #{highPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="lowPrice != null">
+                low_price = #{lowPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="closePrice != null">
+                close_price = #{closePrice, jdbcType=DECIMAL},
+            </if>
+            <if test="tradeAmount != null">
+                trade_amount = #{tradeAmount, jdbcType=DECIMAL},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="blockCode != null">
+            and block_code = #{blockCode, jdbcType=VARCHAR}
+        </if>
+        <if test="blockName != null">
+            and block_name = #{blockName, jdbcType=VARCHAR}
+        </if>
+        <if test="kbarDate != null">
+            and kbar_date = #{kbarDate, jdbcType=VARCHAR}
+        </if>
+        <if test="uniqueKey != null">
+            and unique_key = #{uniqueKey, jdbcType=VARCHAR}
+        </if>
+        <if test="openPrice != null">
+            and open_price = #{openPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="highPrice != null">
+            and high_price = #{highPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="lowPrice != null">
+            and low_price = #{lowPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="closePrice != null">
+            and close_price = #{closePrice, jdbcType=DECIMAL}
+        </if>
+        <if test="tradeAmount != null">
+            and trade_amount = #{tradeAmount, jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="kbarDateFrom != null">
+            <![CDATA[
+            and kbar_date >= #{kbarDateFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="kbarDateTo != null">
+            <![CDATA[
+            and kbar_date <= #{kbarDateTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.BlockKbarSelfQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from block_kbar_self
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.BlockKbarSelfQuery" resultType="java.lang.Integer">
+        select count(1)
+        from block_kbar_self
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>
