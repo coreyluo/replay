@@ -18,6 +18,7 @@ import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
+import com.tradex.util.StockUtils;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -98,9 +99,9 @@ public class ThsZhuanZaiChenWeiComponent {
                     datas.addAll(buyDTOS);
                 }
             }
-            if(datas.size()>=10){
+            /*if(datas.size()>=10){
                 return datas;
-            }
+            }*/
         }
         return datas;
     }
@@ -119,7 +120,11 @@ public class ThsZhuanZaiChenWeiComponent {
             }
             Date date = DateUtil.parseDate(quote.getQuoteTime(), DateUtil.HHMMSS);
             if(date.before(date930)&&(gatherChenJiao==null||gatherChenJiao<=0)){
-                gatherChenJiao = quote.getVol()/10;
+                if(excelDTO.getStockCode().startsWith("12")) {
+                    gatherChenJiao = quote.getVol() / 10;
+                }else{
+                    gatherChenJiao = quote.getVol();
+                }
             }
             if(quote.getCurrentPrice()==null||quote.getTotalSellVolume()==null||quote.getTotalSellVolume()==0){
                 continue;
@@ -127,9 +132,9 @@ public class ThsZhuanZaiChenWeiComponent {
             quoteLast = quote;
             limitQueue.offer(quote);
             ZhuanZaiBuyDTO buyDTO = new ZhuanZaiBuyDTO();
+            buyDTO.setStockCode(excelDTO.getStockCode());
             boolean haveRaise = calRate(limitQueue,buyDTO);
             if (haveRaise && !buyFlag) {
-                buyDTO.setStockCode(excelDTO.getStockCode());
                 buyDTO.setStockName(excelDTO.getStockName());
                 buyDTO.setMarketAmount(excelDTO.getMarketAmount());
                 buyDTO.setGatherFenShi(gatherChenJiao);
@@ -141,7 +146,7 @@ public class ThsZhuanZaiChenWeiComponent {
             }
             if(buyFlag){
                 limitQueueSell.offer(quote);
-                boolean continueDrop = haveContinueDrop(limitQueueSell);
+                boolean continueDrop = haveContinueDrop(limitQueueSell,buyDTO);
                 if(continueDrop){
                     limitQueueSell.clear();
                     buyFlag = false;
@@ -177,8 +182,14 @@ public class ThsZhuanZaiChenWeiComponent {
             i++;
             ThsQuoteInfo next = iterator.next();
             if(i<=3){
-                if(next.getVol()<1000){
-                    return false;
+                if(buyDTO.getStockCode().startsWith("11")) {
+                    if (next.getVol() < 100) {
+                        return false;
+                    }
+                }else{
+                    if (next.getVol() < 1000) {
+                        return false;
+                    }
                 }
                 if(i>1){
                     if(next.getVol()<=preThsQuoteInfo.getVol()){
@@ -198,7 +209,7 @@ public class ThsZhuanZaiChenWeiComponent {
     }
 
 
-    public boolean  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue){
+    public boolean  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
         if(limitQueue==null||limitQueue.size()<3){
             return false;
         }
@@ -206,8 +217,14 @@ public class ThsZhuanZaiChenWeiComponent {
         ThsQuoteInfo preQuote = null;
         while (iterator.hasNext()){
             ThsQuoteInfo next = iterator.next();
-            if(next.getVol()<1000){
-                return false;
+            if(buyDTO.getStockCode().startsWith("11")) {
+                if (next.getVol() < 100) {
+                    return false;
+                }
+            }else{
+                if (next.getVol() < 1000) {
+                    return false;
+                }
             }
             if(preQuote!=null && next.getCurrentPrice().compareTo(preQuote.getCurrentPrice())!=-1){
                 return false;
