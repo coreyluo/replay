@@ -66,6 +66,23 @@ public class PlankHighUtil {
         return new PlankHighDTO(planks,unPlanks);
     }
 
+    public static Integer calOneLinePlank(List<StockKbar> stockKbarList){
+        int planks = 0;
+        for (int i = stockKbarList.size() - 1; i > 0; i--) {
+            StockKbar stockKbar = stockKbarList.get(i);
+            StockKbar preStockKbar = stockKbarList.get(i - 1);
+            if (StockKbarUtil.isUpperPrice(stockKbar, preStockKbar) && stockKbar.getOpenPrice().compareTo(stockKbar.getClosePrice())==0
+                    && stockKbar.getOpenPrice().compareTo(stockKbar.getHighPrice())==0 && stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())==0) {
+                planks++;
+            } else {
+               return planks;
+            }
+        }
+
+
+        return planks;
+    }
+
     public static PlankHighDTO calCommonPlank(List<StockKbar> stockKbarList) {
         int planks = 0;
         int unPlanks = 0;

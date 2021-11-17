@@ -459,7 +459,7 @@ public class MiddlePlankReplayComponent {
                     continue;
                 }
                 BigDecimal day10Rate = calDay10Rate(kbar10List);
-                if(stockKbar.getHighPrice().compareTo(stockKbar.getClosePrice())!=0){
+               /* if(stockKbar.getHighPrice().compareTo(stockKbar.getClosePrice())!=0){
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                         if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
@@ -468,10 +468,15 @@ public class MiddlePlankReplayComponent {
                             break;
                         }
                     }
-                }
+                }*/
 
                 int plank = calSerialsPlank(kbarList);
                 if(plank<2 || plank >4){
+                    continue;
+                }
+                Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
+                if(plank == oneLinePlank){
+                    log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
@@ -678,13 +683,13 @@ public class MiddlePlankReplayComponent {
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
-        while (count< 10){
+        while (count< 30){
             date = DateUtil.addMinutes(date, 1);
             count++;
-           // headList.add(DateUtil.format(date,"HH:mm"));
-            for (int i = 1; i < 21; i++) {
+            headList.add(DateUtil.format(date,"HH:mm"));
+            /*for (int i = 1; i < 21; i++) {
                 headList.add(DateUtil.format(date,"HH:mm") + SymbolConstants.UNDERLINE +i);
-            }
+            }*/
         }
      /*   headList.add("13:00");
         date = DateUtil.parseDate("20210531130000", DateUtil.yyyyMMddHHmmss);
