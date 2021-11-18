@@ -77,4 +77,7 @@ public class SelfExcelImportDTO {
     @ExcelElement("断板")
     private Integer unPlank;
 
+    @ExcelElement("成交金额")
+    private BigDecimal tradeAmount;
+
 }

@@ -74,6 +74,9 @@ public class SelfExcelReplayComponent {
                 if(importDTO.getAbnormalName().startsWith("连续三个交易日")){
                     continue;
                 }
+                if(!importDTO.getSalesDepartName().contains("华鑫")){
+                    continue;
+                }
                 String dragonDate = DateUtil.format(importDTO.getDragonDate(),DateUtil.yyyyMMdd);
                 Date buyDate = commonComponent.afterTradeDate(importDTO.getDragonDate());
                 Date sellDate = commonComponent.afterTradeDate(buyDate);
@@ -87,16 +90,21 @@ public class SelfExcelReplayComponent {
                 }
                 log.info("符合买入条件stockCode{} kbarDate{}",stockCode,DateUtil.format(buyDate,DateUtil.yyyyMMdd));
                 importDTO.setBuyDate(DateUtil.format(buyDate,DateUtil.yyyyMMdd));
-                importDTO.setBuyPrice(buyStockKbar.getOpenPrice());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockCode, sellDate);
                 List<ThirdSecondTransactionDataDTO> buyList = historyTransactionDataComponent.getData(stockCode, buyDate);
                 if(!CollectionUtils.isEmpty(list)){
                     list = historyTransactionDataComponent.getMorningData(list);
+                    ThirdSecondTransactionDataDTO open = buyList.get(0);
+                   // ThirdSecondTransactionDataDTO transactionDataDTO = buyList.get(9);
+                    ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(buyList, "09:33");
+                    if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
+                        continue;
+                    }
+                    importDTO.setBuyPrice(fixTimeDataOne.getTradePrice());
                     Float sellPricef = historyTransactionDataComponent.calAveragePrice(list);
                     BigDecimal sellPrice = new BigDecimal(sellPricef.toString());
                     importDTO.setSellDate(DateUtil.format(sellDate,DateUtil.yyyyMMdd));
                     importDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(importDTO.getBuyPrice()),importDTO.getBuyPrice()));
-                    ThirdSecondTransactionDataDTO open = buyList.get(0);
                     importDTO.setOpenTradeAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
                     importDTO.setOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
 
@@ -115,12 +123,12 @@ public class SelfExcelReplayComponent {
                     PlankHighDTO plankHighDTO = PlankHighUtil.calCommonPlank(Lists.reverse(kbarList));
                     importDTO.setPlankHigh(plankHighDTO.getPlankHigh());
                     importDTO.setUnPlank(plankHighDTO.getUnPlank());
-
+                    importDTO.setTradeAmount(dragonKbar.getTradeAmount());
                 }
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎1年挑选席位席位次日集合买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎华鑫席位次日3min向上买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();
