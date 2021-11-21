@@ -11,8 +11,11 @@ import com.bazinga.dto.ZhuanZaiDTO;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
+import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
@@ -22,6 +25,7 @@ import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,36 +51,68 @@ public class SelfExcelReplayComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    @Autowired
+    private CirculateInfoService circulateInfoService;
 
-    public void zhuanzhai(){
 
-        File file = new File("E:/excelExport/可转债(1).xlsx");
-        try {
-            List<ZhuanZaiDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiDTO.class);
-            List<String> resultList = importList.stream().map(ZhuanZaiDTO::getStockCode).collect(Collectors.toList());
-            log.info("{}",JSONObject.toJSONString(resultList));
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void  replayMarket(){
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+
+        circulateInfos =circulateInfos.stream().filter(item->item.getStockCode().startsWith("3")).collect(Collectors.toList());
+        List<SelfExcelImportDTO> resultList = Lists.newArrayList();
+        for (CirculateInfo circulateInfo : circulateInfos) {
+
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20210101");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<2){
+                continue;
+            }
+            for (int i = 1; i < kbarList.size(); i++) {
+                StockKbar stockKbar = kbarList.get(i);
+                StockKbar preStockKbar = kbarList.get(i-1);
+                if(StockKbarUtil.isUpperPrice(stockKbar,preStockKbar)){
+                    SelfExcelImportDTO importDTO = new SelfExcelImportDTO();
+                    importDTO.setStockName(circulateInfo.getStockName());
+                    importDTO.setStockCode(circulateInfo.getStockCode());
+                    importDTO.setDragonDate(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd));
+                    resultList.add(importDTO);
+                }
+            }
         }
 
+        replay(resultList);
     }
 
 
-    public void replay(){
+    public void replayPosition()  {
 
         File file = new File("E:/excelExport/龙虎/龙虎榜1年挑选席位.xlsx");
+
+        List<SelfExcelImportDTO> importList = null;
+        try {
+            importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SelfExcelImportDTO.class);
+            replay(importList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void replay(List<SelfExcelImportDTO> importList){
         try {
             List<SelfExcelImportDTO> resultList = Lists.newArrayList();
-            List<SelfExcelImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SelfExcelImportDTO.class);
             for (SelfExcelImportDTO importDTO : importList) {
                 String stockCode = importDTO.getStockCode().substring(0,6);
                 importDTO.setStockCode(stockCode);
-                if(importDTO.getAbnormalName().startsWith("连续三个交易日")){
+               /* if(importDTO.getAbnormalName().startsWith("连续三个交易日")){
                     continue;
                 }
                 if(!importDTO.getSalesDepartName().contains("华鑫")){
                     continue;
-                }
+                }*/
                 String dragonDate = DateUtil.format(importDTO.getDragonDate(),DateUtil.yyyyMMdd);
                 Date buyDate = commonComponent.afterTradeDate(importDTO.getDragonDate());
                 Date sellDate = commonComponent.afterTradeDate(buyDate);
@@ -96,11 +132,11 @@ public class SelfExcelReplayComponent {
                     list = historyTransactionDataComponent.getMorningData(list);
                     ThirdSecondTransactionDataDTO open = buyList.get(0);
                    // ThirdSecondTransactionDataDTO transactionDataDTO = buyList.get(9);
-                    ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(buyList, "09:33");
+                  /*  ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(buyList, "09:33");
                     if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
                         continue;
-                    }
-                    importDTO.setBuyPrice(fixTimeDataOne.getTradePrice());
+                    }*/
+                    importDTO.setBuyPrice(open.getTradePrice());
                     Float sellPricef = historyTransactionDataComponent.calAveragePrice(list);
                     BigDecimal sellPrice = new BigDecimal(sellPricef.toString());
                     importDTO.setSellDate(DateUtil.format(sellDate,DateUtil.yyyyMMdd));
@@ -128,7 +164,7 @@ public class SelfExcelReplayComponent {
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎华鑫席位次日3min向上买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\市场300封住次日集合买买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();
