@@ -119,6 +119,11 @@ public class StockPlankDailyComponent {
         daily.setExchangeQuantity(plankTypeDTO.getExchangeQuantity());
         daily.setBadPlankType(0);
         daily.setTradeDate(date);
+        if(plankTypeDTO.isContinueFlag()) {
+            daily.setContinuePlankType(1);
+        }else{
+            daily.setContinuePlankType(0);
+        }
         daily.setCreateTime(new Date());
         daily.setUniqueKey(stockCode+"_"+DateUtil.format(date,DateUtil.yyyyMMdd));
         stockPlankDailyService.save(daily);
@@ -171,6 +176,9 @@ public class StockPlankDailyComponent {
         if(plankTypeDTO.getSpace()>0&& plankTypeDTO.getBeforePlanks()>0){
             return PlankTypeEnum.FOUR_DAY_THREE_PLANK;
         }
+        if(plankTypeDTO.getContinuePlanks()==plankTypeDTO.getPlanks()){
+            plankTypeDTO.setContinueFlag(true);
+        }
         if(plankTypeDTO.getPlanks()>=5){
             return PlankTypeEnum.FIFTH_PLANK;
         }
@@ -190,10 +198,13 @@ public class StockPlankDailyComponent {
         List<KBarDTO> reverse = Lists.reverse(kbars);
         BigDecimal preEndPrice = null;
         BigDecimal preHighPrice = null;
+        KBarDTO preKbar = null;
         Date preDate = null;
         int space = 0;
         int current = 0;
         int before = 0;
+        int continuePlanks = 0;
+        boolean continueFlag = true;
         int i=0;
         for (KBarDTO kBarDTO:reverse){
             i++;
@@ -222,6 +233,11 @@ public class StockPlankDailyComponent {
                     }else{
                         return plankTypeDTO;
                     }
+                    if(highPlank && preKbar.getHighestPrice().compareTo(preKbar.getLowestPrice())==0){
+                        continuePlanks++;
+                    }else{
+                        continueFlag  = false;
+                    }
                 }
                 if(i>2) {
                     if (endPlank) {
@@ -234,18 +250,28 @@ public class StockPlankDailyComponent {
                     } else {
                         space++;
                     }
+                    if(continueFlag){
+                        if(highPlank && preKbar.getHighestPrice().compareTo(preKbar.getLowestPrice())==0){
+                            continuePlanks++;
+                        }
+                    }else{
+                        continueFlag = false;
+                    }
                     if (space >= 2) {
                         break;
                     }
+
                 }
             }
             preEndPrice = kBarDTO.getEndPrice();
             preHighPrice = kBarDTO.getHighestPrice();
+            preKbar  = kBarDTO;
             preDate  = kBarDTO.getDate();
         }
         plankTypeDTO.setPlanks(current);
         plankTypeDTO.setBeforePlanks(before);
         plankTypeDTO.setSpace(space);
+        plankTypeDTO.setContinuePlanks(continuePlanks);
         return plankTypeDTO;
     }
     public void saveStockRehabilitation(String stockCode,String stockName,Date tradeDate){

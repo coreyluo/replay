@@ -17,6 +17,8 @@ public class PlankTypeDTO {
     int planks;
     int all;
     int space;
+    int continuePlanks;
+    boolean continueFlag= false;
 
     BigDecimal beforeRate5;
     BigDecimal beforeRate10;

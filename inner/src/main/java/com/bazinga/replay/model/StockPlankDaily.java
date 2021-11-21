@@ -110,6 +110,7 @@ public class StockPlankDaily implements Serializable {
      * 0 正常  1烂板
      */
     private Integer badPlankType;
+    private Integer continuePlankType;
 
     /**
      * 

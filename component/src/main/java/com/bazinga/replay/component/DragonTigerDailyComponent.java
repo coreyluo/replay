@@ -4,18 +4,22 @@ package com.bazinga.replay.component;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.DragonTigerDaily;
+import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.DragonTigerDailyQuery;
 import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.DragonTigerDailyService;
+import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.util.JoinQuantUtil;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.PriceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -31,6 +35,9 @@ public class DragonTigerDailyComponent {
 
     @Autowired
     private CommonComponent commonComponent;
+
+    @Autowired
+    private StockKbarService stockKbarService;
 
     /**
      * 106001	涨幅偏离值达7%的证券
@@ -77,6 +84,7 @@ public class DragonTigerDailyComponent {
                         DragonTigerDaily dragonTiger = new DragonTigerDaily();
                         dragonTiger.setStockCode(circulateInfo.getStockCode());
                         dragonTiger.setStockName(circulateInfo.getStockName());
+                        dragonTiger.setDirection("BUY");
                         dragonTiger.setKbarDate(kbarDate);
                         dragonTiger.setRank(Integer.valueOf(objArr[3]));
                         dragonTiger.setAbnormalCode(objArr[4]);
@@ -104,6 +112,36 @@ public class DragonTigerDailyComponent {
                                 }
                             }
                         }
+                    }else {
+                        DragonTigerDaily dragonTiger = new DragonTigerDaily();
+                        dragonTiger.setStockCode(circulateInfo.getStockCode());
+                        dragonTiger.setStockName(circulateInfo.getStockName());
+                        dragonTiger.setDirection("SELL");
+                        dragonTiger.setKbarDate(kbarDate);
+                        dragonTiger.setRank(Integer.valueOf(objArr[3]));
+                        dragonTiger.setAbnormalCode(objArr[4]);
+                        dragonTiger.setReason(objArr[5]);
+                        dragonTiger.setChair(objArr[6]);
+                        if("招商证券交易单元(353800)".equals(dragonTiger.getChair())){
+                            if("106015".equals(dragonTiger.getAbnormalCode()) ){
+                                StockKbar preStockKbar = stockKbarService.getByUniqueKey(circulateInfo.getStockCode() + SymbolConstants.UNDERLINE + kbarDate);
+                                if(preStockKbar == null ){
+                                    continue;
+                                }
+                                BigDecimal circulateAmountZ = preStockKbar.getClosePrice().multiply(new BigDecimal(circulateInfo.getCirculateZ())).setScale(0,BigDecimal.ROUND_HALF_UP);
+                                BigDecimal rate = PriceUtil.getPricePercentRate(new BigDecimal(objArr[7]), circulateAmountZ);
+                                if(rate.compareTo(new BigDecimal("0.3"))<=0){
+                                    log.info("不符合买入金额占比条件 stockCode{}",circulateInfo.getStockCode());
+                                    continue;
+                                }
+                                DragonTigerDaily byUnique =  getByUniqueKey(circulateInfo.getStockCode(),kbarDate,dragonTiger.getAbnormalCode());
+                                if(byUnique == null){
+                                    dragonTigerDailyService.save(dragonTiger);
+                                }
+                            }
+                        }
+
+
                     }
                 }
 

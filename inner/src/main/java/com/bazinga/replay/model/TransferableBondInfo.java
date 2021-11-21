@@ -1,19 +1,18 @@
 package com.bazinga.replay.model;
 
 import java.util.Date;
-import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈DragonTigerDaily〉<p>
+ * 〈TransferableBondInfo〉<p>
  *
  * @author
- * @date 2021-11-04
+ * @date 2021-11-21
  */
 @lombok.Data
 @lombok.ToString
-public class DragonTigerDaily implements Serializable {
+public class TransferableBondInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -39,59 +38,36 @@ public class DragonTigerDaily implements Serializable {
      * 股票名称
      *
      * @最大长度   60
-     * @允许为空   NO
+     * @允许为空   YES
      * @是否索引   NO
      */
     private String stockName;
 
     /**
-     * 上榜日期
+     * 正股代码
      *
      * @最大长度   10
-     * @允许为空   NO
-     * @是否索引   YES
-     */
-    private String kbarDate;
-
-    /**
-     * 交易方向
-     */
-    private String direction;
-
-    /**
-     * 买几
-     *
-     * @允许为空   NO
+     * @允许为空   YES
      * @是否索引   NO
      */
-    private Integer rank;
+    private String mainCode;
 
     /**
-     * 席位
+     * 正股名称
      *
-     * @最大长度   20
-     * @允许为空   NO
+     * @最大长度   60
+     * @允许为空   YES
      * @是否索引   NO
      */
-    private String chair;
+    private String mainName;
 
     /**
-     * 异常类型
+     * 市值
      *
-     * @最大长度   20
-     * @允许为空   NO
+     * @允许为空   YES
      * @是否索引   NO
      */
-    private String abnormalCode;
-
-    /**
-     * 上榜理由
-     *
-     * @最大长度   20
-     * @允许为空   NO
-     * @是否索引   NO
-     */
-    private String reason;
+    private Long marketValue;
 
     /**
      * 创建时间
@@ -100,14 +76,6 @@ public class DragonTigerDaily implements Serializable {
      * @是否索引   NO
      */
     private Date createTime;
-
-    /**
-     * 更新时间
-     *
-     * @允许为空   YES
-     * @是否索引   NO
-     */
-    private Date updateTime;
 
 
 }

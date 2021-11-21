@@ -95,6 +95,11 @@ public class BaseTestCase {
         synInfoComponent.synHotCirculateInfo();
     }
 
+    @Test
+    public void test5() {
+        synInfoComponent.synTbondInfo();
+    }
+
 
     @Test
     public void test3() {
@@ -112,6 +117,8 @@ public class BaseTestCase {
         List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123048", "20211102");
         System.out.println(data);*/
         //blockKbarSelfComponent.initBlockKbarSelf();
+        stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
+
     }
 
 

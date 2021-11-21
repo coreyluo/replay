@@ -10,6 +10,7 @@
         <result column="trade_date" jdbcType="TIMESTAMP" property="tradeDate"/>
         <result column="plank_type" jdbcType="TINYINT" property="plankType"/>
         <result column="bad_plank_type" jdbcType="TINYINT" property="badPlankType"/>
+        <result column="continue_plank_type" jdbcType="TINYINT" property="continuePlankType"/>
         <result column="plank_sign" jdbcType="TINYINT" property="plankSign"/>
         <result column="end_status" jdbcType="TINYINT" property="endStatus"/>
         <result column="insert_time" jdbcType="TIMESTAMP" property="insertTime"/>
@@ -36,6 +37,7 @@
             trade_date,
             plank_type,
             bad_plank_type,
+            continue_plank_type,
             plank_sign,
             end_status,
             insert_time,
@@ -72,6 +74,7 @@
             #{tradeDate, jdbcType=TIMESTAMP},
             #{plankType, jdbcType=TINYINT},
             #{badPlankType, jdbcType=TINYINT},
+            #{continuePlankType, jdbcType=TINYINT},
             #{plankSign, jdbcType=TINYINT},
             #{endStatus, jdbcType=TINYINT},
             #{insertTime, jdbcType=TIMESTAMP},
@@ -110,6 +113,9 @@
             </if>
             <if test="badPlankType != null">
                 bad_plank_type = #{badPlankType, jdbcType=TINYINT},
+            </if>
+            <if test="continuePlankType != null">
+                continue_plank_type = #{continuePlankType, jdbcType=TINYINT},
             </if>
             <if test="plankSign != null">
                 plank_sign = #{plankSign, jdbcType=TINYINT},
@@ -175,6 +181,9 @@
         </if>
         <if test="badPlankType != null">
             and bad_plank_type = #{badPlankType, jdbcType=TINYINT}
+        </if>
+        <if test="continuePlankType != null">
+            and continue_plank_type = #{continuePlankType, jdbcType=TINYINT}
         </if>
         <if test="plankSign != null">
             and plank_sign = #{plankSign, jdbcType=TINYINT}
