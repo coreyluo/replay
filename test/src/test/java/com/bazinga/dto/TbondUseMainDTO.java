@@ -13,15 +13,22 @@ public class TbondUseMainDTO {
     private String stockName;
     private String mainCode;
     private String mainName;
+    private BigDecimal buyRate;
+    private BigDecimal sellRate;
     private String tradeDate;
     private BigDecimal tradePrice;
     private String tradeTime;
+    private String tbondTradeTime;
+
     private BigDecimal sellPrice;
+    private String tbondSellTime;
     private String sellTime;
-    private Integer beforeSellQuantity;
-    private Integer beforeTradeDeal;
-    private Integer sellQuantity;
-    private Integer tradeDeal;
-    private Integer avg10TradeDeal;
+    private Long beforeSellQuantity;
+    private Long beforeTradeDeal;
+    private Long sellQuantity;
+    private Long tradeDeal;
+    private Long avg10TradeDeal;
+
+    private BigDecimal preEndPrice;
     private BigDecimal profit;
 }

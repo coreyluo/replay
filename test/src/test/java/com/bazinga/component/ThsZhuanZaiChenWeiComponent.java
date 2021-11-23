@@ -108,8 +108,8 @@ public class ThsZhuanZaiChenWeiComponent {
 
     public List<ZhuanZaiBuyDTO> quoteBuyInfo(List<ThsQuoteInfo> list,BigDecimal preEndPrice,ZhuanZaiExcelDTO excelDTO,String tradeDate){
         List<ZhuanZaiBuyDTO> datas = Lists.newArrayList();
-        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(4);
-        LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(3);
+        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(3);
+        LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(4);
         boolean buyFlag = false;
         ThsQuoteInfo quoteLast = null;
         Long gatherChenJiao =null;
@@ -140,7 +140,7 @@ public class ThsZhuanZaiChenWeiComponent {
                 buyDTO.setGatherFenShi(gatherChenJiao);
                 buyDTO.setTradeDate(tradeDate);
                 buyDTO.setBuyTime(quote.getQuoteTime());
-                buyDTO.setBuyPrice(quote.getCurrentPrice());
+                buyDTO.setBuyPrice(quote.getAsk1());
                 datas.add(buyDTO);
                 buyFlag = true;
             }
@@ -152,7 +152,7 @@ public class ThsZhuanZaiChenWeiComponent {
                     buyFlag = false;
                     ZhuanZaiBuyDTO buy = datas.get(datas.size() - 1);
                     buy.setSellTime(quote.getQuoteTime());
-                    buy.setSellPrice(quote.getCurrentPrice());
+                    buy.setSellPrice(quote.getBid1());
                     BigDecimal profit = PriceUtil.getPricePercentRate(quote.getCurrentPrice().subtract(buy.getBuyPrice()), preEndPrice);
                     buy.setProfit(profit);
                 }
@@ -171,7 +171,7 @@ public class ThsZhuanZaiChenWeiComponent {
     }
 
     public boolean  calRate(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<4){
+        if(limitQueue==null||limitQueue.size()<3){
             return false;
         }
         ThsQuoteInfo preThsQuoteInfo = null;
@@ -210,26 +210,21 @@ public class ThsZhuanZaiChenWeiComponent {
 
 
     public boolean  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<3){
+        if(limitQueue==null||limitQueue.size()<4){
             return false;
         }
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
-        ThsQuoteInfo preQuote = null;
+        ThsQuoteInfo first = null;
+        int i=0;
         while (iterator.hasNext()){
+            i++;
             ThsQuoteInfo next = iterator.next();
-            if(buyDTO.getStockCode().startsWith("11")) {
-                if (next.getVol() < 100) {
-                    return false;
-                }
-            }else{
-                if (next.getVol() < 1000) {
-                    return false;
-                }
+            if(first==null){
+                first = next;
             }
-            if(preQuote!=null && next.getCurrentPrice().compareTo(preQuote.getCurrentPrice())!=-1){
+            if(i>=2 && next.getCurrentPrice().compareTo(first.getCurrentPrice())==1){
                 return false;
             }
-            preQuote = next;
         }
         return true;
     }
