@@ -10,6 +10,7 @@ import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockKbarComponent;
+import com.bazinga.replay.convert.StockKbarConvert;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.*;
@@ -17,6 +18,9 @@ import com.bazinga.replay.service.*;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
@@ -79,13 +83,15 @@ public class BlockDropOpenHighComponent {
             list.add(dto.getSellRate());
             list.add(dto.getSellPrice());
             list.add(dto.getAvg10TradeDeal());
+            list.add(dto.getBuyTimeRate());
+            list.add(dto.getTbondBuyTimeRate());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
         String[] rowNames = {"index","股票代码","股票名称","主板股票代码","主板股票名称","买入日期","主板买入时间","转载买入时间","买入时涨速","买入时价格","买入前总卖","买入前成交",
-                "主板卖出时间","转债卖出时间","卖出时涨速","卖出时价格","买入前10跳平均成交","盈利"};
+                "主板卖出时间","转债卖出时间","卖出时涨速","卖出时价格","买入前10跳平均成交","主板买入时候涨幅","转载买入时候涨幅","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("主板转债",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("主板转债");
@@ -103,23 +109,25 @@ public class BlockDropOpenHighComponent {
         List<TransferableBondInfo> tbInfos = transferableBondInfoService.listByCondition(new TransferableBondInfoQuery());
         for (TransferableBondInfo tbInfo:tbInfos){
             String mainCode = tbInfo.getMainCode();
-            if(!mainCode.equals("600483")){
+            /*if(!mainCode.equals("600483")){
                 continue;
-            }
+            }*/
+            List<StockKbar> kbars = getKbars(tbInfo.getStockCode(), tbInfo.getStockName());
             System.out.println(tbInfo.getStockCode());
             TradeDatePool preTradeDate   = null;
             for (TradeDatePool tradeDatePool:tradeDatePools){
+                BigDecimal tbondPreEndPrice = getPreEndPrice(kbars, DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd));
                 if(preTradeDate!=null){
                     String key = mainCode+"_"+DateUtil.format(preTradeDate.getTradeDate(),DateUtil.yyyyMMdd);
                     StockKbar stockKbar = stockKbarService.getByUniqueKey(key);
                     if(stockKbar!=null){
                         List<TbondUseMainDTO> tbondUseMainDTOS = blockDropInfo(tbInfo,mainCode, DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd), stockKbar.getClosePrice());
                         if(!CollectionUtils.isEmpty(tbondUseMainDTOS)){
-                            List<TbondUseMainDTO> buys = getBuyInfo(tbondUseMainDTOS, tbInfo.getStockCode(), DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd));
+                            List<TbondUseMainDTO> buys = getBuyInfo(tbondUseMainDTOS, tbInfo.getStockCode(), DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd),tbondPreEndPrice);
                             list.addAll(buys);
-                            if(list.size()>5){
+                           /* if(list.size()>5){
                                 return list;
-                            }
+                            }*/
                         }
                     }
                 }
@@ -129,7 +137,21 @@ public class BlockDropOpenHighComponent {
         return list;
     }
 
-    public List<TbondUseMainDTO> getBuyInfo(List<TbondUseMainDTO> list,String tbondCode,String tradeDate){
+    public BigDecimal getPreEndPrice(List<StockKbar> kbars,String tradeDate){
+        if(CollectionUtils.isEmpty(kbars)){
+            return null;
+        }
+        BigDecimal preEndPrice = null;
+        for (StockKbar stockKbar:kbars){
+            if(stockKbar.getKbarDate().equals(tradeDate)){
+                return preEndPrice;
+            }
+            preEndPrice = stockKbar.getClosePrice();
+        }
+        return null;
+    }
+
+    public List<TbondUseMainDTO> getBuyInfo(List<TbondUseMainDTO> list,String tbondCode,String tradeDate,BigDecimal tbondPreEndPrice){
         List<TbondUseMainDTO> datas = Lists.newArrayList();
         List<ThsQuoteInfo> quotes = quotes(tbondCode, tradeDate);
         if(CollectionUtils.isEmpty(quotes)){
@@ -216,6 +238,8 @@ public class BlockDropOpenHighComponent {
                 dto.setSellPrice(beforeQuote.getCurrentPrice());
             }
             if(dto.getProfit()!=null) {
+                BigDecimal rate = PriceUtil.getPricePercentRate(dto.getTradePrice().subtract(tbondPreEndPrice), tbondPreEndPrice);
+                dto.setTbondBuyTimeRate(rate);
                 datas.add(dto);
                 int intTime = getIntTime(dto.getTbondSellTime());
                 preSellTimeInt = intTime;
@@ -228,16 +252,16 @@ public class BlockDropOpenHighComponent {
             return null;
         }
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
-        ThsQuoteInfo low = null;
+        ThsQuoteInfo first = null;
         ThsQuoteInfo last = null;
         while (iterator.hasNext()){
             ThsQuoteInfo quote = iterator.next();
             last = quote;
-            if(low==null||quote.getCurrentPrice().compareTo(low.getCurrentPrice())==-1){
-                low = quote;
+            if(first==null){
+                first = quote;
             }
         }
-        BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(low.getCurrentPrice()), dto.getPreEndPrice());
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(first.getCurrentPrice()), dto.getPreEndPrice());
         return rate;
     }
 
@@ -304,6 +328,8 @@ public class BlockDropOpenHighComponent {
                     tbondBuy.setTradeTime(data.getTradeTime() + ":0" + seconds);
                 }
                 tbondBuy.setBuyRate(raiseRate);
+                BigDecimal buyTimeRate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preEndPrice), preEndPrice);
+                tbondBuy.setBuyTimeRate(buyTimeRate);
                 list.add(tbondBuy);
             }
             if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal("-0.25"))==-1){
@@ -325,17 +351,17 @@ public class BlockDropOpenHighComponent {
         if(limitQueue==null||limitQueue.size()<2){
             return null;
         }
-        ThirdSecondTransactionDataDTO lowest = null;
+        ThirdSecondTransactionDataDTO first = null;
         ThirdSecondTransactionDataDTO last = null;
         Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
         while (iterator.hasNext()){
             ThirdSecondTransactionDataDTO data = iterator.next();
-            if(lowest==null||lowest.getTradePrice().compareTo(data.getTradePrice())!=-1){
-                lowest = data;
+            if(first==null){
+                first = data;
             }
             last = data;
         }
-        BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(lowest.getTradePrice()), preEndPrice);
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(first.getTradePrice()), preEndPrice);
         return rate;
     }
 
@@ -388,6 +414,12 @@ public class BlockDropOpenHighComponent {
             }
         }
         return list;
+    }
+
+    public List<StockKbar> getKbars(String stockCode, String stockName){
+        DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, 100);
+        List<StockKbar> stockKbars = StockKbarConvert.convert(securityBars,stockCode,stockName);
+        return stockKbars;
     }
 
     public static void main(String[] args) {

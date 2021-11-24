@@ -15,6 +15,8 @@ public class TbondUseMainDTO {
     private String mainName;
     private BigDecimal buyRate;
     private BigDecimal sellRate;
+    private BigDecimal buyTimeRate;
+    private BigDecimal tbondBuyTimeRate;
     private String tradeDate;
     private BigDecimal tradePrice;
     private String tradeTime;

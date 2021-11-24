@@ -97,9 +97,9 @@ public class HblTest extends BaseTestCase {
         //highExchangeChungYePlankInfoComponent.badPlankInfo();
        /* chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
-        //synExcelComponent.zhuanZaiBugInfo();
-        //synExcelComponent.zhuanZaiChenWeiInfo();
-        blockDropOpenHighComponent.chaoDie();
+       /* synExcelComponent.zhuanZaiBugInfo();*/
+        synExcelComponent.zhuanZaiChenWeiInfo();
+        /*blockDropOpenHighComponent.chaoDie();*/
 
     }
 }
