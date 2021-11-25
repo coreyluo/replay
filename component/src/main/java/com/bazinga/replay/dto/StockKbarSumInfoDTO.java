@@ -14,6 +14,8 @@ public class StockKbarSumInfoDTO {
     private BigDecimal openRate;
     //收盘涨幅
     private BigDecimal endRate;
+
+    private BigDecimal tradeAmount;
     //5日涨幅
     private BigDecimal endRateDay5;
 }

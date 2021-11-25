@@ -37,6 +37,9 @@ public class ZhuanZaiBuyDTO {
     private BigDecimal sellPrice;
     private Long beforeAvgFenShi;
     private int raiseVolFlag = 0;
+
+    private int isGatherFlag = 0;
+    private int isUpperAvg = 0;
     private BigDecimal profit;
 
 }

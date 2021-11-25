@@ -17,7 +17,7 @@
         <!-- 每半分钟触发任务 -->
 <!--        <task:scheduled ref="updateStockKbarJob" method="execute" cron="00 20 21 * * ?"/>-->
 
-        <task:scheduled ref="stockPlankDailyJob" method="execute" cron="00 40 22 * * ?"/>
+        <!--<task:scheduled ref="stockPlankDailyJob" method="execute" cron="00 40 22 * * ?"/>-->
 
         <task:scheduled ref="newStockJob" method="execute" cron="00 00 23 * * ?"/>
 

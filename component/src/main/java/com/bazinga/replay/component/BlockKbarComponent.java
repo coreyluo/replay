@@ -75,11 +75,15 @@ public class BlockKbarComponent {
         int day5Counts = 0;
         BigDecimal openTotalRate = BigDecimal.ZERO;
         BigDecimal endTotalRate = BigDecimal.ZERO;
+        BigDecimal totalTradeAmount = BigDecimal.ZERO;
         BigDecimal day5TotalRate = BigDecimal.ZERO;
         for (ThsBlockStockDetail detail:blockDetails){
             StockKbarSumInfoDTO sumInfoDTO = stockKBarInfoMap.get(detail.getStockCode());
             if(sumInfoDTO==null){
                 continue;
+            }
+            if(sumInfoDTO.getTradeAmount()!=null){
+                totalTradeAmount = totalTradeAmount.add(sumInfoDTO.getTradeAmount());
             }
             if(sumInfoDTO.getOpenRate()!=null){
                 openCounts = openCounts+1;
@@ -97,6 +101,7 @@ public class BlockKbarComponent {
         ThsBlockKbar thsBlockKbar = new ThsBlockKbar();
         thsBlockKbar.setBlockCode(thsBlockInfo.getBlockCode());
         thsBlockKbar.setBlockName(thsBlockInfo.getBlockName());
+        thsBlockKbar.setTradeAmount(totalTradeAmount);
         if(openCounts>0){
             BigDecimal divide = openTotalRate.divide(new BigDecimal(openCounts),2,BigDecimal.ROUND_HALF_UP);
             thsBlockKbar.setOpenRate(divide);
@@ -140,6 +145,7 @@ public class BlockKbarComponent {
                     BigDecimal openRate = PriceUtil.getPricePercentRate(buyDayKbar.getAdjOpenPrice().subtract(stockKbar.getAdjOpenPrice()), stockKbar.getAdjOpenPrice());
                     sumInfoDTO.setEndRate(endRate);
                     sumInfoDTO.setOpenRate(openRate);
+                    sumInfoDTO.setTradeAmount(buyDayKbar.getTradeAmount());
                 }
                 if(i==6){
                     BigDecimal endRate = PriceUtil.getPricePercentRate(buyDayKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());

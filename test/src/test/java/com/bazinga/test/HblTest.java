@@ -54,6 +54,10 @@ public class HblTest extends BaseTestCase {
     private ChungYePlankFirstInfoComponent chungYePlankFirstInfoComponent;
     @Autowired
     private ThsDataUtilComponent thsDataUtilComponent;
+    @Autowired
+    private BlockDropOpenHighComponent blockDropOpenHighComponent;
+    @Autowired
+    private BlockDropNextOpenHighComponent blockDropNextOpenHighComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -95,8 +99,10 @@ public class HblTest extends BaseTestCase {
         //highExchangeChungYePlankInfoComponent.badPlankInfo();
        /* chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
-        //synExcelComponent.zhuanZaiBugInfo();
-        synExcelComponent.zhuanZaiChenWeiInfo();
+       /* synExcelComponent.zhuanZaiBugInfo();*/
+        //synExcelComponent.zhuanZaiChenWeiInfo();
+        //blockDropOpenHighComponent.chaoDie();
+        blockDropNextOpenHighComponent.chaoDie();
 
     }
 }

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.dto.CirculateInfoExcelDTO;
+import com.bazinga.replay.dto.TransferableBondInfoExcelDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.BlockInfoQuery;
 import com.bazinga.replay.query.CirculateInfoQuery;
@@ -26,6 +27,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,8 @@ public class SynInfoComponent {
     private ThsBlockInfoService thsBlockInfoService;
     @Autowired
     private HotCirculateInfoService hotCirculateInfoService;
+    @Autowired
+    private TransferableBondInfoService transferableBondInfoService;
 
     public static List<String> BLOCK_NAME_FILTER_LIST = Lists.newArrayList("沪股通","深股通","标普道琼斯","新股","次新"
             ,"创业板重组松绑","高送转","填权","共同富裕示范区","融资融券","MSCI","ST");
@@ -273,6 +277,30 @@ public class SynInfoComponent {
                     hotCirculateInfo.setStockType(CommonUtil.getStockType(item.getCirculateZ().longValue()));
                     hotCirculateInfoService.updateById(hotCirculateInfo);
                 }
+            });
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+    }
+
+    public void synTbondInfo() {
+        File file = new File("D:/circulate/tbond.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + "D:/circulate/tbond.xlsx" + "不存在");
+        }
+        try {
+            List<TransferableBondInfoExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(TransferableBondInfoExcelDTO.class);
+            dataList.forEach(item -> {
+                TransferableBondInfo bondInfo = new TransferableBondInfo();
+                bondInfo.setStockCode(item.getStockCode());
+                bondInfo.setStockName(item.getStockName());
+                bondInfo.setMainCode(item.getMainCode());
+                bondInfo.setMainName(item.getMainName());
+                bondInfo.setMarketValue(0L);
+                transferableBondInfoService.save(bondInfo);
+
             });
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {

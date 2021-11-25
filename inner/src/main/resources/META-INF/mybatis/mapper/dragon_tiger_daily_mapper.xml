@@ -7,6 +7,7 @@
         <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
         <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
         <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
+        <result column="direction" jdbcType="VARCHAR" property="direction"/>
         <result column="rank" jdbcType="TINYINT" property="rank"/>
         <result column="chair" jdbcType="VARCHAR" property="chair"/>
         <result column="abnormal_code" jdbcType="VARCHAR" property="abnormalCode"/>
@@ -21,6 +22,7 @@
             stock_code,
             stock_name,
             kbar_date,
+            direction,
             rank,
             chair,
             abnormal_code,
@@ -45,6 +47,7 @@
             #{stockCode, jdbcType=VARCHAR},
             #{stockName, jdbcType=VARCHAR},
             #{kbarDate, jdbcType=VARCHAR},
+            #{direction, jdbcType=VARCHAR},
             #{rank, jdbcType=TINYINT},
             #{chair, jdbcType=VARCHAR},
             #{abnormalCode, jdbcType=VARCHAR},

@@ -54,6 +54,8 @@ public class ThsBlockKbarQuery extends PagingQuery implements Serializable {
      */
     private BigDecimal closeRate;
 
+    private BigDecimal tradeAmount;
+
     /**
      * 板块5日涨幅
      */

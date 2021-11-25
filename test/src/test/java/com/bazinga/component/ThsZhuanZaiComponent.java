@@ -72,9 +72,9 @@ public class ThsZhuanZaiComponent {
         }
 
         String[] rowNames = {"index","股票代码","股票名称","市值","交易日期","买入价格","买入时间","买出价格","买出时间","买入前总卖","买入前分时","买入时总卖","买入时分时","买入前10跳平均分时","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("转债无敌",rowNames,datas);
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("转债无敌两跳",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("转债无敌");
+            poiExcelUtil.exportExcelUseExcelTitle("转债无敌两跳");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -114,7 +114,7 @@ public class ThsZhuanZaiComponent {
 
     public List<ZhuanZaiBuyDTO> quoteBuyInfo(List<ThsQuoteInfo> list,BigDecimal preEndPrice,ZhuanZaiExcelDTO excelDTO,String tradeDate){
         List<ZhuanZaiBuyDTO> datas = Lists.newArrayList();
-        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(3);
+        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(2);
         LimitQueue<ThsQuoteInfo> limitQueue4 = new LimitQueue<>(5);
         LimitQueue<ThsQuoteInfo> limitQueue10 = new LimitQueue<>(10);
         boolean buyFlag = false;
@@ -184,7 +184,7 @@ public class ThsZhuanZaiComponent {
         while (iterator.hasNext()){
             i++;
             ThsQuoteInfo next = iterator.next();
-            if(i<=2){
+            if(i<=1){
                 if(lowQuoteInfo==null||next.getCurrentPrice().compareTo(lowQuoteInfo.getCurrentPrice())==-1) {
                     lowQuoteInfo = next;
                 }
@@ -305,6 +305,12 @@ public class ThsZhuanZaiComponent {
             }
             Integer timeInt = Integer.valueOf(quoteTime);
             if(timeInt>=93000&&timeInt<=150006){
+                if(quote.getStockCode().startsWith("11")&&quote.getVol()!=null){
+                    quote.setVol(quote.getVol()*10);
+                }
+                if(quote.getStockCode().startsWith("11")&&quote.getTotalSellVolume()!=null){
+                    quote.setTotalSellVolume(quote.getTotalSellVolume()*10);
+                }
                 list.add(quote);
             }
         }
