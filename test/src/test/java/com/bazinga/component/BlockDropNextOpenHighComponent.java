@@ -53,7 +53,7 @@ public class BlockDropNextOpenHighComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
     @Autowired
-    private BlockKbarSelfService blockKbarSelfService;
+    private ThsBlockKbarService thsBlockKbarService;
     @Autowired
     private ThsBlockInfoService thsBlockInfoService;
     @Autowired
@@ -104,6 +104,8 @@ public class BlockDropNextOpenHighComponent {
 
     public List<TbondUseMainDTO> choaDieInfo() {
         blockInfo();
+
+
         List<TradeDatePool> tradeDatePools = getTradeDatePool();
         Map<String, BlockRateDTO> preBlockRateDTO = new HashMap<>();
         List<BlockRateDTO> blockRates = new ArrayList<>();
