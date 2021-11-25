@@ -172,7 +172,7 @@ public class BlockDropOpenHighComponent {
             int beforeTimeInt = 0;
             ThsQuoteInfo beforeQuote  = null;
             LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(10);
-            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(10);
+            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(40);
             int i = 0;
             for (ThsQuoteInfo quote:quotes){
                 int intTime = getIntTime(quote.getQuoteTime());
@@ -295,7 +295,7 @@ public class BlockDropOpenHighComponent {
             return list;
         }*/
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockCode, tradeDate);
-        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(10);
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(40);
         boolean buyFlag = false;
         String timeStamp = null;
         int seconds = 0;
