@@ -118,18 +118,18 @@ public class PositionOwnReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
 
-        File file = new File("E:/excelExport/陈1109.xlsx");
+        File file = new File("E:/excelExport/陈20211125.xlsx");
         try {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             log.info("data{}", JSONObject.toJSONString(dataList));
 
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-                if("20211109".equals(kbarDate)){
+                if("20211125".equals(kbarDate)){
                     continue;
                 }
                 Date afterTradeDate = commonComponent.afterTradeDate(stockPosition.getKbarDate());
-                log.info("满足中条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
+                log.info("满足条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockPosition.getStockCode(), afterTradeDate);
                 list = historyTransactionDataComponent.getPreHalfOneHourData(list);
                 if(CollectionUtils.isEmpty(list)){
@@ -211,7 +211,7 @@ public class PositionOwnReplayComponent {
             excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
             excelExportUtil.writeMainData(1);
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\1109.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\1125.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
