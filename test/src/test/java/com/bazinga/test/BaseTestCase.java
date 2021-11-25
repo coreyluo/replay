@@ -1,10 +1,14 @@
 package com.bazinga.test;
 
+import com.bazinga.base.Sort;
 import com.bazinga.enums.PlankTypeEnum;
 import com.bazinga.replay.component.*;
 import com.bazinga.replay.dto.PlankTypeDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.tradex.enums.KCate;
@@ -55,6 +59,8 @@ public class BaseTestCase {
     private HistoryTransactionDataComponent historyTransactionDataComponent;
     @Autowired
     private BlockKbarSelfComponent blockKbarSelfComponent;
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
     @Test
     public void test1() {
         //无敌数据
@@ -117,7 +123,15 @@ public class BaseTestCase {
         List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123048", "20211102");
         System.out.println(data);*/
         //blockKbarSelfComponent.initBlockKbarSelf();
-        stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
+        //stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateTo(DateTimeUtils.getDate000000(DateUtil.parseDate("20211123",DateUtil.yyyyMMdd)));
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd)));
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        for (TradeDatePool tradeDatePool:tradeDatePools) {
+            blockKbarComponent.thsBlockKbar(tradeDatePool.getTradeDate());
+        }
 
     }
 

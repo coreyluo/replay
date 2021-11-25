@@ -11,6 +11,7 @@
         <result column="open_rate" jdbcType="DECIMAL" property="openRate"/>
         <result column="close_rate" jdbcType="DECIMAL" property="closeRate"/>
         <result column="close_rate_day5" jdbcType="DECIMAL" property="closeRateDay5"/>
+        <result column="trade_amount" jdbcType="DECIMAL" property="tradeAmount"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
@@ -25,6 +26,7 @@
             open_rate,
             close_rate,
             close_rate_day5,
+            trade_amount,
             create_time,
             update_time
         </sql>
@@ -66,6 +68,9 @@
         <if test="closeRateDay5 != null">
             close_rate_day5 = #{closeRateDay5, jdbcType=DECIMAL},
         </if>
+        <if test="tradeAmount != null">
+            trade_amount = #{tradeAmount, jdbcType=DECIMAL},
+        </if>
         <if test="createTime != null">
             create_time = #{createTime, jdbcType=TIMESTAMP},
         </if>
@@ -86,6 +91,7 @@
             #{openRate, jdbcType=DECIMAL},
             #{closeRate, jdbcType=DECIMAL},
             #{closeRateDay5, jdbcType=DECIMAL},
+            #{tradeAmount, jdbcType=DECIMAL},
             #{createTime, jdbcType=TIMESTAMP},
             #{updateTime, jdbcType=TIMESTAMP}
             )
@@ -114,6 +120,9 @@
             </if>
             <if test="closeRateDay5 != null">
                 close_rate_day5 = #{closeRateDay5, jdbcType=DECIMAL},
+            </if>
+            <if test="tradeAmount != null">
+                trade_amount = #{tradeAmount, jdbcType=DECIMAL},
             </if>
             <if test="createTime != null">
                 create_time = #{createTime, jdbcType=TIMESTAMP},
@@ -146,6 +155,9 @@
         </if>
         <if test="closeRateDay5 != null">
             and close_rate_day5 = #{closeRateDay5, jdbcType=DECIMAL}
+        </if>
+        <if test="tradeAmount != null">
+            and trade_amount = #{tradeAmount, jdbcType=DECIMAL}
         </if>
     </sql>
 

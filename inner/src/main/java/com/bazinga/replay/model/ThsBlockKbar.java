@@ -90,6 +90,8 @@ public class ThsBlockKbar implements Serializable {
      */
     private BigDecimal closeRateDay5;
 
+    private BigDecimal tradeAmount;
+
     /**
      * 创建时间
      *
