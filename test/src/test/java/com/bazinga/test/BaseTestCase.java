@@ -124,14 +124,16 @@ public class BaseTestCase {
         System.out.println(data);*/
         //blockKbarSelfComponent.initBlockKbarSelf();
         //stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
-        TradeDatePoolQuery query = new TradeDatePoolQuery();
-        query.setTradeDateTo(DateTimeUtils.getDate000000(DateUtil.parseDate("20211123",DateUtil.yyyyMMdd)));
-        query.setTradeDateFrom(DateTimeUtils.getDate000000(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd)));
+        /*TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateFrom(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd));
+        query.setTradeDateTo(DateUtil.parseDate("20211122",DateUtil.yyyyMMdd));
         query.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
         for (TradeDatePool tradeDatePool:tradeDatePools) {
-            blockKbarComponent.thsBlockKbar(tradeDatePool.getTradeDate());
-        }
+            System.out.println(tradeDatePool);
+            //blockKbarComponent.thsBlockKbar(tradeDatePool.getTradeDate());
+        }*/
+        blockKbarComponent.thsBlockKbarGatherQuantity();
 
     }
 
