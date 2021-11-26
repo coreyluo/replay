@@ -19,4 +19,14 @@ public class BlockRateDTO {
     private BigDecimal preCloseRate;
     private BigDecimal preTotalTradeAmount;
 
+    private String stockCode;
+    private String stockName;
+    private BigDecimal stockOpenRate;
+    private BigDecimal stockGatherTradeAmount;
+    private Integer gatherLeve;
+    private BigDecimal stockPreTradeAmount;
+    private BigDecimal stockBuyPrice;
+
+    private BigDecimal profit;
+
 }
