@@ -460,7 +460,7 @@ public class StockKbarComponent {
         }
         List<StockKbar> kbars = Lists.reverse(stockKbars);
         if(kbars.size()==size){
-            List<StockKbar> result = kbars.subList(kbars.size() - days, kbars.size());
+            List<StockKbar> result = kbars.subList(days, kbars.size());
             return result;
         }
         BigDecimal preEndPrice = null;

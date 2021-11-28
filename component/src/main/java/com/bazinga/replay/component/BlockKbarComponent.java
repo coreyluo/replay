@@ -1,5 +1,6 @@
 package com.bazinga.replay.component;
 
+import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import sun.misc.Cache;
 
 import javax.swing.*;
 import java.math.BigDecimal;
@@ -67,6 +69,56 @@ public class BlockKbarComponent {
             thsBlockKbar.setCreateTime(new Date());
             thsBlockKbarService.save(thsBlockKbar);
         }
+    }
+
+    public void thsBlockKbarGatherQuantity(){
+
+        List<ThsBlockInfo> thsBlockInfos = thsBlockInfoService.listByCondition(new ThsBlockInfoQuery());
+        for (ThsBlockInfo blockInfo:thsBlockInfos){
+            System.out.println(blockInfo.getBlockCode());
+            ThsBlockStockDetailQuery detailQuery = new ThsBlockStockDetailQuery();
+            detailQuery.setBlockCode(blockInfo.getBlockCode());
+            List<ThsBlockStockDetail> details = thsBlockStockDetailService.listByCondition(detailQuery);
+            if(CollectionUtils.isEmpty(details)||details.size()<10){
+                continue;
+            }
+            ThsBlockKbarQuery query = new ThsBlockKbarQuery();
+            query.setBlockCode(blockInfo.getBlockCode());
+            query.addOrderBy("trade_date", Sort.SortType.ASC);
+            List<ThsBlockKbar> thsBlockKbars = thsBlockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(thsBlockKbars)){
+                continue;
+            }
+            ThsBlockKbar preKbar = null;
+            for (ThsBlockKbar thsBlockKbar:thsBlockKbars){
+                try {
+                    if (preKbar != null) {
+                        if (preKbar.getCloseRate().compareTo(new BigDecimal(-1)) == -1 && thsBlockKbar.getOpenRate().compareTo(new BigDecimal(0)) == 1) {
+                            Map<String, BigDecimal> gatherAmountMap = gatherQuantityInfo(thsBlockKbar.getTradeDate(), details);
+                            BigDecimal gatherAmount = calGatherAmount(details, gatherAmountMap);
+                            thsBlockKbar.setGatherAmount(gatherAmount);
+                            thsBlockKbarService.updateById(thsBlockKbar);
+                        }
+                    }
+                } catch (Exception e){
+                    log.error(e.getMessage(),e);
+                }
+                preKbar  = thsBlockKbar;
+            }
+
+        }
+    }
+
+
+    public BigDecimal calGatherAmount(List<ThsBlockStockDetail> blockDetails,Map<String,BigDecimal> gatherAmountMap){
+        BigDecimal totalGatherAmount = BigDecimal.ZERO;
+        for (ThsBlockStockDetail detail:blockDetails){
+            BigDecimal gatherAmount = gatherAmountMap.get(detail.getStockCode());
+            if(gatherAmount!=null){
+                totalGatherAmount   = totalGatherAmount.add(gatherAmount);
+            }
+        }
+        return totalGatherAmount;
     }
 
     public ThsBlockKbar calBlockKBar(ThsBlockInfo thsBlockInfo,List<ThsBlockStockDetail> blockDetails,Map<String,StockKbarSumInfoDTO> stockKBarInfoMap){
@@ -121,7 +173,7 @@ public class BlockKbarComponent {
         String dateyyyyMMdd = DateUtil.format(date, DateUtil.yyyyMMdd);
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos) {
-            List<StockKbar> stockKBarRemoveNew = stockKbarComponent.getStockKBarRemoveNew(circulateInfo.getStockCode(), 100, 50);
+            List<StockKbar> stockKBarRemoveNew = stockKbarComponent.getStockKBarRemoveNew(circulateInfo.getStockCode(), 400, 20);
             if(CollectionUtils.isEmpty(stockKBarRemoveNew)){
                 continue;
             }
@@ -156,6 +208,24 @@ public class BlockKbarComponent {
             stockKBarInfoMap.put(circulateInfo.getStockCode(),sumInfoDTO);
         }
         return stockKBarInfoMap;
+    }
+
+    public Map<String,BigDecimal> gatherQuantityInfo(String tradeDate,List<ThsBlockStockDetail> details){
+        Map<String,BigDecimal> gatherAmountMap=new HashMap<>();
+        for (ThsBlockStockDetail detail:details) {
+            List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(detail.getStockCode(), tradeDate);
+            if(CollectionUtils.isEmpty(datas)){
+                continue;
+            }
+            if(datas!=null&&datas.size()>=1){
+                ThirdSecondTransactionDataDTO transactionDataDTO = datas.get(0);
+                if(transactionDataDTO.getTradeTime().equals("09:25")){
+                    BigDecimal gatherAmount = transactionDataDTO.getTradePrice().multiply(new BigDecimal(transactionDataDTO.getTradeQuantity() * 100));
+                    gatherAmountMap.put(detail.getStockCode(),gatherAmount);
+                }
+            }
+        }
+        return gatherAmountMap;
     }
 
 }
