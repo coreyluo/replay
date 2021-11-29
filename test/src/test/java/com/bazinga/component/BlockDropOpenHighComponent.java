@@ -172,7 +172,7 @@ public class BlockDropOpenHighComponent {
             int beforeTimeInt = 0;
             ThsQuoteInfo beforeQuote  = null;
             LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(10);
-            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(40);
+            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(10);
             int i = 0;
             for (ThsQuoteInfo quote:quotes){
                 int intTime = getIntTime(quote.getQuoteTime());
@@ -218,7 +218,7 @@ public class BlockDropOpenHighComponent {
                     }
                     if(dto.getTbondTradeTime()!=null && i>=5){
                         BigDecimal rate = before30SecondRate(limitQueueSell, dto);
-                        if(rate.compareTo(new BigDecimal("-0.5"))==-1){
+                        if(rate.compareTo(new BigDecimal("0"))==-1){
                             dto.setTbondSellTime(beforeQuote.getQuoteTime());
                             dto.setSellPrice(quote.getCurrentPrice());
                             if (dto.getTradePrice() != null && dto.getSellPrice() != null) {
@@ -295,7 +295,7 @@ public class BlockDropOpenHighComponent {
             return list;
         }*/
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockCode, tradeDate);
-        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(40);
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(10);
         boolean buyFlag = false;
         String timeStamp = null;
         int seconds = 0;
@@ -314,7 +314,7 @@ public class BlockDropOpenHighComponent {
             }
             limitQueue.offer(data);
             BigDecimal raiseRate = calRaise(limitQueue, preEndPrice);
-            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.75))==1){
+            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.5))==1){
                 TbondUseMainDTO tbondBuy = new TbondUseMainDTO();
                 tbondBuy.setTradeDate(tradeDate);
                 tbondBuy.setStockCode(tbInfo.getStockCode());
@@ -332,7 +332,7 @@ public class BlockDropOpenHighComponent {
                 tbondBuy.setBuyTimeRate(buyTimeRate);
                 list.add(tbondBuy);
             }
-            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal("-0.25"))==-1){
+            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal("0"))==-1){
                 for(TbondUseMainDTO dto:list){
                     if(dto.getSellTime()==null) {
                         dto.setSellRate(raiseRate);
