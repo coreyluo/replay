@@ -217,7 +217,7 @@ public class BlockDropOpenHighComponent {
                         i++;
                     }
                     if(dto.getTbondTradeTime()!=null && i>=5){
-                        BigDecimal rate = before30SecondRate(limitQueueSell, dto);
+                        BigDecimal rate = before30SecondRateHu(limitQueueSell, dto);
                         if(rate.compareTo(new BigDecimal("0"))==-1){
                             dto.setTbondSellTime(beforeQuote.getQuoteTime());
                             dto.setSellPrice(quote.getCurrentPrice());
@@ -262,6 +262,23 @@ public class BlockDropOpenHighComponent {
             }
         }
         BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(first.getCurrentPrice()), dto.getPreEndPrice());
+        return rate;
+    }
+    public BigDecimal before30SecondRateHu(LimitQueue<ThsQuoteInfo> limitQueue,TbondUseMainDTO dto){
+        if(limitQueue.size()<3){
+            return null;
+        }
+        Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
+        ThsQuoteInfo high = null;
+        ThsQuoteInfo last = null;
+        while (iterator.hasNext()){
+            ThsQuoteInfo quote = iterator.next();
+            last = quote;
+            if(high==null||quote.getCurrentPrice().compareTo(high.getCurrentPrice())==1){
+                high = quote;
+            }
+        }
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(high.getCurrentPrice()), dto.getPreEndPrice());
         return rate;
     }
 
@@ -313,7 +330,7 @@ public class BlockDropOpenHighComponent {
                 seconds = 3;
             }
             limitQueue.offer(data);
-            BigDecimal raiseRate = calRaise(limitQueue, preEndPrice);
+            BigDecimal raiseRate = calRaiseHu(limitQueue, preEndPrice);
             if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.5))==1){
                 TbondUseMainDTO tbondBuy = new TbondUseMainDTO();
                 tbondBuy.setTradeDate(tradeDate);
@@ -362,6 +379,23 @@ public class BlockDropOpenHighComponent {
             last = data;
         }
         BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(first.getTradePrice()), preEndPrice);
+        return rate;
+    }
+    public BigDecimal calRaiseHu(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,BigDecimal preEndPrice){
+        if(limitQueue==null||limitQueue.size()<2){
+            return null;
+        }
+        ThirdSecondTransactionDataDTO low = null;
+        ThirdSecondTransactionDataDTO last = null;
+        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
+        while (iterator.hasNext()){
+            ThirdSecondTransactionDataDTO data = iterator.next();
+            if(low==null||data.getTradePrice().compareTo(low.getTradePrice())==-1){
+                low = data;
+            }
+            last = data;
+        }
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(low.getTradePrice()), preEndPrice);
         return rate;
     }
 
