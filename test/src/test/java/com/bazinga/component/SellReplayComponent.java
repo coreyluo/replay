@@ -125,7 +125,7 @@ public class SellReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20210418");
+            query.setKbarDateFrom("20210922");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
             if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<8){
@@ -207,6 +207,11 @@ public class SellReplayComponent {
                 if(CollectionUtils.isEmpty(list)){
                     continue;
                 }
+                ThirdSecondTransactionDataDTO open = list.get(0);
+                ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "10:00");
+                if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())>0){
+                    continue;
+                }
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     if("09:25".equals(transactionDataDTO.getTradeTime())){
                         openPrice = transactionDataDTO.getTradePrice();
@@ -230,11 +235,11 @@ public class SellReplayComponent {
             }
 
             List<Map> exportList = Lists.newArrayList();
-           /* groupByMap.forEach((key,list)->{
+            groupByMap.forEach((key,list)->{
                 Map map = new HashMap<>();
                 map.put("sellDate",key);
                 map.put("count",list.size());
-                for (int i = 3; i < headList.length; i++) {
+                for (int i = 2; i < headList.length; i++) {
                     String attrKey = headList[i];
                     BigDecimal totalRate = BigDecimal.ZERO;
                     BigDecimal preRate = BigDecimal.ZERO;
@@ -245,18 +250,18 @@ public class SellReplayComponent {
                             preRate = new BigDecimal(itemMap.get(attrKey).toString());
                         }
                     }
-                  //  map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
-                    map.put(attrKey,totalRate);
+                    map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
+                  //  map.put(attrKey,totalRate);
                 }
                 exportList.add(map);
-            });*/
-           daysGroupBy(groupByMap,exportList);
+            });
+          // daysGroupBy(groupByMap,exportList);
             excelExportUtil.setData(exportList);
             excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
             excelExportUtil.writeMainData(1);
 
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\未封住封住卖出5日聚合市场.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场未封住10点低于开盘卖出聚合.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
@@ -405,7 +410,7 @@ public class SellReplayComponent {
      //   headList.add("openRate");
         headList.add("sellDate");
         headList.add("count");
-        headList.add("overCount");
+       // headList.add("overCount");
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210531092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
