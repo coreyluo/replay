@@ -564,19 +564,34 @@ public class MiddlePlankReplayComponent {
         groupByMap.forEach((key,list)->{
             Map map = new HashMap<>();
             map.put("kbarDate",key);
-            map.put("count",list.size());
+            map.put("count",list.size()-2);
             for (int i = 2; i < headList.length; i++) {
                 String attrKey = headList[i];
                 BigDecimal totalRate = BigDecimal.ZERO;
                 BigDecimal preRate = BigDecimal.ZERO;
+                BigDecimal minRate = new BigDecimal("20");
+                BigDecimal maxRate = new BigDecimal("-20");
+                List<BigDecimal> rateList = Lists.newArrayList();
                 for (Map itemMap : list) {
                     BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
                     totalRate = totalRate.add(rate);
                     if(itemMap.get(attrKey) != null){
                         preRate = new BigDecimal(itemMap.get(attrKey).toString());
                     }
+                    if(rate.compareTo(minRate)<0){
+                        minRate = rate;
+                    }
+                    if(rate.compareTo(maxRate) >0){
+                        maxRate = rate;
+                    }
+                    rateList.add(rate);
                 }
-                map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
+                List<BigDecimal> sortList = rateList.stream().sorted(BigDecimal::compareTo).collect(Collectors.toList());
+                for (int j = 0; j < 2; j++) {
+                    totalRate = totalRate.subtract(sortList.get(j));
+                }
+                totalRate = totalRate.subtract(minRate);
+                map.put(attrKey,totalRate.divide(new BigDecimal(list.size()-2),2,BigDecimal.ROUND_HALF_UP));
             }
             exportList.add(map);
         });
@@ -586,7 +601,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank包含炸板纯粹连板去20天新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank去最小2值去20天新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
