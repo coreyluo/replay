@@ -58,13 +58,15 @@ public class HblTest extends BaseTestCase {
     private BlockDropOpenHighComponent blockDropOpenHighComponent;
     @Autowired
     private BlockDropNextOpenHighComponent blockDropNextOpenHighComponent;
+    @Autowired
+    private RaiseDropComponent raiseDropComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
-       /*synExcelComponent.otherStockBuy();
+       synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        synExcelComponent.graphBuy();*/
+        synExcelComponent.graphBuy();
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
         synExcelComponent.zhuanZaiBuy();
@@ -78,7 +80,7 @@ public class HblTest extends BaseTestCase {
         //hotBlockDropBuyComponent.hotDrop();
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
-        //fastPlankComponent.fastPlank();
+        fastPlankComponent.fastPlank();
         //synExcelComponent.zhuanZaiQuoteInfo();
         //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
         synExcelComponent.zhuanZaiQuoteInfo();
@@ -89,9 +91,9 @@ public class HblTest extends BaseTestCase {
     public void test3(){
         //yesterdayPlankRateComponent.yesterdayPlankRate();
         //zhongZheng500Component.zz500Buy();
-        //zhongZheng500TwoComponent.zz500BuyTwo();
-        //choaDieComponent.chaoDie();
-        //fastRaiseComponent.fastRaise();
+        /*zhongZheng500TwoComponent.zz500BuyTwo();
+        choaDieComponent.chaoDie();
+        fastRaiseComponent.fastRaise();*/
         //fastRateBankComponent.fastRaiseBanker();
         //lowExchangePercentComponent.lowExchangeAvg();
         //oneMinutePlankComponent.firstMinutePlankInfo();
@@ -101,8 +103,9 @@ public class HblTest extends BaseTestCase {
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
        /* synExcelComponent.zhuanZaiBugInfo();*/
         //synExcelComponent.zhuanZaiChenWeiInfo();
-        blockDropOpenHighComponent.chaoDie();
+        //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
+        raiseDropComponent.raiseDrop();
 
     }
 }
