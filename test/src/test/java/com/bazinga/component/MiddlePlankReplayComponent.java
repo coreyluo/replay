@@ -474,11 +474,11 @@ public class MiddlePlankReplayComponent {
                 if(plank<2 || plank >4){
                     continue;
                 }
-              /*  Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
+                Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
                 if(plank == oneLinePlank){
                     log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
-                }*/
+                }
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
                 /*BlockCompeteDTO blockCompeteDTO = blockCompeteMap.get(uniqueKey);
                 if(blockCompeteDTO == null ){
@@ -572,6 +572,7 @@ public class MiddlePlankReplayComponent {
             Map map = new HashMap<>();
             map.put("kbarDate",key);
             map.put("count",list.size()-1);
+            Map<String,BigDecimal> openRateMap = new HashMap<>();
             for (int i = 2; i < headList.length; i++) {
                 String attrKey = headList[i];
                 BigDecimal totalRate = BigDecimal.ZERO;
@@ -579,26 +580,30 @@ public class MiddlePlankReplayComponent {
                 BigDecimal minRate = new BigDecimal("20");
                 BigDecimal maxRate = new BigDecimal("-20");
                 List<BigDecimal> rateList = Lists.newArrayList();
+
                 for (Map itemMap : list) {
+                    String stockCode = itemMap.get("stockCode").toString();
                     BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
-                    totalRate = totalRate.add(rate);
+                    if(i==2){
+                        openRateMap.put(stockCode,rate);
+                    }
                     if(itemMap.get(attrKey) != null){
                         preRate = new BigDecimal(itemMap.get(attrKey).toString());
                     }
+                  //  BigDecimal relativeOpenRate = rate.subtract(openRateMap.get(stockCode));
+                    totalRate = totalRate.add(rate);
+
                     if(rate.compareTo(minRate)<0){
                         minRate = rate;
                     }
-                    if(rate.compareTo(maxRate) >0){
-                        maxRate = rate;
-                    }
-                    rateList.add(rate);
+                   // rateList.add(rate);
                 }
                 List<BigDecimal> sortList = rateList.stream().sorted(BigDecimal::compareTo).collect(Collectors.toList());
                /* for (int j = 0; j < 2; j++) {
                     totalRate = totalRate.subtract(sortList.get(j));
                 }*/
                 totalRate = totalRate.subtract(minRate);
-                map.put(attrKey,totalRate.divide(new BigDecimal(list.size()-1),2,BigDecimal.ROUND_HALF_UP));
+                map.put(attrKey,totalRate);
             }
             exportList.add(map);
         });
@@ -608,7 +613,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank去最小值含一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank去最值去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

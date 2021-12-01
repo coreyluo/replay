@@ -40,6 +40,10 @@ public final class Excel2JavaPojoUtil {
         wb = WorkbookFactory.create(inp);
     }
 
+    public Row getRow(int row){
+        return  wb.getSheetAt(0).getRow(row);
+    }
+
     /**
      * Excel文件到POJO的转换: <br>
      *
