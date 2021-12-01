@@ -172,7 +172,7 @@ public class BlockDropOpenHighComponent {
             int beforeTimeInt = 0;
             ThsQuoteInfo beforeQuote  = null;
             LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(10);
-            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(40);
+            LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(10);
             int i = 0;
             for (ThsQuoteInfo quote:quotes){
                 int intTime = getIntTime(quote.getQuoteTime());
@@ -217,8 +217,8 @@ public class BlockDropOpenHighComponent {
                         i++;
                     }
                     if(dto.getTbondTradeTime()!=null && i>=5){
-                        BigDecimal rate = before30SecondRate(limitQueueSell, dto);
-                        if(rate.compareTo(new BigDecimal("-0.5"))==-1){
+                        BigDecimal rate = before30SecondRateHu(limitQueueSell, dto);
+                        if(rate.compareTo(new BigDecimal("0"))==-1){
                             dto.setTbondSellTime(beforeQuote.getQuoteTime());
                             dto.setSellPrice(quote.getCurrentPrice());
                             if (dto.getTradePrice() != null && dto.getSellPrice() != null) {
@@ -264,6 +264,23 @@ public class BlockDropOpenHighComponent {
         BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(first.getCurrentPrice()), dto.getPreEndPrice());
         return rate;
     }
+    public BigDecimal before30SecondRateHu(LimitQueue<ThsQuoteInfo> limitQueue,TbondUseMainDTO dto){
+        if(limitQueue.size()<3){
+            return null;
+        }
+        Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
+        ThsQuoteInfo high = null;
+        ThsQuoteInfo last = null;
+        while (iterator.hasNext()){
+            ThsQuoteInfo quote = iterator.next();
+            last = quote;
+            if(high==null||quote.getCurrentPrice().compareTo(high.getCurrentPrice())==1){
+                high = quote;
+            }
+        }
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getCurrentPrice().subtract(high.getCurrentPrice()), dto.getPreEndPrice());
+        return rate;
+    }
 
     public void before10AvgInfo(LimitQueue<ThsQuoteInfo> limitQueue,TbondUseMainDTO dto){
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
@@ -295,7 +312,7 @@ public class BlockDropOpenHighComponent {
             return list;
         }*/
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockCode, tradeDate);
-        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(40);
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue  = new LimitQueue(10);
         boolean buyFlag = false;
         String timeStamp = null;
         int seconds = 0;
@@ -313,8 +330,8 @@ public class BlockDropOpenHighComponent {
                 seconds = 3;
             }
             limitQueue.offer(data);
-            BigDecimal raiseRate = calRaise(limitQueue, preEndPrice);
-            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.75))==1){
+            BigDecimal raiseRate = calRaiseHu(limitQueue, preEndPrice);
+            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.5))==1){
                 TbondUseMainDTO tbondBuy = new TbondUseMainDTO();
                 tbondBuy.setTradeDate(tradeDate);
                 tbondBuy.setStockCode(tbInfo.getStockCode());
@@ -332,7 +349,7 @@ public class BlockDropOpenHighComponent {
                 tbondBuy.setBuyTimeRate(buyTimeRate);
                 list.add(tbondBuy);
             }
-            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal("-0.25"))==-1){
+            if(raiseRate!=null&&raiseRate.compareTo(new BigDecimal("0"))==-1){
                 for(TbondUseMainDTO dto:list){
                     if(dto.getSellTime()==null) {
                         dto.setSellRate(raiseRate);
@@ -362,6 +379,23 @@ public class BlockDropOpenHighComponent {
             last = data;
         }
         BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(first.getTradePrice()), preEndPrice);
+        return rate;
+    }
+    public BigDecimal calRaiseHu(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,BigDecimal preEndPrice){
+        if(limitQueue==null||limitQueue.size()<2){
+            return null;
+        }
+        ThirdSecondTransactionDataDTO low = null;
+        ThirdSecondTransactionDataDTO last = null;
+        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
+        while (iterator.hasNext()){
+            ThirdSecondTransactionDataDTO data = iterator.next();
+            if(low==null||data.getTradePrice().compareTo(low.getTradePrice())==-1){
+                low = data;
+            }
+            last = data;
+        }
+        BigDecimal rate = PriceUtil.getPricePercentRate(last.getTradePrice().subtract(low.getTradePrice()), preEndPrice);
         return rate;
     }
 
