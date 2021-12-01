@@ -208,8 +208,8 @@ public class SellReplayComponent {
                     continue;
                 }
                 ThirdSecondTransactionDataDTO open = list.get(0);
-                ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "10:00");
-                if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())>0){
+                ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "09:31");
+                if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
                     continue;
                 }
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
@@ -261,7 +261,7 @@ public class SellReplayComponent {
             excelExportUtil.writeMainData(1);
 
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场未封住10点低于开盘卖出聚合.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场未封住931高于开盘卖出聚合.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
