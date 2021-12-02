@@ -121,6 +121,7 @@ public class SellReplayComponent {
 
     public void replayMarket(){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
         List<SellReplayImportDTO> importList = Lists.newArrayList();
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
@@ -143,7 +144,7 @@ public class SellReplayComponent {
                 if(plankHighDTO.getPlankHigh() > 2){
                     continue;
                 }
-                if(buyStockKbar.getHighPrice().compareTo(buyStockKbar.getClosePrice())==0){
+                if(buyStockKbar.getHighPrice().compareTo(buyStockKbar.getClosePrice())!=0){
                     continue;
                 }
                 log.info("满足炸板条件 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
@@ -187,7 +188,7 @@ public class SellReplayComponent {
         excelExportUtil.setHeadKey(headList);
         List<Map> dataList = new ArrayList<>();
         try {
-            for (SellReplayImportDTO sellReplayImportDTO : importList) {
+            out:for (SellReplayImportDTO sellReplayImportDTO : importList) {
                 if(sellReplayImportDTO.getSealType()!=0){
                     continue;
                 }
@@ -208,15 +209,34 @@ public class SellReplayComponent {
                     continue;
                 }
                 ThirdSecondTransactionDataDTO open = list.get(0);
-                ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "09:31");
-                if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
+             //   ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "09:31");
+               /* BigDecimal fixRelativeOpen = PriceUtil.getPricePercentRate(fixTimeDataOne.getTradePrice().subtract(open.getTradePrice()),stockKbar.getClosePrice());
+                if(fixRelativeOpen.compareTo(new BigDecimal("-1"))>0){
                     continue;
+                }*/
+              /*  if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
+                    continue;
+                }*/
+                List<ThirdSecondTransactionDataDTO> pre15List = historyTransactionDataComponent.getFixTimeData(list, "09:45");
+                BigDecimal lowPrice = new BigDecimal("11");
+                openPrice = list.get(0).getTradePrice();
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : pre15List) {
+                    if(transactionDataDTO.getTradePrice().compareTo(lowPrice)<0){
+                        lowPrice = transactionDataDTO.getTradePrice();
+                    }
+                    BigDecimal lowRelOpenRate = PriceUtil.getPricePercentRate(lowPrice.subtract(openPrice), stockKbar.getClosePrice());
+                    BigDecimal midPrice = openPrice.add(lowPrice).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
+                    if(lowRelOpenRate.compareTo(new BigDecimal("-2"))<0 && transactionDataDTO.getTradePrice().compareTo(midPrice)>0){
+                        log.info("满足强势回弹 stockCode{} kbarDate{}",sellReplayImportDTO.getStockCode(),sellDateString);
+                        continue out;
+                    }
                 }
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     if("09:25".equals(transactionDataDTO.getTradeTime())){
                         openPrice = transactionDataDTO.getTradePrice();
                     }
                     BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+
                     map.put(transactionDataDTO.getTradeTime(),rate);
                 }
                 map.put("openRate", PriceUtil.getPricePercentRate(openPrice.subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice()));
@@ -261,7 +281,7 @@ public class SellReplayComponent {
             excelExportUtil.writeMainData(1);
 
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场未封住931高于开盘卖出聚合.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场封住15min未反弹到中位聚合.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {

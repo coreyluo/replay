@@ -11,7 +11,7 @@ public class DailyTest extends BaseTestCase{
 
     @Test
     public void test(){
-        accountPositionCalComponent.cal();
+        accountPositionCalComponent.cal("398000103912");
     }
 
 
