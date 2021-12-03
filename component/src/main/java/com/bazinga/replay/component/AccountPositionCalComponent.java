@@ -28,10 +28,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,13 +44,15 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-       // currentTradeDate = DateUtil.parseDate("20211201",DateUtil.yyyyMMdd);
+      //  currentTradeDate = DateUtil.parseDate("20211201",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
         List<PositionCalDTO> resultList = Lists.newArrayList();
 
         try {
+            File orderFile = new File("E:\\positionCal\\"+preName+"_委托_"+kbarDate+".csv");
+            List<String> orderList = FileUtils.readLines(orderFile, "GBK");
             File importFile = new File("E:\\positionCal\\"+preName+SymbolConstants.UNDERLINE +"收益"+preKbarDate+".xls");
             List<PositionCalDTO> importList = new Excel2JavaPojoUtil(importFile).excel2JavaPojo(PositionCalDTO.class);
             File file = new File("E:\\positionCal\\"+preName+"_持仓_"+kbarDate+".csv");
@@ -63,8 +62,7 @@ public class AccountPositionCalComponent {
             }
             log.info("");
 
-            File orderFile = new File("E:\\positionCal\\"+preName+"_委托_"+kbarDate+".csv");
-            List<String> orderList = FileUtils.readLines(orderFile, "GBK");
+
 
             Map<String, SellGroupDTO> sellAmountMap = new HashMap<>();
             for (int i = 0; i < orderList.size(); i++) {
@@ -104,8 +102,8 @@ public class AccountPositionCalComponent {
                     int unCalQuantiy = unResultList.stream().mapToInt(PositionCalDTO::getTradeQuantity).sum();
                     if(sellGroupDTO.getSellQuantity().equals(unCalQuantiy)){
                         log.info("满足结算条件stockCode{}",stockCode);
-                        if(resultList.size()==1){
-                            PositionCalDTO positionCalDTO = resultList.get(0);
+                        if(unResultList.size()==1){
+                            PositionCalDTO positionCalDTO = unResultList.get(0);
                             positionCalDTO.setTradeQuantity(0);
                             if(positionCalDTO.getSellAmount()==null){
                                 positionCalDTO.setSellAmount(sellGroupDTO.getSellAmount());
@@ -113,10 +111,10 @@ public class AccountPositionCalComponent {
                                 positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellGroupDTO.getSellAmount()));
                             }
                             positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium().subtract(positionCalDTO.getBuyAmount()),positionCalDTO.getBuyAmount()));
+                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
                         }else {
-                            for (int i = 0; i < resultList.size(); i++) {
-                                PositionCalDTO positionCalDTO = resultList.get(i);
+                            for (int i = 0; i < unResultList.size(); i++) {
+                                PositionCalDTO positionCalDTO = unResultList.get(i);
                                 BigDecimal quantityRate = new BigDecimal(positionCalDTO.getTradeQuantity().toString()).divide(new BigDecimal(String.valueOf(unCalQuantiy)),3, RoundingMode.HALF_UP);
                                 positionCalDTO.setTradeQuantity(0);
                                 BigDecimal sellAmount = sellGroupDTO.getSellAmount().multiply(quantityRate).setScale(2, RoundingMode.HALF_UP);
@@ -126,13 +124,13 @@ public class AccountPositionCalComponent {
                                     positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellAmount));
                                 }
                                 positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium().subtract(positionCalDTO.getBuyAmount()),positionCalDTO.getBuyAmount()));
+                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
                             }
                         }
                     }else {
                         log.info("不满足结算条件需要更新卖出金额stockCode{}",stockCode);
-                        if(resultList.size()==1){
-                            PositionCalDTO positionCalDTO = resultList.get(0);
+                        if(unResultList.size()==1){
+                            PositionCalDTO positionCalDTO = unResultList.get(0);
                             positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()-sellGroupDTO.getSellQuantity());
                             if(positionCalDTO.getSellAmount()==null){
                                 positionCalDTO.setSellAmount(sellGroupDTO.getSellAmount());
@@ -141,12 +139,12 @@ public class AccountPositionCalComponent {
                             }
                         }else {
                             Integer totalSubQuantity = 0;
-                            for (int i = 0; i < resultList.size(); i++) {
-                                PositionCalDTO positionCalDTO = resultList.get(i);
+                            for (int i = 0; i < unResultList.size(); i++) {
+                                PositionCalDTO positionCalDTO = unResultList.get(i);
                                 BigDecimal quantityRate = new BigDecimal(positionCalDTO.getTradeQuantity().toString()).divide(new BigDecimal(String.valueOf(unCalQuantiy)),3, RoundingMode.HALF_UP);
                                 Integer subtractQuantity = new BigDecimal(sellGroupDTO.getSellQuantity().toString()).multiply(quantityRate).intValue();
                                 totalSubQuantity = totalSubQuantity + subtractQuantity;
-                                if(i== resultList.size()-1){
+                                if(i== unResultList.size()-1){
                                     positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()-(sellGroupDTO.getSellQuantity()- totalSubQuantity));
                                 }else {
                                     positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()- subtractQuantity);
@@ -186,9 +184,6 @@ public class AccountPositionCalComponent {
                     positionCalDTO.setOrderTime(objArr[0]);
                     positionCalDTO.setStockCode(objArr[1]);
                     positionCalDTO.setStockName(objArr[2]);
-                  /*  positionCalDTO.setSellAmount(new BigDecimal("-1"));
-                    positionCalDTO.setPremium(new BigDecimal("-1"));
-                    positionCalDTO.setPremiumRate(new BigDecimal("-1"));*/
                     positionCalDTO.setTradeQuantity(Integer.valueOf(objArr[7]));
                     positionCalDTO.setBuyAmount(new BigDecimal(objArr[8]));
                     BigDecimal orderPrice = new BigDecimal(objArr[5]);

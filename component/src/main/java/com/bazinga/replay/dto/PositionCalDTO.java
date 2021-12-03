@@ -76,7 +76,7 @@ public class PositionCalDTO {
     private String accountName;
 
     @ExcelField(name="成交股数")
-    @ExcelElement("发生日期")
+    @ExcelElement("成交股数")
     private Integer tradeQuantity;
 
 
