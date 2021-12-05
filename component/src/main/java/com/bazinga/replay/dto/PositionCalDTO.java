@@ -75,8 +75,8 @@ public class PositionCalDTO {
     @ExcelElement("账号")
     private String accountName;
 
-    @ExcelField(name="成交股数")
-    @ExcelElement("成交股数")
+    @ExcelField(name="未结算股数")
+    @ExcelElement("未结算股数")
     private Integer tradeQuantity;
 
 

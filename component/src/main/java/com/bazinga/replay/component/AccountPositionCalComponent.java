@@ -41,10 +41,18 @@ public class AccountPositionCalComponent {
     @Autowired
     private CommonComponent commonComponent;
 
+    private static Map<String,String> ACCOUNT_NAME_MAP = new HashMap<>();
+
+    static {
+        ACCOUNT_NAME_MAP.put("398000086400","老窝");
+        ACCOUNT_NAME_MAP.put("398000103912","赵");
+        ACCOUNT_NAME_MAP.put("398000131333","杜");
+        ACCOUNT_NAME_MAP.put("398000104352","产品");
+    }
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-      //  currentTradeDate = DateUtil.parseDate("20211201",DateUtil.yyyyMMdd);
+        currentTradeDate = DateUtil.parseDate("20211203",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -53,15 +61,8 @@ public class AccountPositionCalComponent {
         try {
             File orderFile = new File("E:\\positionCal\\"+preName+"_委托_"+kbarDate+".csv");
             List<String> orderList = FileUtils.readLines(orderFile, "GBK");
-            File importFile = new File("E:\\positionCal\\"+preName+SymbolConstants.UNDERLINE +"收益"+preKbarDate+".xls");
+            File importFile = new File("E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+preKbarDate+".xls");
             List<PositionCalDTO> importList = new Excel2JavaPojoUtil(importFile).excel2JavaPojo(PositionCalDTO.class);
-            File file = new File("E:\\positionCal\\"+preName+"_持仓_"+kbarDate+".csv");
-            List<String> list = FileUtils.readLines(file, "GBK");
-            for (int i = 0; i < 3; i++) {
-                list.remove(0);
-            }
-            log.info("");
-
 
 
             Map<String, SellGroupDTO> sellAmountMap = new HashMap<>();
@@ -232,7 +233,11 @@ public class AccountPositionCalComponent {
                         }
                         positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh()-1 + "+");
                     }else {
-                        positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh() + "+"+ plankHighDTO.getUnPlank());
+                        if(plankHighDTO.getUnPlank()==0){
+                            positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh().toString());
+                        }else {
+                            positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh() + "+"+ plankHighDTO.getUnPlank());
+                        }
                         positionCalDTO.setMode("自动化普打");
                     }
                     positionCalDTO.setSealType(sealType);
@@ -245,7 +250,7 @@ public class AccountPositionCalComponent {
 
             }
             log.info("");
-            ExcelExportUtil.exportToFile(resultList, "E:\\positionCal\\"+preName+SymbolConstants.UNDERLINE +"收益"+kbarDate+".xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+kbarDate+".xls");
 
         } catch (Exception e) {
             e.printStackTrace();
