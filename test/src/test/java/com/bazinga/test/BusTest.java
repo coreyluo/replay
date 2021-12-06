@@ -19,8 +19,12 @@ public class BusTest extends BaseTestCase {
 
     @Test
     public void test(){
-        dragonTigerDailyComponent.save2Db();
+      //  dragonTigerDailyComponent.save2Db();
       /*  List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("113615", "20211103");
         System.out.println(JSONObject.toJSONString(data));*/
+
+        List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData("600260", "20210816");
+        ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "09:36");
+
     }
 }

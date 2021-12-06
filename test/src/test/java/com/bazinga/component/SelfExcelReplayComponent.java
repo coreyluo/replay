@@ -130,20 +130,24 @@ public class SelfExcelReplayComponent {
                 List<ThirdSecondTransactionDataDTO> buyList = historyTransactionDataComponent.getData(stockCode, buyDate);
                 if(!CollectionUtils.isEmpty(list)){
                     list = historyTransactionDataComponent.getMorningData(list);
+                    if(CollectionUtils.isEmpty(list)|| list.size()==1){
+                        continue;
+                    }
+                    ThirdSecondTransactionDataDTO buyDTO = historyTransactionDataComponent.getFixTimeDataOne(list, "09:36");
                     ThirdSecondTransactionDataDTO open = buyList.get(0);
                    // ThirdSecondTransactionDataDTO transactionDataDTO = buyList.get(9);
                   /*  ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(buyList, "09:33");
                     if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
                         continue;
                     }*/
-                    importDTO.setBuyPrice(open.getTradePrice());
+                    importDTO.setBuyPrice(buyDTO.getTradePrice());
                     Float sellPricef = historyTransactionDataComponent.calAveragePrice(list);
                     BigDecimal sellPrice = new BigDecimal(sellPricef.toString());
                     importDTO.setSellDate(DateUtil.format(sellDate,DateUtil.yyyyMMdd));
                     importDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(importDTO.getBuyPrice()),importDTO.getBuyPrice()));
                     importDTO.setOpenTradeAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
                     importDTO.setOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
-
+                    importDTO.setRelativeOpenRate(PriceUtil.getPricePercentRate(buyDTO.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
                     StockKbarQuery query = new StockKbarQuery();
                     query.setKbarDateTo(dragonDate);
                     query.setStockCode(stockCode);
@@ -164,7 +168,7 @@ public class SelfExcelReplayComponent {
                 importDTO.setStockName(buyStockKbar.getStockName());
                 resultList.add(importDTO);
             }
-            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\市场300封住次日集合买买.xls");
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\龙虎300封住次日集合买买.xls");
 
         } catch (Exception e) {
             e.printStackTrace();

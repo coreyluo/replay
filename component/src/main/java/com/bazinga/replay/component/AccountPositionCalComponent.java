@@ -48,11 +48,13 @@ public class AccountPositionCalComponent {
         ACCOUNT_NAME_MAP.put("398000103912","赵");
         ACCOUNT_NAME_MAP.put("398000131333","杜");
         ACCOUNT_NAME_MAP.put("398000104352","产品");
+        ACCOUNT_NAME_MAP.put("398000104348","大佬");
+        ACCOUNT_NAME_MAP.put("398000102550","问");
     }
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-        currentTradeDate = DateUtil.parseDate("20211203",DateUtil.yyyyMMdd);
+        //currentTradeDate = DateUtil.parseDate("20211203",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -189,8 +191,8 @@ public class AccountPositionCalComponent {
                     positionCalDTO.setBuyAmount(new BigDecimal(objArr[8]));
                     BigDecimal orderPrice = new BigDecimal(objArr[5]);
                     positionCalDTO.setTradeTime(tradeTime);
-                    Date orderDate = DateUtil.parseDate(positionCalDTO.getOrderTime(), DateUtil.HH_MM_SS);
-                    Date tradeDate = DateUtil.parseDate(positionCalDTO.getTradeTime(), DateUtil.HH_MM_SS);
+                    Date orderDate = DateUtil.parseDate(positionCalDTO.getOrderTime().startsWith("9")?"0"+positionCalDTO.getOrderTime():positionCalDTO.getOrderTime(), DateUtil.HH_MM_SS);
+                    Date tradeDate = DateUtil.parseDate(positionCalDTO.getTradeTime().startsWith("9")?"0"+positionCalDTO.getTradeTime():positionCalDTO.getTradeTime(), DateUtil.HH_MM_SS);
                     long subTimeLong = tradeDate.getTime() - orderDate.getTime();
                     long hour = subTimeLong/(1000*60*60);
                     long min = subTimeLong%(1000*60*60)/(1000*60);
@@ -202,7 +204,7 @@ public class AccountPositionCalComponent {
                     String uniqueKey = positionCalDTO.getStockCode() +SymbolConstants.UNDERLINE + kbarDate;
                     StockKbar byUniqueKey = stockKbarService.getByUniqueKey(uniqueKey);
                     if(byUniqueKey ==null){
-                        throw new Exception();
+                        throw new Exception(positionCalDTO.getStockCode());
                     }
                     StockKbarQuery query = new StockKbarQuery();
                     query.setStockCode(positionCalDTO.getStockCode());
@@ -253,7 +255,7 @@ public class AccountPositionCalComponent {
             ExcelExportUtil.exportToFile(resultList, "E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+kbarDate+".xls");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         }
 
 
