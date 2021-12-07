@@ -1,5 +1,6 @@
 package com.bazinga.dto;
 
+
 import com.bazinga.annotation.ExcelElement;
 import lombok.Data;
 
@@ -7,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
-public class SellReplayImportDTO {
+public class Sell300ExportDTO {
 
     /**
      * 股票代码
@@ -30,15 +31,22 @@ public class SellReplayImportDTO {
     private String stockName;
 
     @ExcelElement("发生日期")
-    private Date kbarDate;
+    private String kbarDate;
 
     @ExcelElement("委托时间")
-    private Date orderTime;
+    private String orderTime;
 
     @ExcelElement("是否炸板")
     private Integer sealType;
 
+    private Integer competeNum;
+
+    private BigDecimal openRate;
+
+    private Integer overOpen;
+
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
+    private BigDecimal monitorSellRate;
 }

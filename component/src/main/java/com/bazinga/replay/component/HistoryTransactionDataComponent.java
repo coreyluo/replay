@@ -36,7 +36,7 @@ public class HistoryTransactionDataComponent {
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
             loopTimes++;
             if(historyTransactionData ==null ){
-                continue;
+                break;
             }
             List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
             resultList.addAll(0,list);
@@ -55,13 +55,27 @@ public class HistoryTransactionDataComponent {
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
             loopTimes++;
             if(historyTransactionData ==null ){
-                continue;
+                break;
             }
             List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
             resultList.addAll(0,list);
         }
         return resultList;
 
+    }
+
+    public List<ThirdSecondTransactionDataDTO> getMorningData(List<ThirdSecondTransactionDataDTO> list){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = list.size();
+        for(int i=0; i<list.size(); i++){
+            if("11:30".equals(list.get(i).getTradeTime())){
+                index = i;
+                break;
+            }
+        }
+        return list.subList(0,index);
     }
 
     public List<ThirdSecondTransactionDataDTO> getPreOneHourData(List<ThirdSecondTransactionDataDTO> list){
@@ -90,6 +104,22 @@ public class HistoryTransactionDataComponent {
             }
         }
         return list.subList(0,index);
+    }
+
+    public ThirdSecondTransactionDataDTO getFixTimeDataOne(List<ThirdSecondTransactionDataDTO> list,String fixTime){
+        if(CollectionUtils.isEmpty(list)){
+            return null;
+        }
+        int index = 1;
+        fixTime = fixTime.replace(":","");
+        for(int i=0; i<list.size(); i++){
+            String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+            if(Integer.parseInt(minTradeTime)>=Integer.parseInt(fixTime)){
+                index = i;
+                break;
+            }
+        }
+        return list.get(index-1);
     }
 
     public List<ThirdSecondTransactionDataDTO> getFixTimeData(List<ThirdSecondTransactionDataDTO> list,String fixTime){
@@ -174,6 +204,21 @@ public class HistoryTransactionDataComponent {
             return avgPrice;
         } catch (Exception e) {
             log.info("计算均价异常 stockCode:{} tradeDate:{}",stockCode,tradeDateStr);
+            return null;
+        }
+    }
+
+    public BigDecimal calMorningAvgPrice(String stockCode, String tradeDate) {
+        try{
+            List<ThirdSecondTransactionDataDTO> datas = getData(stockCode, tradeDate);
+            datas = getMorningData(datas);
+            if(CollectionUtils.isEmpty(datas)){
+                return null;
+            }
+            BigDecimal avgPrice = new BigDecimal(calAveragePrice(datas)).setScale(2,BigDecimal.ROUND_HALF_UP);
+            return avgPrice;
+        } catch (Exception e) {
+            log.info("计算均价异常 stockCode:{} tradeDate:{}",stockCode,tradeDate);
             return null;
         }
     }

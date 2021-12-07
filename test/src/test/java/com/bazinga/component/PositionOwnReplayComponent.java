@@ -118,20 +118,20 @@ public class PositionOwnReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
 
-        File file = new File("E:/excelExport/1030以前.xlsx");
+        File file = new File("E:/excelExport/陈20211125.xlsx");
         try {
             List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
             log.info("data{}", JSONObject.toJSONString(dataList));
 
             for (PositionOwnImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
-               /* if("20210907".equals(kbarDate)){
+                if("20211125".equals(kbarDate)){
                     continue;
-                }*/
+                }
                 Date afterTradeDate = commonComponent.afterTradeDate(stockPosition.getKbarDate());
-                log.info("满足中条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
+                log.info("满足条件 stockCode{} kbarDate{}", stockPosition.getStockCode(),kbarDate);
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockPosition.getStockCode(), afterTradeDate);
-                list = historyTransactionDataComponent.getPreHalfOneHourData(list);
+               // list = historyTransactionDataComponent.getPreHalfOneHourData(list);
                 if(CollectionUtils.isEmpty(list)){
                     continue;
                 }
@@ -141,10 +141,15 @@ public class PositionOwnReplayComponent {
                 String uniqueKey = stockPosition.getStockCode() + SymbolConstants.UNDERLINE + kbarDate;
                 StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
                 Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
+                if(stockKbar == null ){
+                    continue;
+                }
 
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
-                    if(!"09:25".equals(transactionDataDTO.getTradeTime())){
+                    map.put(transactionDataDTO.getTradeTime(),rate);
+
+                  /*  if(!"09:25".equals(transactionDataDTO.getTradeTime())){
                         List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
                         if(minList == null){
                             minList = new ArrayList<>();
@@ -156,9 +161,9 @@ public class PositionOwnReplayComponent {
                     }else {
                         map.put(transactionDataDTO.getTradeTime(),rate);
 
-                    }
+                    }*/
                 }
-                tempMap.forEach((minStr,minlist)->{
+                /*tempMap.forEach((minStr,minlist)->{
                     for (int j = 0; j < minlist.size(); j++) {
                         ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(j);
                         BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
@@ -171,7 +176,7 @@ public class PositionOwnReplayComponent {
                             map.put(minStr+ SymbolConstants.UNDERLINE + j,rate);
                         }
                     }
-                });
+                });*/
                 dataList.add(map);
             }
 
@@ -211,7 +216,7 @@ public class PositionOwnReplayComponent {
             excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
             excelExportUtil.writeMainData(1);
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\afterDay1030.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\1125分钟.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
@@ -234,12 +239,13 @@ public class PositionOwnReplayComponent {
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
-        while (count< 10){
+        while (count< 60){
             date = DateUtil.addMinutes(date, 1);
             count++;
-            for (int i = 1; i < 21; i++) {
+            headList.add(DateUtil.format(date,"HH:mm"));
+         /*   for (int i = 1; i < 21; i++) {
                 headList.add(DateUtil.format(date,"HH:mm") + SymbolConstants.UNDERLINE +i);
-            }
+            }*/
         }
         return headList.toArray(new String[]{});
     }

@@ -1,0 +1,86 @@
+package com.bazinga.dto;
+
+import com.bazinga.annotation.ExcelElement;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Data
+public class SelfExcelImportDTO {
+    /**
+     * 股票代码
+     *
+     * @最大长度 10
+     * @允许为空 NO
+     * @是否索引 NO
+     */
+    @ExcelElement("code")
+    private String stockCode;
+
+    /**
+     * 股票名称
+     *
+     * @最大长度 60
+     * @允许为空 NO
+     * @是否索引 NO
+     */
+    @ExcelElement("证券名称")
+    private String stockName;
+
+    @ExcelElement("day")
+    private Date dragonDate;
+
+    @ExcelElement("direction")
+    private String direction;
+
+    @ExcelElement("rank")
+    private Integer rank;
+
+    @ExcelElement("sales_depart_name")
+    private String salesDepartName;
+
+    @ExcelElement("abnormal_name")
+    private String abnormalName;
+
+    @ExcelElement("buy_value")
+    private String buyValue;
+
+    @ExcelElement("买入价格")
+    private BigDecimal buyPrice;
+
+    private String buyDate;
+
+    private String sellDate;
+
+    @ExcelElement("收益")
+    private BigDecimal premium;
+
+    @ExcelElement("开盘涨幅")
+    private BigDecimal openRate;
+
+    @ExcelElement("买入相对开盘涨幅")
+    private BigDecimal relativeOpenRate;
+
+    @ExcelElement("集合成交金额")
+    private BigDecimal openTradeAmount;
+
+    @ExcelElement("3日涨幅")
+    private BigDecimal day3Rate;
+
+    @ExcelElement("3日涨幅")
+    private BigDecimal day5Rate;
+
+    @ExcelElement("3日涨幅")
+    private BigDecimal day10Rate;
+
+    @ExcelElement("板高")
+    private Integer plankHigh;
+
+    @ExcelElement("断板")
+    private Integer unPlank;
+
+    @ExcelElement("成交金额")
+    private BigDecimal tradeAmount;
+
+}

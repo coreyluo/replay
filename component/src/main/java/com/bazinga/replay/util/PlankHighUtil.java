@@ -1,8 +1,7 @@
-package com.bazinga.util;
+package com.bazinga.replay.util;
 
-import com.bazinga.dto.PlankHighDTO;
+import com.bazinga.replay.dto.PlankHighDTO;
 import com.bazinga.replay.model.StockKbar;
-import com.bazinga.replay.util.StockKbarUtil;
 
 import java.util.List;
 
