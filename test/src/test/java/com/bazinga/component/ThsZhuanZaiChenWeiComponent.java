@@ -62,12 +62,13 @@ public class ThsZhuanZaiChenWeiComponent {
             list.add(dto.getRaiseVolFlag());
             list.add(dto.getIsGatherFlag());
             list.add(dto.getIsUpperAvg());
+            list.add(dto.getSellType());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","市值","交易日期","买入价格","买入时间","买出价格","买出时间","集合成交量","成交是否递增","开盘是否新高","买入时是否在均价线上","盈利"};
+        String[] rowNames = {"index","股票代码","股票名称","市值","交易日期","买入价格","买入时间","买出价格","买出时间","集合成交量","成交是否递增","开盘是否新高","买入时是否在均价线上","卖出类型（1 下降 2 缩量）","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("转债陈威",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("转债陈威");
@@ -85,9 +86,15 @@ public class ThsZhuanZaiChenWeiComponent {
         query.addOrderBy("trade_date", Sort.SortType.DESC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
         for(ZhuanZaiExcelDTO zhuanZai:dataList){
+            /*if(!zhuanZai.getStockCode().equals("113619")){
+                continue;
+            }*/
             List<StockKbar> kbars = getKbars(zhuanZai.getStockCode(), zhuanZai.getStockName());
             for(TradeDatePool tradeDatePool:tradeDatePools){
                 System.out.println(zhuanZai.getStockCode()+"======"+DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd));
+                if(zhuanZai.getStockCode().equals("113619")&&DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd).equals("20211101")){
+                    System.out.println(11111111);
+                }
                 BigDecimal preEndPrice = getPreEndPrice(kbars, DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd));
                 if(preEndPrice==null){
                     continue;
@@ -113,8 +120,8 @@ public class ThsZhuanZaiChenWeiComponent {
 
     public List<ZhuanZaiBuyDTO> quoteBuyInfo(List<ThsQuoteInfo> list,BigDecimal preEndPrice,ZhuanZaiExcelDTO excelDTO,String tradeDate){
         List<ZhuanZaiBuyDTO> datas = Lists.newArrayList();
-        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(3);
-        LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(2);
+        LimitQueue<ThsQuoteInfo> limitQueue = new LimitQueue<>(4);
+        LimitQueue<ThsQuoteInfo> limitQueueSell = new LimitQueue<>(3);
         boolean buyFlag = false;
         int gatherHigh  = 0;
         ThsQuoteInfo quoteLast = null;
@@ -168,11 +175,12 @@ public class ThsZhuanZaiChenWeiComponent {
             }
             limitQueueSell.offer(quote);
             if(buyFlag){
-                boolean continueDrop = haveContinueDrop(limitQueueSell,buyDTO);
-                if(continueDrop){
+                Integer continueDrop = haveContinueDrop(limitQueueSell,buyDTO);
+                if(continueDrop!=null){
                     buyFlag = false;
                     ZhuanZaiBuyDTO buy = datas.get(datas.size() - 1);
                     buy.setSellTime(quote.getQuoteTime());
+                    buy.setSellType(continueDrop);
                     buy.setSellPrice(quote.getCurrentPrice().add(new BigDecimal("-0.01")));
                     BigDecimal profit = PriceUtil.getPricePercentRate(quote.getCurrentPrice().subtract(buy.getBuyPrice()), preEndPrice);
                     buy.setProfit(profit);
@@ -192,7 +200,7 @@ public class ThsZhuanZaiChenWeiComponent {
     }
 
     public boolean  calRate(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<3){
+        if(limitQueue==null||limitQueue.size()<4){
             return false;
         }
         ThsQuoteInfo preThsQuoteInfo = null;
@@ -230,24 +238,39 @@ public class ThsZhuanZaiChenWeiComponent {
     }
 
 
-    public boolean  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
-        if(limitQueue==null||limitQueue.size()<2){
-            return false;
+    public Integer  haveContinueDrop(LimitQueue<ThsQuoteInfo> limitQueue,ZhuanZaiBuyDTO buyDTO){
+        if(limitQueue==null||limitQueue.size()<3){
+            return null;
         }
         Iterator<ThsQuoteInfo> iterator = limitQueue.iterator();
-        ThsQuoteInfo first = null;
+        ThsQuoteInfo preQuote = null;
+        int littleVolTime = 0;
         int i=0;
         while (iterator.hasNext()){
             i++;
             ThsQuoteInfo next = iterator.next();
-            if(first==null){
-                first = next;
+            if(buyDTO.getStockCode().startsWith("11")) {
+                if (next.getVol() < 10) {
+                    littleVolTime++;
+                }else{
+                    littleVolTime = 0;
+                }
+            }else{
+                if (next.getVol() < 100) {
+                    littleVolTime++;
+                }else{
+                    littleVolTime = 0;
+                }
             }
-            if(i>=2 && next.getCurrentPrice().compareTo(first.getCurrentPrice())==-1){
-                return true;
+            if(littleVolTime>=2){
+                return 2;
             }
+            if(i>=2 && next.getCurrentPrice().compareTo(preQuote.getCurrentPrice())!=-1){
+                return null;
+            }
+            preQuote = next;
         }
-        return false;
+        return 1;
     }
 
 
@@ -266,9 +289,6 @@ public class ThsZhuanZaiChenWeiComponent {
     }
 
     public List<ThsQuoteInfo> quotes(String stockCode,String tradeDate){
-        if(stockCode.equals("113620")&&tradeDate.equals("20210929")){
-            System.out.println(11111);
-        }
         ThsQuoteInfoQuery query = new ThsQuoteInfoQuery();
         query.setStockCode(stockCode);
         query.setQuoteDate(tradeDate);
@@ -280,6 +300,9 @@ public class ThsZhuanZaiChenWeiComponent {
         List<ThsQuoteInfo> list = Lists.newArrayList();
         for (ThsQuoteInfo quote:quotes){
             if(StringUtils.isBlank(quote.getQuoteTime())){
+                continue;
+            }
+            if(quote.getBid1()==null&&quote.getAsk1()==null){
                 continue;
             }
             String quoteTime = quote.getQuoteTime();
