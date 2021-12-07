@@ -55,6 +55,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
+    @Autowired
+    private Plank3to4Component plank3to4Component;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -121,6 +124,7 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test11(){
-        Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
+        //Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
+        plank3to4Component.replay();
     }
 }

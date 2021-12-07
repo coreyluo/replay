@@ -89,7 +89,7 @@ public class SelfExcelReplayComponent {
 
     public void replayPosition()  {
 
-        File file = new File("E:/excelExport/龙虎/龙虎榜1年挑选席位.xlsx");
+        File file = new File("E:/excelExport/龙虎/华鑫20211206.xlsx");
 
         List<SelfExcelImportDTO> importList = null;
         try {
@@ -133,21 +133,21 @@ public class SelfExcelReplayComponent {
                     if(CollectionUtils.isEmpty(list)|| list.size()==1){
                         continue;
                     }
-                    ThirdSecondTransactionDataDTO buyDTO = historyTransactionDataComponent.getFixTimeDataOne(list, "09:36");
+                   // ThirdSecondTransactionDataDTO buyDTO = historyTransactionDataComponent.getFixTimeDataOne(list, "09:36");
                     ThirdSecondTransactionDataDTO open = buyList.get(0);
                    // ThirdSecondTransactionDataDTO transactionDataDTO = buyList.get(9);
                   /*  ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(buyList, "09:33");
                     if(fixTimeDataOne.getTradePrice().compareTo(open.getTradePrice())<=0){
                         continue;
                     }*/
-                    importDTO.setBuyPrice(buyDTO.getTradePrice());
+                    importDTO.setBuyPrice(open.getTradePrice());
                     Float sellPricef = historyTransactionDataComponent.calAveragePrice(list);
                     BigDecimal sellPrice = new BigDecimal(sellPricef.toString());
                     importDTO.setSellDate(DateUtil.format(sellDate,DateUtil.yyyyMMdd));
                     importDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(importDTO.getBuyPrice()),importDTO.getBuyPrice()));
                     importDTO.setOpenTradeAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
                     importDTO.setOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
-                    importDTO.setRelativeOpenRate(PriceUtil.getPricePercentRate(buyDTO.getTradePrice().subtract(dragonKbar.getClosePrice()),dragonKbar.getClosePrice()));
+                    importDTO.setRelativeOpenRate(PriceUtil.getPricePercentRate(open.getTradePrice().subtract(open.getTradePrice()),dragonKbar.getClosePrice()));
                     StockKbarQuery query = new StockKbarQuery();
                     query.setKbarDateTo(dragonDate);
                     query.setStockCode(stockCode);
