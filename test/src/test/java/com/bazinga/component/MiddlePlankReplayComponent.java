@@ -459,13 +459,13 @@ public class MiddlePlankReplayComponent {
                 List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
                 List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
                 int plank = calSerialsPlank(kbarList);
-                if(plank<2 || plank > 4 ){
-                    continue;
-                }
-              /*  PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
-                if(plankHighDTO.getPlankHigh()<2 || plankHighDTO.getPlankHigh() > 4 ){
+               /* if(plank<2 || plank > 4 ){
                     continue;
                 }*/
+                PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
+                if(plankHighDTO.getPlankHigh()<2 || plankHighDTO.getPlankHigh() > 4 ){
+                    continue;
+                }
                 if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
                     continue;
                 }
@@ -639,7 +639,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank去一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\2-4断板去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
