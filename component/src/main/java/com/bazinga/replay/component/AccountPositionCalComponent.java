@@ -114,7 +114,7 @@ public class AccountPositionCalComponent {
                                 positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellGroupDTO.getSellAmount()));
                             }
                             positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
+                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
                         }else {
                             for (int i = 0; i < unResultList.size(); i++) {
                                 PositionCalDTO positionCalDTO = unResultList.get(i);
@@ -127,7 +127,7 @@ public class AccountPositionCalComponent {
                                     positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellAmount));
                                 }
                                 positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
+                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
                             }
                         }
                     }else {

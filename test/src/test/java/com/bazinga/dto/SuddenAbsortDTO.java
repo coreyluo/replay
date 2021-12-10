@@ -30,6 +30,17 @@ public class SuddenAbsortDTO {
     @ExcelField(name = "跌停日成交量")
     private BigDecimal lastSuddenTradeAmount;
 
+    @ExcelField(name = "封死跌停1 被翘0")
+    private Integer suddenClose;
+
+    @ExcelField(name = "跌停日收盘点数")
+    private BigDecimal suddenCloseRate;
+
+    @ExcelField(name = "跌停日小于-8数量")
+    private Integer day1LowRateCount;
+
+    @ExcelField(name = "跌停2日小于-8数量")
+    private Integer day2LowRateCount;
 
     @ExcelField(name = "收益")
     private BigDecimal premium;
