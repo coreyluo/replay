@@ -42,6 +42,12 @@ public class SuddenAbsortDTO {
     @ExcelField(name = "跌停2日小于-8数量")
     private Integer day2LowRateCount;
 
+    @ExcelField(name = "跌停1日数量")
+    private Integer day1suddenCount;
+
+    @ExcelField(name = "跌停2日数量")
+    private Integer day2suddenCount;
+
     @ExcelField(name = "收益")
     private BigDecimal premium;
 

@@ -43,6 +43,7 @@ public class SuddenAbsortComponent {
 
     public void replay(){
         Map<String, List<String>> lowRateMap = getLowRateMap();
+        Map<String, List<String>> suddenMap = getSuddenMap();
         List<SuddenAbsortDTO> resultList = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         circulateInfos = circulateInfos.stream().filter(item -> !item.getStockCode().startsWith("3")).collect(Collectors.toList());
@@ -81,6 +82,10 @@ public class SuddenAbsortComponent {
                 Integer suddenCount = CollectionUtils.isEmpty(suddendayList)?0:suddendayList.size();
                 Integer sudden2Count = CollectionUtils.isEmpty(preSuddendayList)?0:preSuddendayList.size();
 
+                List<String> suddenList = suddenMap.get(stockKbar.getKbarDate());
+                List<String> preSuddenList = suddenMap.get(preStockKbar.getKbarDate());
+                Integer sudden = CollectionUtils.isEmpty(suddenList)?0:suddenList.size();
+                Integer sudden2 = CollectionUtils.isEmpty(preSuddenList)?0:preSuddenList.size();
                 SuddenAbsortDTO exportDTO = new SuddenAbsortDTO();
                 exportDTO.setStockCode(buyStockKbar.getStockCode());
                 exportDTO.setStockName(buyStockKbar.getStockName());
@@ -89,7 +94,9 @@ public class SuddenAbsortComponent {
                 exportDTO.setSuddenClose(stockKbar.getClosePrice().compareTo(stockKbar.getLowPrice())==0?1:0);
                 exportDTO.setSuddenCloseRate(PriceUtil.getPricePercentRate(stockKbar.getClosePrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice()));
                 exportDTO.setDay1LowRateCount(suddenCount);
-                exportDTO.setDay2LowRateCount(suddenCount + sudden2Count);
+                exportDTO.setDay2LowRateCount(sudden2Count);
+                exportDTO.setDay1suddenCount(sudden);
+                exportDTO.setDay2suddenCount(sudden2);
                 BigDecimal sellPrice = historyTransactionDataComponent.calMorningAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                 exportDTO.setBuyPrice(buyStockKbar.getOpenPrice());
                 exportDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
@@ -147,6 +154,38 @@ public class SuddenAbsortComponent {
                         resultMap.put(stockKbar.getKbarDate(),lowList);
                     }
                     lowList.add(stockKbar.getStockCode());
+                }
+            }
+        }
+
+        return resultMap;
+    }
+
+    public  Map<String,List<String>>  getSuddenMap(){
+        Map<String,List<String>> resultMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+
+        for (CirculateInfo circulateInfo : circulateInfos) {
+
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20201220");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+
+            if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<2){
+                continue;
+            }
+            for (int i = 1; i < kbarList.size(); i++) {
+                StockKbar stockKbar = kbarList.get(i);
+                StockKbar preStockKbar = kbarList.get(i-1);
+                if(PriceUtil.isSuddenPrice(stockKbar.getStockCode(),stockKbar.getClosePrice(),preStockKbar.getClosePrice())){
+                    List<String> suddenList = resultMap.get(stockKbar.getKbarDate());
+                    if(suddenList == null){
+                        suddenList = new ArrayList<>();
+                        resultMap.put(stockKbar.getKbarDate(),suddenList);
+                    }
+                    suddenList.add(stockKbar.getStockCode());
                 }
             }
         }
