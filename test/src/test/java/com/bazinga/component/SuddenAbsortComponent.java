@@ -2,9 +2,12 @@ package com.bazinga.component;
 
 
 import com.bazinga.base.Sort;
+import com.bazinga.constant.CommonConstant;
 import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.dto.SuddenAbsortDTO;
+import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.query.CirculateInfoQuery;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +61,7 @@ public class SuddenAbsortComponent {
             kbarList = kbarList.stream().filter(item->item.getTradeQuantity()>0).collect(Collectors.toList());
 
             for (int i = 11; i < kbarList.size()-2; i++) {
+                StockKbar prepreStockKbar = kbarList.get(i-2);
                 StockKbar preStockKbar = kbarList.get(i-1);
                 StockKbar stockKbar = kbarList.get(i);
                 StockKbar buyStockKbar = kbarList.get(i+1);
@@ -72,8 +77,8 @@ public class SuddenAbsortComponent {
                     continue;
                 }
 
-                Integer plank = calPlank(rateList);
-                if(plank<3){
+                PlankHighDTO plankHighDTO = PlankHighUtil.calSpecialPlank(rateList);
+                if(plankHighDTO.getPlankHigh()<3){
                     continue;
                 }
                 log.info("满足买入条件stockCode{} stockName{}", buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
@@ -98,9 +103,30 @@ public class SuddenAbsortComponent {
                 exportDTO.setDay1suddenCount(sudden);
                 exportDTO.setDay2suddenCount(sudden2);
                 BigDecimal sellPrice = historyTransactionDataComponent.calMorningAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
-                exportDTO.setBuyPrice(buyStockKbar.getOpenPrice());
+             //   exportDTO.setBuyPrice(buyStockKbar.getOpenPrice());
+                exportDTO.setPlankHigh(plankHighDTO.getPlankHigh());
+
+                exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                BigDecimal suddenHighPrice = stockKbar.getHighPrice();
+
+                if(preStockKbar.getHighPrice().compareTo(suddenHighPrice)>0){
+                    suddenHighPrice = preStockKbar.getHighPrice();
+                }
+                if(prepreStockKbar.getHighPrice().compareTo(suddenHighPrice)>0){
+                    suddenHighPrice = prepreStockKbar.getHighPrice();
+                }
+
+                exportDTO.setSuddenHighPrice(suddenHighPrice);
+                exportDTO.setBuyOpenRate(PriceUtil.getPricePercentRate(buyStockKbar.getOpenPrice().subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice()));
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
+                ThirdSecondTransactionDataDTO fixTimeDataOne = historyTransactionDataComponent.getFixTimeDataOne(list, "09:31");
+                exportDTO.setBuyPrice(fixTimeDataOne.getTradePrice());
+                ThirdSecondTransactionDataDTO open = list.get(0);
+                exportDTO.setBuyOpenAmount(open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity().toString())).multiply(CommonConstant.DECIMAL_HUNDRED));
+                BigDecimal day3AvgAmount = prepreStockKbar.getTradeAmount().add(preStockKbar.getTradeAmount()).add(stockKbar.getTradeAmount()).divide(new BigDecimal("3"),0, RoundingMode.HALF_UP);
+                exportDTO.setDay3Amount(day3AvgAmount);
+                exportDTO.setBuyRate(PriceUtil.getPricePercentRate(exportDTO.getBuyPrice().subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice()));
                 exportDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
-                exportDTO.setPlankHigh(plank);
                 exportDTO.setLastSuddenTradeAmount(stockKbar.getTradeAmount());
                 resultList.add(exportDTO);
             }
@@ -109,7 +135,7 @@ public class SuddenAbsortComponent {
 
         }
 
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\10日板高跌停次日低吸.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\常规板高算法跌停次日低吸.xls");
     }
 
     private Integer calPlank(List<StockKbar> stockKbarList) {

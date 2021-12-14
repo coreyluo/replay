@@ -21,6 +21,9 @@ public class SuddenAbsortDTO {
     @ExcelField(name = "买入价格")
     private BigDecimal buyPrice;
 
+    @ExcelField(name = "买入涨幅")
+    private BigDecimal buyRate;
+
     @ExcelField(name = "板高")
     private Integer plankHigh;
 
@@ -47,6 +50,21 @@ public class SuddenAbsortDTO {
 
     @ExcelField(name = "跌停2日数量")
     private Integer day2suddenCount;
+
+    @ExcelField(name = "买入日开盘涨幅")
+    private BigDecimal buyOpenRate;
+
+    @ExcelField(name = "买入日开盘成交金额")
+    private BigDecimal buyOpenAmount;
+
+    @ExcelField(name = "买入前3天平均成交金额")
+    private BigDecimal day3Amount;
+
+    @ExcelField(name = "流通z")
+    private Long circulateZ;
+
+    @ExcelField(name = "触及跌停日最高价格")
+    private BigDecimal suddenHighPrice;
 
     @ExcelField(name = "收益")
     private BigDecimal premium;
