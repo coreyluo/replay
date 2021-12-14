@@ -79,12 +79,15 @@ public class PrePlankAbsortComponent {
             }
 
             List<StockOpenAmountDTO> sortList = openAmountList.stream().sorted(Comparator.comparing(StockOpenAmountDTO::getOpenAmount).reversed()).collect(Collectors.toList());
-            int toIndex = sortList.size()>15?15:sortList.size();
+          //  int toIndex = sortList.size()>15?15:sortList.size();
+            int toIndex = sortList.size();
 
             for (int i = 0; i < toIndex; i++) {
                 StockOpenAmountDTO stockOpenAmountDTO = sortList.get(i);
                 log.info("满足买入条件 stockCode{} kbarDate{}", stockOpenAmountDTO.getStockCode(),kbarDate);
-
+                if(!stockOpenAmountDTO.getStockCode().startsWith("3")){
+                    continue;
+                }
                 StockKbarQuery query = new StockKbarQuery();
                 query.setStockCode(stockOpenAmountDTO.getStockCode());
                 query.setKbarDateTo(DateUtil.format(afterTradeDate,DateUtil.yyyyMMdd));
