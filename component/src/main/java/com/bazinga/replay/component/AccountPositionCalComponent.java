@@ -186,6 +186,9 @@ public class AccountPositionCalComponent {
                     positionCalDTO.setTradeDate(DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd));
                     positionCalDTO.setOrderTime(objArr[0]);
                     positionCalDTO.setStockCode(objArr[1]);
+                    if(positionCalDTO.getStockCode().startsWith("1")){
+                        continue;
+                    }
                     positionCalDTO.setStockName(objArr[2]);
                     positionCalDTO.setTradeQuantity(Integer.valueOf(objArr[7]));
                     positionCalDTO.setBuyAmount(new BigDecimal(objArr[8]));
