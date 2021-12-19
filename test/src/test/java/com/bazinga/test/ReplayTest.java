@@ -64,6 +64,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private PrePlankAbsortComponent prePlankAbsortComponent;
 
+    @Autowired
+    private MiddlePlankUpdateReplayComponent middlePlankUpdateReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -133,7 +136,8 @@ public class ReplayTest extends BaseTestCase {
         //Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
      //   plank3to4Component.replay();
      //   suddenAbsortComponent.replay();
-        prePlankAbsortComponent.replay();
+        //prePlankAbsortComponent.replay();
+        middlePlankUpdateReplayComponent.invoke();
 
     }
 }

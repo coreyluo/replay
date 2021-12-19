@@ -138,6 +138,22 @@ public class HistoryTransactionDataComponent {
         return list.subList(0,index);
     }
 
+    public List<ThirdSecondTransactionDataDTO> getAfterFixTimeData(List<ThirdSecondTransactionDataDTO> list,String fixTime){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = 1;
+        fixTime = fixTime.replace(":","");
+        for(int i=0; i<list.size(); i++){
+            String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+            if(Integer.parseInt(minTradeTime)>=Integer.parseInt(fixTime)){
+                index = i;
+                break;
+            }
+        }
+        return list.subList(index,list.size());
+    }
+
     public Integer getUpperOpenCount(BigDecimal upperPrice, List<ThirdSecondTransactionDataDTO> list){
         int openCount = 0;
 

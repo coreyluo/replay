@@ -487,14 +487,14 @@ public class MiddlePlankReplayComponent {
                     continue;
                 }*/
                 Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
-               /* if(plank == oneLinePlank){
-                    log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                    continue;
-                }*/
-                if(oneLinePlank >= 2){
+                if(plank == oneLinePlank){
                     log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }
+                /*if(oneLinePlank >= 2){
+                    log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                    continue;
+                }*/
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
                 /*BlockCompeteDTO blockCompeteDTO = blockCompeteMap.get(uniqueKey);
                 if(blockCompeteDTO == null ){
