@@ -3,12 +3,15 @@ package com.bazinga.test;
 
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
+import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.util.DateUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.AbstractCollection;
+import java.util.List;
 
 public class HblTest extends BaseTestCase {
 
@@ -62,6 +65,8 @@ public class HblTest extends BaseTestCase {
     private RaiseDropComponent raiseDropComponent;
     @Autowired
     private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -104,10 +109,11 @@ public class HblTest extends BaseTestCase {
         /*chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
        /* synExcelComponent.zhuanZaiBugInfo();*/
-        synExcelComponent.zhuanZaiChenWeiInfo();
+        //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
         //raiseDropComponent.raiseDrop();
+        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
 
 
 

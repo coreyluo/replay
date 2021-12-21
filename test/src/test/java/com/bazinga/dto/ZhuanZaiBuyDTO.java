@@ -19,6 +19,7 @@ public class ZhuanZaiBuyDTO {
     private String tradeDate;
 
     private BigDecimal buyPrice;
+    private BigDecimal avgPrice;
 
     private String buyTime;
 
