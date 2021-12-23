@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.dto.SunPlankAbsortDTO;
+import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
@@ -13,6 +14,7 @@ import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.util.StockKbarUtil;
+import com.bazinga.util.DateUtil;
 import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
@@ -26,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -41,13 +44,18 @@ public class HighPlankReplayComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    @Autowired
+    private CommonComponent commonComponent;
+
 
     public void replay(){
 
         List<HighPlankReplayDTO> resultList = Lists.newArrayList();
-        Map<String, List<HighPlankInfo>> premiumMap = getHighPremiumMap();
         Map<String, List<HighPlankInfo>> highPlankInfoMap = getHighPlankInfo();
+        Map<String, List<HighPlankInfo>> premiumMap = getHighPremiumMap();
         Map<String, List<String>> oneLinePlankMap = getOneLinePlankMap();
+
+        Map<String,List<HighPlankInfo> > shakeMap = new HashMap<>();
 
         highPlankInfoMap.forEach((kbarDate, highPlankList)->{
             List<String> oneLineList = oneLinePlankMap.get(kbarDate);
@@ -76,12 +84,36 @@ public class HighPlankReplayComponent {
                 double average = premiumList.stream().map(HighPlankInfo::getPremium).mapToDouble(BigDecimal::doubleValue).average().getAsDouble();
                 exportDTO.setAvgPremium(new BigDecimal(average).setScale(2,BigDecimal.ROUND_HALF_UP));
             }
+            List<HighPlankInfo> shakeList;
+            if(CollectionUtils.isEmpty(highPlankList)){
+                shakeList = Lists.newArrayList();
+            }else {
+                shakeList = highPlankList.stream().filter(item -> item.getShakeRate().compareTo(new BigDecimal("2")) > 0).collect(Collectors.toList());
+            }
+            shakeMap.put(kbarDate,shakeList);
 
             resultList.add(exportDTO);
 
 
 
         });
+
+        for (HighPlankReplayDTO highPlankReplayDTO : resultList) {
+            String kbarDate = highPlankReplayDTO.getKbarDate();
+            Date preTradeDate = commonComponent.preTradeDate(DateUtil.parseDate(kbarDate, DateUtil.yyyyMMdd));
+            String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
+            List<HighPlankInfo> highPlankInfoList = shakeMap.get(preKbarDate);
+            if(CollectionUtils.isEmpty(highPlankInfoMap)){
+                continue;
+            }
+            if(CollectionUtils.isEmpty(highPlankInfoList)){
+                highPlankReplayDTO.setShakeCount(0);
+                highPlankReplayDTO.setTotalShakeRate(BigDecimal.ZERO);
+            }else {
+                highPlankReplayDTO.setShakeCount(highPlankInfoList.size());
+                highPlankReplayDTO.setTotalShakeRate(highPlankInfoList.stream().map(HighPlankInfo::getShakeRate).reduce(BigDecimal::add).get());
+            }
+        }
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\高位板情绪回测.xls");
 
     }
@@ -108,7 +140,21 @@ public class HighPlankReplayComponent {
                 if(plankHighDTO.getPlankHigh()>=4){
                     List<HighPlankInfo> highPlankInfoList = resultMap.computeIfAbsent(sellStockKbar.getKbarDate(), k -> new ArrayList<>());
                     BigDecimal rate = PriceUtil.getPricePercentRate(sellStockKbar.getOpenPrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
-                    highPlankInfoList.add(new HighPlankInfo(sellStockKbar.getStockCode(),sellStockKbar.getStockName(),rate));
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                    BigDecimal lowPrice = list.get(0).getTradePrice();
+                    int lowIndex = 0;
+                    for (int j = 0; j < list.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                        if(transactionDataDTO.getTradePrice().compareTo(lowPrice)<0){
+                            lowIndex = j;
+                            lowPrice = transactionDataDTO.getTradePrice();
+                        }
+                    }
+                    BigDecimal highPrice = list.subList(0, lowIndex+1).stream().map(ThirdSecondTransactionDataDTO::getTradePrice).max(BigDecimal::compareTo).get();
+                    BigDecimal shakeRate = PriceUtil.getPricePercentRate(highPrice.subtract(lowPrice),stockKbar.getClosePrice());
+
+
+                    highPlankInfoList.add(new HighPlankInfo(sellStockKbar.getStockCode(),sellStockKbar.getStockName(),rate,shakeRate));
                 }
             }
         }
@@ -123,10 +169,13 @@ public class HighPlankReplayComponent {
 
         private BigDecimal premium;
 
-        public HighPlankInfo(String stockCode, String stockName, BigDecimal premium) {
+        private BigDecimal shakeRate;
+
+        public HighPlankInfo(String stockCode, String stockName, BigDecimal premium, BigDecimal shakeRate) {
             this.stockCode = stockCode;
             this.stockName = stockName;
             this.premium = premium;
+            this.shakeRate = shakeRate;
         }
     }
 
@@ -175,7 +224,7 @@ public class HighPlankReplayComponent {
                         BigDecimal avgPrice = historyTransactionDataComponent.calMorningAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                         if(avgPrice!=null){
                             BigDecimal premium = PriceUtil.getPricePercentRate(avgPrice.subtract(stockKbar.getHighPrice()), stockKbar.getHighPrice());
-                            highPlankInfoList.add(new HighPlankInfo(stockKbar.getStockCode(),stockKbar.getStockName(),premium));
+                            highPlankInfoList.add(new HighPlankInfo(stockKbar.getStockCode(),stockKbar.getStockName(),premium,BigDecimal.ZERO));
                         }
                     }
                 }
