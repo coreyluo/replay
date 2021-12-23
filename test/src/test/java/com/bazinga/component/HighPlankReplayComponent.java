@@ -51,6 +51,7 @@ public class HighPlankReplayComponent {
     public void replay(){
 
         List<HighPlankReplayDTO> resultList = Lists.newArrayList();
+        Map<String, List<String>> suddenMap = getHighPlankSuddenInfo();
         Map<String, List<HighPlankInfo>> highPlankInfoMap = getHighPlankInfo();
         Map<String, List<HighPlankInfo>> premiumMap = getHighPremiumMap();
         Map<String, List<String>> oneLinePlankMap = getOneLinePlankMap();
@@ -91,7 +92,6 @@ public class HighPlankReplayComponent {
                 shakeList = highPlankList.stream().filter(item -> item.getShakeRate().compareTo(new BigDecimal("2")) > 0).collect(Collectors.toList());
             }
             shakeMap.put(kbarDate,shakeList);
-
             resultList.add(exportDTO);
 
 
@@ -106,6 +106,12 @@ public class HighPlankReplayComponent {
             if(CollectionUtils.isEmpty(highPlankInfoMap)){
                 continue;
             }
+            List<String> stockList = suddenMap.get(preKbarDate);
+            if(CollectionUtils.isEmpty(stockList)){
+                highPlankReplayDTO.setSuddenCount(0);
+            }else {
+                highPlankReplayDTO.setSuddenCount(stockList.size());
+            }
             if(CollectionUtils.isEmpty(highPlankInfoList)){
                 highPlankReplayDTO.setShakeCount(0);
                 highPlankReplayDTO.setTotalShakeRate(BigDecimal.ZERO);
@@ -114,7 +120,7 @@ public class HighPlankReplayComponent {
                 highPlankReplayDTO.setTotalShakeRate(highPlankInfoList.stream().map(HighPlankInfo::getShakeRate).reduce(BigDecimal::add).get());
             }
         }
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\高位板情绪回测.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\高位板情绪回测触碰跌停.xls");
 
     }
 
@@ -141,6 +147,9 @@ public class HighPlankReplayComponent {
                     List<HighPlankInfo> highPlankInfoList = resultMap.computeIfAbsent(sellStockKbar.getKbarDate(), k -> new ArrayList<>());
                     BigDecimal rate = PriceUtil.getPricePercentRate(sellStockKbar.getOpenPrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                    if(CollectionUtils.isEmpty(list)){
+                        continue;
+                    }
                     BigDecimal lowPrice = list.get(0).getTradePrice();
                     int lowIndex = 0;
                     for (int j = 0; j < list.size(); j++) {
@@ -177,6 +186,45 @@ public class HighPlankReplayComponent {
             this.premium = premium;
             this.shakeRate = shakeRate;
         }
+    }
+
+    public Map<String,List<String>> getHighPlankSuddenInfo(){
+        Map<String,List<String>> resultMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20201210");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+
+            if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<20){
+                continue;
+            }
+            for (int i = 24; i < kbarList.size(); i++) {
+                StockKbar preStockKbar = kbarList.get(i-1);
+                StockKbar stockKbar = kbarList.get(i);
+                if(!PriceUtil.isSuddenPrice(stockKbar.getStockCode(),stockKbar.getLowPrice(),preStockKbar.getClosePrice())){
+                    continue;
+                }
+                PlankHighDTO plankHighDTO;
+                for (int j = i; j > i-15; j--) {
+                    plankHighDTO  = PlankHighUtil.calTodayPlank(kbarList.subList(j - 9, j + 1));
+                    if(plankHighDTO.getPlankHigh()>=4){
+                        List<String> stockCodeList = resultMap.computeIfAbsent(stockKbar.getKbarDate(), k -> new ArrayList<>());
+                        stockCodeList.add(stockKbar.getStockCode());
+                        break;
+                    }
+                }
+
+            }
+        }
+
+
+        return resultMap;
+
+
     }
 
 

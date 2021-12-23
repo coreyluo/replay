@@ -36,4 +36,7 @@ public class HighPlankReplayDTO {
     @ExcelField(name = "振幅大票数")
     private Integer shakeCount;
 
+    @ExcelField(name = "跌停数量")
+    private Integer suddenCount;
+
 }
