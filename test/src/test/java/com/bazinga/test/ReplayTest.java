@@ -70,6 +70,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private MiddlePlankUpdateReplayComponent middlePlankUpdateReplayComponent;
 
+    @Autowired
+    private PlankFirstSealReplayComponent plankFirstSealReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -88,7 +91,7 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test4(){
-        positionOwnReplayComponent.replay();
+        positionOwnReplayComponent.positionOwnAdd();
     }
 
     @Test
@@ -141,7 +144,8 @@ public class ReplayTest extends BaseTestCase {
      //   suddenAbsortComponent.replay();
      //   prePlankAbsortComponent.replay();
       //  middlePlankUpdateReplayComponent.invoke();
-        highPlankReplayComponent.replay();
+      //  highPlankReplayComponent.replay();
+        plankFirstSealReplayComponent.replay();
 
     }
 }

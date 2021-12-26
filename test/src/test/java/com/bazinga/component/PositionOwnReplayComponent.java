@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.PositionOwnImportDTO;
+import com.bazinga.dto.SellReplayImportDTO;
 import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -14,6 +15,7 @@ import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
+import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.*;
@@ -48,31 +50,40 @@ public class PositionOwnReplayComponent {
     @Autowired
     private StockKbarService stockKbarService;
 
+    @Autowired
+    private CirculateInfoService circulateInfoService;
 
-    public void replayReplankTwo(){
 
-        File file = new File("E:/excelExport/own518.xlsx");
+    public void positionOwnAdd(){
+
+        File file = new File("E:/excelExport/陈成交20211226.xlsx");
         try {
-            List<PositionOwnImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(PositionOwnImportDTO.class);
-            for (PositionOwnImportDTO stockPosition : importList) {
+            List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+
+            List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+            Map<String, CirculateInfo> circulateInfoMap = new HashMap<>();
+            for (CirculateInfo circulateInfo : circulateInfos) {
+                circulateInfoMap.put(circulateInfo.getStockCode(),circulateInfo);
+            }
+            for (SellReplayImportDTO stockPosition : importList) {
                 String kbarDate = DateUtil.format(stockPosition.getKbarDate(),DateUtil.yyyyMMdd);
+                String uniqueKey = stockPosition.getStockCode() + SymbolConstants.UNDERLINE + kbarDate;
 
-                StockKbarQuery query = new StockKbarQuery();
-                query.setStockCode(stockPosition.getStockCode());
-                query.setKbarDateTo(kbarDate);
-                query.addOrderBy("kbar_date", Sort.SortType.DESC);
-                query.setLimit(7);
-                List<StockKbar> kbarList = stockKbarService.listByCondition(query);
-
-                if(kbarList.size()<7){
-                    continue;
+                StockKbar byUniqueKey = stockKbarService.getByUniqueKey(uniqueKey);
+                if(byUniqueKey!=null){
+                    stockPosition.setBuyPrice(byUniqueKey.getHighPrice());
                 }
-                if(isReplankTwo(kbarList)){
-                    log.info("反包二板 stockCode{} kbarDate{}",stockPosition.getStockCode(),kbarDate);
+                CirculateInfo circulateInfo = circulateInfoMap.get(stockPosition.getStockCode());
+                if(circulateInfo==null){
+                    log.info("log stockCode{} kbarDate{}",stockPosition.getStockCode(),stockPosition.getKbarDate());
+                }else {
+                    stockPosition.setCirculateZ(circulateInfo.getCirculateZ());
+                    stockPosition.setTotalQty(circulateInfo.getCirculate());
                 }
 
             }
 
+            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(importList, "E:\\trendData\\陈成交加属性.xls");
         } catch (Exception e) {
             throw new BusinessException("文件解析及同步异常", e);
         }

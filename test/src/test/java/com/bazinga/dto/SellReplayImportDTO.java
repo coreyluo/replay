@@ -1,6 +1,7 @@
 package com.bazinga.dto;
 
 import com.bazinga.annotation.ExcelElement;
+import com.xuxueli.poi.excel.annotation.ExcelField;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -32,13 +33,22 @@ public class SellReplayImportDTO {
     @ExcelElement("发生日期")
     private Date kbarDate;
 
-    @ExcelElement("委托时间")
-    private Date orderTime;
+  /*  @ExcelElement("委托时间")
+    private Date orderTime;*/
 
     @ExcelElement("是否炸板")
     private Integer sealType;
 
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
+
+    @ExcelField(name = "流通z")
+    private Long circulateZ;
+
+    @ExcelField(name = "买入价格")
+    private BigDecimal buyPrice;
+
+    @ExcelField(name = "总股本")
+    private Long totalQty;
 
 }
