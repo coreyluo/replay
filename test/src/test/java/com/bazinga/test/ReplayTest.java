@@ -73,6 +73,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private PlankFirstSealReplayComponent plankFirstSealReplayComponent;
 
+    @Autowired
+    private BankerStockReplayComponent bankerStockReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -145,7 +148,8 @@ public class ReplayTest extends BaseTestCase {
      //   prePlankAbsortComponent.replay();
       //  middlePlankUpdateReplayComponent.invoke();
       //  highPlankReplayComponent.replay();
-        plankFirstSealReplayComponent.replay();
+      //  plankFirstSealReplayComponent.replay();
+        bankerStockReplayComponent.replay();
 
     }
 }

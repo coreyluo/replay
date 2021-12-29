@@ -119,7 +119,36 @@ public class HistoryTransactionDataComponent {
                 break;
             }
         }
-        return list.get(index-1);
+        return list.get(index);
+    }
+
+    public List<ThirdSecondTransactionDataDTO> getRangeTimeData(List<ThirdSecondTransactionDataDTO> list,String fromTime,String toTime){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = 1;
+        fromTime = fromTime.replace(":","");
+        for(int i=0; i<list.size(); i++){
+            String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+            if(Integer.parseInt(minTradeTime)>=Integer.parseInt(fromTime)){
+                index = i;
+                break;
+            }
+        }
+
+        int toIndex= list.size();
+        if(!toTime.startsWith("15")){
+            toTime = toTime.replace(":","");
+            for(int i=0; i<list.size(); i++){
+                String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+                if(Integer.parseInt(minTradeTime)>Integer.parseInt(toTime)){
+                    index = i;
+                    break;
+                }
+            }
+        }
+        return list.subList(index,toIndex);
+
     }
 
     public List<ThirdSecondTransactionDataDTO> getFixTimeData(List<ThirdSecondTransactionDataDTO> list,String fixTime){
