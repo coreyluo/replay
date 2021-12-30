@@ -3,6 +3,7 @@ package com.bazinga.component;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
+import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.BankerStockReplayDTO;
 import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -18,6 +19,7 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,8 +64,9 @@ public class BankerStockReplayComponent {
                 continue;
             }
 
-            for (int i = 11; i < stockKbarList.size(); i++) {
+            for (int i = 11; i < stockKbarList.size()-1; i++) {
                 StockKbar stockKbar = stockKbarList.get(i);
+                StockKbar sellstockKbar = stockKbarList.get(i+1);
                 StockKbar preStockKbar = stockKbarList.get(i-1);
                 if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
                     continue;
@@ -91,12 +94,19 @@ public class BankerStockReplayComponent {
 
                     BigDecimal total10Amout = stockKbarList.subList(i - 10, i).stream().map(StockKbar::getTradeAmount).reduce(BigDecimal::add).get();
                     exportDTO.setDay10AvgTradeAmount(total10Amout.divide(new BigDecimal("10"),0,BigDecimal.ROUND_HALF_UP));
+                    BigDecimal sellPrice = historyTransactionDataComponent.calMorningAvgPrice(sellstockKbar.getStockCode(), sellstockKbar.getKbarDate());
+                    exportDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
+                    String uniqueKey = stockKbar.getStockCode() + SymbolConstants.UNDERLINE + rateAmountDTO.getKbarDate();
+                    StockKbar byUniqueKey = stockKbarService.getByUniqueKey(uniqueKey);
+                    exportDTO.setRateTradeAmount(byUniqueKey.getTradeAmount());
+                    resultList.add(exportDTO);
                 }
             }
 
 
 
         }
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\庄股分析.xls");
 
 
     }

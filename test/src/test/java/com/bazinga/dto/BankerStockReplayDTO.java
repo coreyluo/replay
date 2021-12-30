@@ -27,6 +27,9 @@ public class BankerStockReplayDTO {
     @ExcelField(name = "涨速前后5min成交金额")
     private BigDecimal rateTradeAmount;
 
+    @ExcelField(name = "涨速日成交金额")
+    private BigDecimal rateDayTradeAmount;
+
     @ExcelField(name="涨速次数")
     private Integer rateCount;
 
