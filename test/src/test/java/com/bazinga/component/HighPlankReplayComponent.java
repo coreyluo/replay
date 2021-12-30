@@ -54,6 +54,7 @@ public class HighPlankReplayComponent {
         Map<String, List<String>> suddenMap = getHighPlankSuddenInfo();
         Map<String, List<HighPlankInfo>> highPlankInfoMap = getHighPlankInfo();
         Map<String, List<HighPlankInfo>> premiumMap = getHighPremiumMap();
+        Map<String, List<HighPlankInfo>> plankThreePremiumMap = getPlankThreeMap();
         Map<String, List<String>> oneLinePlankMap = getOneLinePlankMap();
 
         Map<String,List<HighPlankInfo> > shakeMap = new HashMap<>();
@@ -85,6 +86,18 @@ public class HighPlankReplayComponent {
                 double average = premiumList.stream().map(HighPlankInfo::getPremium).mapToDouble(BigDecimal::doubleValue).average().getAsDouble();
                 exportDTO.setAvgPremium(new BigDecimal(average).setScale(2,BigDecimal.ROUND_HALF_UP));
             }
+
+            List<HighPlankInfo> plankThreePremiumList = plankThreePremiumMap.get(kbarDate);
+            if(CollectionUtils.isEmpty(plankThreePremiumList)){
+                exportDTO.setPlank3Count(0);
+                exportDTO.setPlank3Premium(BigDecimal.ZERO);
+            }else {
+                exportDTO.setPlank3Count(plankThreePremiumList.size());
+                double average = plankThreePremiumList.stream().map(HighPlankInfo::getPremium).mapToDouble(BigDecimal::doubleValue).average().getAsDouble();
+                exportDTO.setPlank3Premium(new BigDecimal(average).setScale(2,BigDecimal.ROUND_HALF_UP));
+            }
+
+
             List<HighPlankInfo> shakeList;
             if(CollectionUtils.isEmpty(highPlankList)){
                 shakeList = Lists.newArrayList();
@@ -227,6 +240,61 @@ public class HighPlankReplayComponent {
 
     }
 
+    public Map<String,List<HighPlankInfo>> getPlankThreeMap(){
+        Map<String,List<HighPlankInfo>> resultMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20201220");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+            kbarList = kbarList.stream().filter(item-> item.getTradeQuantity()>0).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<20){
+                continue;
+            }
+            for (int i = 9; i < kbarList.size()-1; i++) {
+                StockKbar preStockKbar = kbarList.get(i-1);
+                StockKbar stockKbar = kbarList.get(i);
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                    continue;
+                }
+                StockKbar sellStockKbar = kbarList.get(i+1);
+                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i + 1));
+                if(plank == 3){
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                    ThirdSecondTransactionDataDTO open = list.get(0);
+                    if(open.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
+                        open.setTradeType(1);
+                    }
+                    boolean upperSFlag= false;
+                    for (int j = 1; j < list.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                        ThirdSecondTransactionDataDTO preTransactionDataDTO = list.get(j-1);
+                        if(transactionDataDTO.getTradeType()==1 && stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice()) ==0 ){
+                            if(preTransactionDataDTO.getTradeType()!=1 || stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice()) <0){
+                                upperSFlag = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(upperSFlag){
+                        List<HighPlankInfo> highPlankInfoList = resultMap.computeIfAbsent(stockKbar.getKbarDate(), k -> new ArrayList<>());
+                        BigDecimal avgPrice = historyTransactionDataComponent.calMorningAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                        if(avgPrice!=null){
+                            BigDecimal premium = PriceUtil.getPricePercentRate(avgPrice.subtract(stockKbar.getHighPrice()), stockKbar.getHighPrice());
+                            highPlankInfoList.add(new HighPlankInfo(stockKbar.getStockCode(),stockKbar.getStockName(),premium,BigDecimal.ZERO));
+                        }
+                    }
+                }
+            }
+        }
+
+
+        return resultMap;
+    }
+
 
     public Map<String,List<HighPlankInfo>> getHighPremiumMap(){
         Map<String,List<HighPlankInfo>> resultMap = new HashMap<>();
@@ -238,7 +306,7 @@ public class HighPlankReplayComponent {
             query.setKbarDateFrom("20201220");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
-
+            kbarList = kbarList.stream().filter(item-> item.getTradeQuantity()>0).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<20){
                 continue;
             }
@@ -249,8 +317,9 @@ public class HighPlankReplayComponent {
                     continue;
                 }
                 StockKbar sellStockKbar = kbarList.get(i+1);
-                PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList.subList(i - 9, i + 1));
-                if(plankHighDTO.getPlankHigh()>=4){
+               // PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList.subList(i - 9, i + 1));
+                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i + 1));
+                if(plank>=4){
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     ThirdSecondTransactionDataDTO open = list.get(0);
                     if(open.getTradePrice().compareTo(stockKbar.getHighPrice())==0){

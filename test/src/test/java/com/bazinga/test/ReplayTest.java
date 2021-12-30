@@ -147,9 +147,9 @@ public class ReplayTest extends BaseTestCase {
      //   suddenAbsortComponent.replay();
      //   prePlankAbsortComponent.replay();
       //  middlePlankUpdateReplayComponent.invoke();
-      //  highPlankReplayComponent.replay();
+        highPlankReplayComponent.replay();
       //  plankFirstSealReplayComponent.replay();
-        bankerStockReplayComponent.replay();
+      //  bankerStockReplayComponent.replay();
 
     }
 }

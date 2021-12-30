@@ -30,6 +30,12 @@ public class HighPlankReplayDTO {
     @ExcelField(name = "平均收益")
     private BigDecimal avgPremium;
 
+    @ExcelField(name = "可打三板数量")
+    private Integer plank3Count;
+
+    @ExcelField(name = "可打三板收益")
+    private BigDecimal plank3Premium;
+
     @ExcelField(name = "振幅大总和")
     private BigDecimal totalShakeRate;
 
