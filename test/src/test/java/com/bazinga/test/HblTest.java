@@ -67,17 +67,21 @@ public class HblTest extends BaseTestCase {
     private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
+    @Autowired
+    private TwoToThreePlankInfoComponent twoToThreePlankInfoComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
-       synExcelComponent.otherStockBuy();
+       /*synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        synExcelComponent.graphBuy();
+        synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
-        synExcelComponent.zhuanZaiBuy();
-        blockChoaDieComponent.chaoDie();
+        /*synExcelComponent.zhuanZaiBuy();
+        blockChoaDieComponent.chaoDie();*/
+
+        twoToThreePlankInfoComponent.badPlankInfo();
 
     }
     @Test
@@ -105,7 +109,7 @@ public class HblTest extends BaseTestCase {
         //lowExchangePercentComponent.lowExchangeAvg();
         //oneMinutePlankComponent.firstMinutePlankInfo();
         //badChungYePlankInfoComponent.badPlankInfo();
-        //highExchangeChungYePlankInfoComponent.badPlankInfo();
+        highExchangeChungYePlankInfoComponent.badPlankInfo();
         /*chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
        /* synExcelComponent.zhuanZaiBugInfo();*/
