@@ -261,8 +261,8 @@ public class HighPlankReplayComponent {
                     continue;
                 }
                 StockKbar sellStockKbar = kbarList.get(i+1);
-                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i + 1));
-                if(plank == 3){
+                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i ));
+                if(plank == 2){
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     ThirdSecondTransactionDataDTO open = list.get(0);
                     if(open.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
@@ -318,8 +318,8 @@ public class HighPlankReplayComponent {
                 }
                 StockKbar sellStockKbar = kbarList.get(i+1);
                // PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList.subList(i - 9, i + 1));
-                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i + 1));
-                if(plank>=4){
+                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 9, i ));
+                if(plank>=3){
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     ThirdSecondTransactionDataDTO open = list.get(0);
                     if(open.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
