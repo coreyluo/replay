@@ -133,7 +133,7 @@ public class HighPlankReplayComponent {
                 highPlankReplayDTO.setTotalShakeRate(highPlankInfoList.stream().map(HighPlankInfo::getShakeRate).reduce(BigDecimal::add).get());
             }
         }
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\高位板情绪回测触碰跌停.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\连续板高位板情绪回测.xls");
 
     }
 
@@ -145,7 +145,7 @@ public class HighPlankReplayComponent {
 
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20201220");
+            query.setKbarDateFrom("20191220");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
 
@@ -208,7 +208,7 @@ public class HighPlankReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20201210");
+            query.setKbarDateFrom("20191210");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
 
@@ -247,7 +247,7 @@ public class HighPlankReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20201220");
+            query.setKbarDateFrom("20191220");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
             kbarList = kbarList.stream().filter(item-> item.getTradeQuantity()>0).collect(Collectors.toList());
@@ -303,7 +303,7 @@ public class HighPlankReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20201220");
+            query.setKbarDateFrom("20191220");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
             kbarList = kbarList.stream().filter(item-> item.getTradeQuantity()>0).collect(Collectors.toList());
@@ -360,7 +360,7 @@ public class HighPlankReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20201220");
+            query.setKbarDateFrom("20191220");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> kbarList = stockKbarService.listByCondition(query);
 
