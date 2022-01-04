@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.BondConvertPriceAdjustDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.BondConvertPriceAdjust">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="pub_date" jdbcType="VARCHAR" property="pubDate"/>
+        <result column="adjust_date" jdbcType="VARCHAR" property="adjustDate"/>
+        <result column="new_convert_price" jdbcType="VARCHAR" property="newConvertPrice"/>
+        <result column="adjust_reason" jdbcType="VARCHAR" property="adjustReason"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            code,
+            name,
+            pub_date,
+            adjust_date,
+            new_convert_price,
+            adjust_reason
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from bond_convert_price_adjust
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.BondConvertPriceAdjust" useGeneratedKeys="true" keyProperty="id">
+        insert into bond_convert_price_adjust (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{code, jdbcType=VARCHAR},
+            #{name, jdbcType=VARCHAR},
+            #{pubDate, jdbcType=VARCHAR},
+            #{adjustDate, jdbcType=VARCHAR},
+            #{newConvertPrice, jdbcType=VARCHAR},
+            #{adjustReason, jdbcType=VARCHAR}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.BondConvertPriceAdjust">
+        update bond_convert_price_adjust
+        <set>
+            <if test="code != null">
+                code = #{code, jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="pubDate != null">
+                pub_date = #{pubDate, jdbcType=VARCHAR},
+            </if>
+            <if test="adjustDate != null">
+                adjust_date = #{adjustDate, jdbcType=VARCHAR},
+            </if>
+            <if test="newConvertPrice != null">
+                new_convert_price = #{newConvertPrice, jdbcType=VARCHAR},
+            </if>
+            <if test="adjustReason != null">
+                adjust_reason = #{adjustReason, jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="code != null">
+            and code = #{code, jdbcType=VARCHAR}
+        </if>
+        <if test="name != null">
+            and name = #{name, jdbcType=VARCHAR}
+        </if>
+        <if test="pubDate != null">
+            and pub_date = #{pubDate, jdbcType=VARCHAR}
+        </if>
+        <if test="adjustDate != null">
+            and adjust_date = #{adjustDate, jdbcType=VARCHAR}
+        </if>
+        <if test="newConvertPrice != null">
+            and new_convert_price = #{newConvertPrice, jdbcType=VARCHAR}
+        </if>
+        <if test="adjustReason != null">
+            and adjust_reason = #{adjustReason, jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.BondConvertPriceAdjustQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from bond_convert_price_adjust
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.BondConvertPriceAdjustQuery" resultType="java.lang.Integer">
+        select count(1)
+        from bond_convert_price_adjust
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

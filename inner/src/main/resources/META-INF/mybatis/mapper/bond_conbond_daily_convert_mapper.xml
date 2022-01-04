@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.BondConbondDailyConvertDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.BondConbondDailyConvert">
+        <result column="id" jdbcType="BIGINT" property="id"/>
+        <result column="date" jdbcType="DATE" property="date"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="exchange_code" jdbcType="VARCHAR" property="exchangeCode"/>
+        <result column="issue_number" jdbcType="BIGINT" property="issueNumber"/>
+        <result column="convert_price" jdbcType="DOUBLE" property="convertPrice"/>
+        <result column="daily_convert_number" jdbcType="DOUBLE" property="dailyConvertNumber"/>
+        <result column="acc_convert_number" jdbcType="DOUBLE" property="accConvertNumber"/>
+        <result column="acc_convert_ratio" jdbcType="DOUBLE" property="accConvertRatio"/>
+        <result column="convert_premium" jdbcType="DOUBLE" property="convertPremium"/>
+        <result column="convert_premium_rate" jdbcType="DOUBLE" property="convertPremiumRate"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            date,
+            code,
+            name,
+            exchange_code,
+            issue_number,
+            convert_price,
+            daily_convert_number,
+            acc_convert_number,
+            acc_convert_ratio,
+            convert_premium,
+            convert_premium_rate
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="${table.primaryKey.javaType}" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from bond_conbond_daily_convert
+        where ${table.primaryKey.columnName} = #{${table.primaryKey.fieldName}}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.BondConbondDailyConvert" useGeneratedKeys="true" keyProperty="${table.primaryKey.fieldName}">
+        insert into bond_conbond_daily_convert (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{date, jdbcType=DATE},
+            #{code, jdbcType=VARCHAR},
+            #{name, jdbcType=VARCHAR},
+            #{exchangeCode, jdbcType=VARCHAR},
+            #{issueNumber, jdbcType=BIGINT},
+            #{convertPrice, jdbcType=DOUBLE},
+            #{dailyConvertNumber, jdbcType=DOUBLE},
+            #{accConvertNumber, jdbcType=DOUBLE},
+            #{accConvertRatio, jdbcType=DOUBLE},
+            #{convertPremium, jdbcType=DOUBLE},
+            #{convertPremiumRate, jdbcType=DOUBLE}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.BondConbondDailyConvert">
+        update bond_conbond_daily_convert
+        <set>
+            <if test="id != null">
+                id = #{id, jdbcType=BIGINT},
+            </if>
+            <if test="date != null">
+                date = #{date, jdbcType=DATE},
+            </if>
+            <if test="code != null">
+                code = #{code, jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                name = #{name, jdbcType=VARCHAR},
+            </if>
+            <if test="exchangeCode != null">
+                exchange_code = #{exchangeCode, jdbcType=VARCHAR},
+            </if>
+            <if test="issueNumber != null">
+                issue_number = #{issueNumber, jdbcType=BIGINT},
+            </if>
+            <if test="convertPrice != null">
+                convert_price = #{convertPrice, jdbcType=DOUBLE},
+            </if>
+            <if test="dailyConvertNumber != null">
+                daily_convert_number = #{dailyConvertNumber, jdbcType=DOUBLE},
+            </if>
+            <if test="accConvertNumber != null">
+                acc_convert_number = #{accConvertNumber, jdbcType=DOUBLE},
+            </if>
+            <if test="accConvertRatio != null">
+                acc_convert_ratio = #{accConvertRatio, jdbcType=DOUBLE},
+            </if>
+            <if test="convertPremium != null">
+                convert_premium = #{convertPremium, jdbcType=DOUBLE},
+            </if>
+            <if test="convertPremiumRate != null">
+                convert_premium_rate = #{convertPremiumRate, jdbcType=DOUBLE},
+            </if>
+        </set>
+        where ${table.primaryKey.columnName} = #{${table.primaryKey.fieldName}} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="id != null">
+            and id = #{id, jdbcType=BIGINT}
+        </if>
+        <if test="code != null">
+            and code = #{code, jdbcType=VARCHAR}
+        </if>
+        <if test="name != null">
+            and name = #{name, jdbcType=VARCHAR}
+        </if>
+        <if test="exchangeCode != null">
+            and exchange_code = #{exchangeCode, jdbcType=VARCHAR}
+        </if>
+        <if test="issueNumber != null">
+            and issue_number = #{issueNumber, jdbcType=BIGINT}
+        </if>
+        <if test="convertPrice != null">
+            and convert_price = #{convertPrice, jdbcType=DOUBLE}
+        </if>
+        <if test="dailyConvertNumber != null">
+            and daily_convert_number = #{dailyConvertNumber, jdbcType=DOUBLE}
+        </if>
+        <if test="accConvertNumber != null">
+            and acc_convert_number = #{accConvertNumber, jdbcType=DOUBLE}
+        </if>
+        <if test="accConvertRatio != null">
+            and acc_convert_ratio = #{accConvertRatio, jdbcType=DOUBLE}
+        </if>
+        <if test="convertPremium != null">
+            and convert_premium = #{convertPremium, jdbcType=DOUBLE}
+        </if>
+        <if test="convertPremiumRate != null">
+            and convert_premium_rate = #{convertPremiumRate, jdbcType=DOUBLE}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="dateFrom != null">
+            <![CDATA[
+            and date >= #{dateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="dateTo != null">
+            <![CDATA[
+            and date <= #{dateTo, jdbcType=DATE}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.BondConbondDailyConvertQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from bond_conbond_daily_convert
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.BondConbondDailyConvertQuery" resultType="java.lang.Integer">
+        select count(1)
+        from bond_conbond_daily_convert
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

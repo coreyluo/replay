@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.BondBasicInfoDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.BondBasicInfo">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="short_name" jdbcType="VARCHAR" property="shortName"/>
+        <result column="full_name" jdbcType="VARCHAR" property="fullName"/>
+        <result column="list_status_id" jdbcType="BIGINT" property="listStatusId"/>
+        <result column="list_status" jdbcType="VARCHAR" property="listStatus"/>
+        <result column="issuer" jdbcType="VARCHAR" property="issuer"/>
+        <result column="company_code" jdbcType="VARCHAR" property="companyCode"/>
+        <result column="issue_start_date" jdbcType="DATE" property="issueStartDate"/>
+        <result column="issue_end_date" jdbcType="DATE" property="issueEndDate"/>
+        <result column="plan_raise_fund" jdbcType="DOUBLE" property="planRaiseFund"/>
+        <result column="actual_raise_fund" jdbcType="DOUBLE" property="actualRaiseFund"/>
+        <result column="issue_par" jdbcType="BIGINT" property="issuePar"/>
+        <result column="issue_price" jdbcType="DOUBLE" property="issuePrice"/>
+        <result column="is_guarantee" jdbcType="BIGINT" property="isGuarantee"/>
+        <result column="fund_raising_purposes" jdbcType="VARCHAR" property="fundRaisingPurposes"/>
+        <result column="list_declare_date" jdbcType="DATE" property="listDeclareDate"/>
+        <result column="convert_price_reason" jdbcType="VARCHAR" property="convertPriceReason"/>
+        <result column="convert_price" jdbcType="DOUBLE" property="convertPrice"/>
+        <result column="convert_start_date" jdbcType="DATE" property="convertStartDate"/>
+        <result column="convert_end_date" jdbcType="DATE" property="convertEndDate"/>
+        <result column="convert_code" jdbcType="VARCHAR" property="convertCode"/>
+        <result column="coupon" jdbcType="DOUBLE" property="coupon"/>
+        <result column="exchange_code" jdbcType="BIGINT" property="exchangeCode"/>
+        <result column="exchange" jdbcType="VARCHAR" property="exchange"/>
+        <result column="currency_id" jdbcType="VARCHAR" property="currencyId"/>
+        <result column="coupon_type_id" jdbcType="BIGINT" property="couponTypeId"/>
+        <result column="coupon_type" jdbcType="VARCHAR" property="couponType"/>
+        <result column="coupon_frequency" jdbcType="BIGINT" property="couponFrequency"/>
+        <result column="payment_type_id" jdbcType="BIGINT" property="paymentTypeId"/>
+        <result column="payment_type" jdbcType="VARCHAR" property="paymentType"/>
+        <result column="par" jdbcType="DOUBLE" property="par"/>
+        <result column="repayment_period" jdbcType="BIGINT" property="repaymentPeriod"/>
+        <result column="bond_type_id" jdbcType="BIGINT" property="bondTypeId"/>
+        <result column="bond_type" jdbcType="VARCHAR" property="bondType"/>
+        <result column="bond_form_id" jdbcType="BIGINT" property="bondFormId"/>
+        <result column="bond_form" jdbcType="VARCHAR" property="bondForm"/>
+        <result column="list_date" jdbcType="DATE" property="listDate"/>
+        <result column="delist_Date" jdbcType="DATE" property="delistDate"/>
+        <result column="interest_begin_date" jdbcType="DATE" property="interestBeginDate"/>
+        <result column="maturity_date" jdbcType="DATE" property="maturityDate"/>
+        <result column="interest_date" jdbcType="VARCHAR" property="interestDate"/>
+        <result column="last_cash_date" jdbcType="DATE" property="lastCashDate"/>
+        <result column="cash_comment" jdbcType="VARCHAR" property="cashComment"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            code,
+            short_name,
+            full_name,
+            list_status_id,
+            list_status,
+            issuer,
+            company_code,
+            issue_start_date,
+            issue_end_date,
+            plan_raise_fund,
+            actual_raise_fund,
+            issue_par,
+            issue_price,
+            is_guarantee,
+            fund_raising_purposes,
+            list_declare_date,
+            convert_price_reason,
+            convert_price,
+            convert_start_date,
+            convert_end_date,
+            convert_code,
+            coupon,
+            exchange_code,
+            exchange,
+            currency_id,
+            coupon_type_id,
+            coupon_type,
+            coupon_frequency,
+            payment_type_id,
+            payment_type,
+            par,
+            repayment_period,
+            bond_type_id,
+            bond_type,
+            bond_form_id,
+            bond_form,
+            list_date,
+            delist_Date,
+            interest_begin_date,
+            maturity_date,
+            interest_date,
+            last_cash_date,
+            cash_comment
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from bond_basic_info
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.BondBasicInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into bond_basic_info (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{code, jdbcType=VARCHAR},
+            #{shortName, jdbcType=VARCHAR},
+            #{fullName, jdbcType=VARCHAR},
+            #{listStatusId, jdbcType=BIGINT},
+            #{listStatus, jdbcType=VARCHAR},
+            #{issuer, jdbcType=VARCHAR},
+            #{companyCode, jdbcType=VARCHAR},
+            #{issueStartDate, jdbcType=DATE},
+            #{issueEndDate, jdbcType=DATE},
+            #{planRaiseFund, jdbcType=DOUBLE},
+            #{actualRaiseFund, jdbcType=DOUBLE},
+            #{issuePar, jdbcType=BIGINT},
+            #{issuePrice, jdbcType=DOUBLE},
+            #{isGuarantee, jdbcType=BIGINT},
+            #{fundRaisingPurposes, jdbcType=VARCHAR},
+            #{listDeclareDate, jdbcType=DATE},
+            #{convertPriceReason, jdbcType=VARCHAR},
+            #{convertPrice, jdbcType=DOUBLE},
+            #{convertStartDate, jdbcType=DATE},
+            #{convertEndDate, jdbcType=DATE},
+            #{convertCode, jdbcType=VARCHAR},
+            #{coupon, jdbcType=DOUBLE},
+            #{exchangeCode, jdbcType=BIGINT},
+            #{exchange, jdbcType=VARCHAR},
+            #{currencyId, jdbcType=VARCHAR},
+            #{couponTypeId, jdbcType=BIGINT},
+            #{couponType, jdbcType=VARCHAR},
+            #{couponFrequency, jdbcType=BIGINT},
+            #{paymentTypeId, jdbcType=BIGINT},
+            #{paymentType, jdbcType=VARCHAR},
+            #{par, jdbcType=DOUBLE},
+            #{repaymentPeriod, jdbcType=BIGINT},
+            #{bondTypeId, jdbcType=BIGINT},
+            #{bondType, jdbcType=VARCHAR},
+            #{bondFormId, jdbcType=BIGINT},
+            #{bondForm, jdbcType=VARCHAR},
+            #{listDate, jdbcType=DATE},
+            #{delistDate, jdbcType=DATE},
+            #{interestBeginDate, jdbcType=DATE},
+            #{maturityDate, jdbcType=DATE},
+            #{interestDate, jdbcType=VARCHAR},
+            #{lastCashDate, jdbcType=DATE},
+            #{cashComment, jdbcType=VARCHAR}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.BondBasicInfo">
+        update bond_basic_info
+        <set>
+            <if test="code != null">
+                code = #{code, jdbcType=VARCHAR},
+            </if>
+            <if test="shortName != null">
+                short_name = #{shortName, jdbcType=VARCHAR},
+            </if>
+            <if test="fullName != null">
+                full_name = #{fullName, jdbcType=VARCHAR},
+            </if>
+            <if test="listStatusId != null">
+                list_status_id = #{listStatusId, jdbcType=BIGINT},
+            </if>
+            <if test="listStatus != null">
+                list_status = #{listStatus, jdbcType=VARCHAR},
+            </if>
+            <if test="issuer != null">
+                issuer = #{issuer, jdbcType=VARCHAR},
+            </if>
+            <if test="companyCode != null">
+                company_code = #{companyCode, jdbcType=VARCHAR},
+            </if>
+            <if test="issueStartDate != null">
+                issue_start_date = #{issueStartDate, jdbcType=DATE},
+            </if>
+            <if test="issueEndDate != null">
+                issue_end_date = #{issueEndDate, jdbcType=DATE},
+            </if>
+            <if test="planRaiseFund != null">
+                plan_raise_fund = #{planRaiseFund, jdbcType=DOUBLE},
+            </if>
+            <if test="actualRaiseFund != null">
+                actual_raise_fund = #{actualRaiseFund, jdbcType=DOUBLE},
+            </if>
+            <if test="issuePar != null">
+                issue_par = #{issuePar, jdbcType=BIGINT},
+            </if>
+            <if test="issuePrice != null">
+                issue_price = #{issuePrice, jdbcType=DOUBLE},
+            </if>
+            <if test="isGuarantee != null">
+                is_guarantee = #{isGuarantee, jdbcType=BIGINT},
+            </if>
+            <if test="fundRaisingPurposes != null">
+                fund_raising_purposes = #{fundRaisingPurposes, jdbcType=VARCHAR},
+            </if>
+            <if test="listDeclareDate != null">
+                list_declare_date = #{listDeclareDate, jdbcType=DATE},
+            </if>
+            <if test="convertPriceReason != null">
+                convert_price_reason = #{convertPriceReason, jdbcType=VARCHAR},
+            </if>
+            <if test="convertPrice != null">
+                convert_price = #{convertPrice, jdbcType=DOUBLE},
+            </if>
+            <if test="convertStartDate != null">
+                convert_start_date = #{convertStartDate, jdbcType=DATE},
+            </if>
+            <if test="convertEndDate != null">
+                convert_end_date = #{convertEndDate, jdbcType=DATE},
+            </if>
+            <if test="convertCode != null">
+                convert_code = #{convertCode, jdbcType=VARCHAR},
+            </if>
+            <if test="coupon != null">
+                coupon = #{coupon, jdbcType=DOUBLE},
+            </if>
+            <if test="exchangeCode != null">
+                exchange_code = #{exchangeCode, jdbcType=BIGINT},
+            </if>
+            <if test="exchange != null">
+                exchange = #{exchange, jdbcType=VARCHAR},
+            </if>
+            <if test="currencyId != null">
+                currency_id = #{currencyId, jdbcType=VARCHAR},
+            </if>
+            <if test="couponTypeId != null">
+                coupon_type_id = #{couponTypeId, jdbcType=BIGINT},
+            </if>
+            <if test="couponType != null">
+                coupon_type = #{couponType, jdbcType=VARCHAR},
+            </if>
+            <if test="couponFrequency != null">
+                coupon_frequency = #{couponFrequency, jdbcType=BIGINT},
+            </if>
+            <if test="paymentTypeId != null">
+                payment_type_id = #{paymentTypeId, jdbcType=BIGINT},
+            </if>
+            <if test="paymentType != null">
+                payment_type = #{paymentType, jdbcType=VARCHAR},
+            </if>
+            <if test="par != null">
+                par = #{par, jdbcType=DOUBLE},
+            </if>
+            <if test="repaymentPeriod != null">
+                repayment_period = #{repaymentPeriod, jdbcType=BIGINT},
+            </if>
+            <if test="bondTypeId != null">
+                bond_type_id = #{bondTypeId, jdbcType=BIGINT},
+            </if>
+            <if test="bondType != null">
+                bond_type = #{bondType, jdbcType=VARCHAR},
+            </if>
+            <if test="bondFormId != null">
+                bond_form_id = #{bondFormId, jdbcType=BIGINT},
+            </if>
+            <if test="bondForm != null">
+                bond_form = #{bondForm, jdbcType=VARCHAR},
+            </if>
+            <if test="listDate != null">
+                list_date = #{listDate, jdbcType=DATE},
+            </if>
+            <if test="delistDate != null">
+                delist_Date = #{delistDate, jdbcType=DATE},
+            </if>
+            <if test="interestBeginDate != null">
+                interest_begin_date = #{interestBeginDate, jdbcType=DATE},
+            </if>
+            <if test="maturityDate != null">
+                maturity_date = #{maturityDate, jdbcType=DATE},
+            </if>
+            <if test="interestDate != null">
+                interest_date = #{interestDate, jdbcType=VARCHAR},
+            </if>
+            <if test="lastCashDate != null">
+                last_cash_date = #{lastCashDate, jdbcType=DATE},
+            </if>
+            <if test="cashComment != null">
+                cash_comment = #{cashComment, jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="code != null">
+            and code = #{code, jdbcType=VARCHAR}
+        </if>
+        <if test="shortName != null">
+            and short_name = #{shortName, jdbcType=VARCHAR}
+        </if>
+        <if test="fullName != null">
+            and full_name = #{fullName, jdbcType=VARCHAR}
+        </if>
+        <if test="listStatusId != null">
+            and list_status_id = #{listStatusId, jdbcType=BIGINT}
+        </if>
+        <if test="listStatus != null">
+            and list_status = #{listStatus, jdbcType=VARCHAR}
+        </if>
+        <if test="issuer != null">
+            and issuer = #{issuer, jdbcType=VARCHAR}
+        </if>
+        <if test="companyCode != null">
+            and company_code = #{companyCode, jdbcType=VARCHAR}
+        </if>
+        <if test="planRaiseFund != null">
+            and plan_raise_fund = #{planRaiseFund, jdbcType=DOUBLE}
+        </if>
+        <if test="actualRaiseFund != null">
+            and actual_raise_fund = #{actualRaiseFund, jdbcType=DOUBLE}
+        </if>
+        <if test="issuePar != null">
+            and issue_par = #{issuePar, jdbcType=BIGINT}
+        </if>
+        <if test="issuePrice != null">
+            and issue_price = #{issuePrice, jdbcType=DOUBLE}
+        </if>
+        <if test="isGuarantee != null">
+            and is_guarantee = #{isGuarantee, jdbcType=BIGINT}
+        </if>
+        <if test="fundRaisingPurposes != null">
+            and fund_raising_purposes = #{fundRaisingPurposes, jdbcType=VARCHAR}
+        </if>
+        <if test="convertPriceReason != null">
+            and convert_price_reason = #{convertPriceReason, jdbcType=VARCHAR}
+        </if>
+        <if test="convertPrice != null">
+            and convert_price = #{convertPrice, jdbcType=DOUBLE}
+        </if>
+        <if test="convertCode != null">
+            and convert_code = #{convertCode, jdbcType=VARCHAR}
+        </if>
+        <if test="coupon != null">
+            and coupon = #{coupon, jdbcType=DOUBLE}
+        </if>
+        <if test="exchangeCode != null">
+            and exchange_code = #{exchangeCode, jdbcType=BIGINT}
+        </if>
+        <if test="exchange != null">
+            and exchange = #{exchange, jdbcType=VARCHAR}
+        </if>
+        <if test="currencyId != null">
+            and currency_id = #{currencyId, jdbcType=VARCHAR}
+        </if>
+        <if test="couponTypeId != null">
+            and coupon_type_id = #{couponTypeId, jdbcType=BIGINT}
+        </if>
+        <if test="couponType != null">
+            and coupon_type = #{couponType, jdbcType=VARCHAR}
+        </if>
+        <if test="couponFrequency != null">
+            and coupon_frequency = #{couponFrequency, jdbcType=BIGINT}
+        </if>
+        <if test="paymentTypeId != null">
+            and payment_type_id = #{paymentTypeId, jdbcType=BIGINT}
+        </if>
+        <if test="paymentType != null">
+            and payment_type = #{paymentType, jdbcType=VARCHAR}
+        </if>
+        <if test="par != null">
+            and par = #{par, jdbcType=DOUBLE}
+        </if>
+        <if test="repaymentPeriod != null">
+            and repayment_period = #{repaymentPeriod, jdbcType=BIGINT}
+        </if>
+        <if test="bondTypeId != null">
+            and bond_type_id = #{bondTypeId, jdbcType=BIGINT}
+        </if>
+        <if test="bondType != null">
+            and bond_type = #{bondType, jdbcType=VARCHAR}
+        </if>
+        <if test="bondFormId != null">
+            and bond_form_id = #{bondFormId, jdbcType=BIGINT}
+        </if>
+        <if test="bondForm != null">
+            and bond_form = #{bondForm, jdbcType=VARCHAR}
+        </if>
+        <if test="interestDate != null">
+            and interest_date = #{interestDate, jdbcType=VARCHAR}
+        </if>
+        <if test="cashComment != null">
+            and cash_comment = #{cashComment, jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="issueStartDateFrom != null">
+            <![CDATA[
+            and issue_start_date >= #{issueStartDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="issueStartDateTo != null">
+            <![CDATA[
+            and issue_start_date <= #{issueStartDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="issueEndDateFrom != null">
+            <![CDATA[
+            and issue_end_date >= #{issueEndDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="issueEndDateTo != null">
+            <![CDATA[
+            and issue_end_date <= #{issueEndDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="listDeclareDateFrom != null">
+            <![CDATA[
+            and list_declare_date >= #{listDeclareDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="listDeclareDateTo != null">
+            <![CDATA[
+            and list_declare_date <= #{listDeclareDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="convertStartDateFrom != null">
+            <![CDATA[
+            and convert_start_date >= #{convertStartDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="convertStartDateTo != null">
+            <![CDATA[
+            and convert_start_date <= #{convertStartDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="convertEndDateFrom != null">
+            <![CDATA[
+            and convert_end_date >= #{convertEndDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="convertEndDateTo != null">
+            <![CDATA[
+            and convert_end_date <= #{convertEndDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="listDateFrom != null">
+            <![CDATA[
+            and list_date >= #{listDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="listDateTo != null">
+            <![CDATA[
+            and list_date <= #{listDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="delistDateFrom != null">
+            <![CDATA[
+            and delist_Date >= #{delistDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="delistDateTo != null">
+            <![CDATA[
+            and delist_Date <= #{delistDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="interestBeginDateFrom != null">
+            <![CDATA[
+            and interest_begin_date >= #{interestBeginDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="interestBeginDateTo != null">
+            <![CDATA[
+            and interest_begin_date <= #{interestBeginDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="maturityDateFrom != null">
+            <![CDATA[
+            and maturity_date >= #{maturityDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="maturityDateTo != null">
+            <![CDATA[
+            and maturity_date <= #{maturityDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="lastCashDateFrom != null">
+            <![CDATA[
+            and last_cash_date >= #{lastCashDateFrom, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="lastCashDateTo != null">
+            <![CDATA[
+            and last_cash_date <= #{lastCashDateTo, jdbcType=DATE}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.BondBasicInfoQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from bond_basic_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.BondBasicInfoQuery" resultType="java.lang.Integer">
+        select count(1)
+        from bond_basic_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>
