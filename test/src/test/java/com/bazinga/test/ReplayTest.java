@@ -132,7 +132,7 @@ public class ReplayTest extends BaseTestCase {
     public void test10(){
        // rotPlankReplayComponent.replay(2);
        // rotPlankReplayComponent.replay(3);
-      //  rotPlankReplayComponent.replay(4);
+        rotPlankReplayComponent.replay(4);
        // rotPlankReplayComponent.replay(5);
 
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
