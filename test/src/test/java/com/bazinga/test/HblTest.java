@@ -81,6 +81,7 @@ public class HblTest extends BaseTestCase {
         /*synExcelComponent.zhuanZaiBuy();
         blockChoaDieComponent.chaoDie();*/
 
+        //twoToThreePlankInfoComponent.badPlankInfo();
         twoToThreePlankInfoComponent.badPlankInfo();
 
     }
