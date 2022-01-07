@@ -7,6 +7,8 @@ import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.util.DateUtil;
+import com.tradex.enums.KCate;
+import com.tradex.util.TdxHqUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -69,6 +71,8 @@ public class HblTest extends BaseTestCase {
     private HistoryTransactionDataComponent historyTransactionDataComponent;
     @Autowired
     private TwoToThreePlankInfoComponent twoToThreePlankInfoComponent;
+    @Autowired
+    private BlockHighProfitInfoComponent blockHighProfitInfoComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -78,11 +82,13 @@ public class HblTest extends BaseTestCase {
         synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
-        /*synExcelComponent.zhuanZaiBuy();
-        blockChoaDieComponent.chaoDie();*/
+        //synExcelComponent.zhuanZaiBuy();
+        //blockChoaDieComponent.chaoDie();
 
         //twoToThreePlankInfoComponent.badPlankInfo();
-        twoToThreePlankInfoComponent.badPlankInfo();
+        //twoToThreePlankInfoComponent.badPlankInfo();
+
+        blockHighProfitInfoComponent.badPlankInfo();
 
     }
     @Test
