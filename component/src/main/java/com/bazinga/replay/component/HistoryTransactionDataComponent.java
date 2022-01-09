@@ -237,6 +237,15 @@ public class HistoryTransactionDataComponent {
         }
         return (float) (Math.round(totalPrice / totalQuantity * 100)) / 100;
     }
+    public BigDecimal calBigDecimalAveragePrice(List<ThirdSecondTransactionDataDTO> list){
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        Integer totalQuantity = 0;
+        for (ThirdSecondTransactionDataDTO item : list) {
+            totalPrice = totalPrice.add(item.getTradePrice().multiply(new BigDecimal(item.getTradeQuantity().toString())));
+            totalQuantity += item.getTradeQuantity();
+        }
+        return totalPrice.divide(new BigDecimal(totalQuantity.toString()),2,BigDecimal.ROUND_HALF_UP);
+    }
 
     public BigDecimal calAvgPrice(String stockCode, Date tradeDate) {
         String tradeDateStr = DateUtil.format(tradeDate, DateUtil.yyyy_MM_dd);
