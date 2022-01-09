@@ -19,6 +19,7 @@ public class ZhuanZaiBuyDTO {
     private String tradeDate;
 
     private BigDecimal buyPrice;
+    private BigDecimal avgPrice;
 
     private String buyTime;
 
@@ -37,6 +38,9 @@ public class ZhuanZaiBuyDTO {
     private BigDecimal sellPrice;
     private Long beforeAvgFenShi;
     private int raiseVolFlag = 0;
+
+
+    private Integer sellType;
 
     private int isGatherFlag = 0;
     private int isUpperAvg = 0;

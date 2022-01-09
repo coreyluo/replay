@@ -3,12 +3,17 @@ package com.bazinga.test;
 
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
+import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.util.DateUtil;
+import com.tradex.enums.KCate;
+import com.tradex.util.TdxHqUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.AbstractCollection;
+import java.util.List;
 
 public class HblTest extends BaseTestCase {
 
@@ -60,17 +65,30 @@ public class HblTest extends BaseTestCase {
     private BlockDropNextOpenHighComponent blockDropNextOpenHighComponent;
     @Autowired
     private RaiseDropComponent raiseDropComponent;
+    @Autowired
+    private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
+    @Autowired
+    private TwoToThreePlankInfoComponent twoToThreePlankInfoComponent;
+    @Autowired
+    private BlockHighProfitInfoComponent blockHighProfitInfoComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
-       synExcelComponent.otherStockBuy();
+       /*synExcelComponent.otherStockBuy();
         synExcelComponent.ziDongHuaBuy();
-        synExcelComponent.graphBuy();
+        synExcelComponent.graphBuy();*/
         /*BlockLevelDTO preBlockLevel = otherBuyStockComponent.getPreBlockLevel("600476", "20210830");
         System.out.println(preBlockLevel);*/
-        synExcelComponent.zhuanZaiBuy();
-        blockChoaDieComponent.chaoDie();
+        //synExcelComponent.zhuanZaiBuy();
+        //blockChoaDieComponent.chaoDie();
+
+        //twoToThreePlankInfoComponent.badPlankInfo();
+        //twoToThreePlankInfoComponent.badPlankInfo();
+
+        blockHighProfitInfoComponent.badPlankInfo();
 
     }
     @Test
@@ -98,14 +116,17 @@ public class HblTest extends BaseTestCase {
         //lowExchangePercentComponent.lowExchangeAvg();
         //oneMinutePlankComponent.firstMinutePlankInfo();
         //badChungYePlankInfoComponent.badPlankInfo();
-        //highExchangeChungYePlankInfoComponent.badPlankInfo();
+        highExchangeChungYePlankInfoComponent.badPlankInfo();
         /*chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
        /* synExcelComponent.zhuanZaiBugInfo();*/
         //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
-        raiseDropComponent.raiseDrop();
+        //raiseDropComponent.raiseDrop();
+        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
+
+
 
     }
 }

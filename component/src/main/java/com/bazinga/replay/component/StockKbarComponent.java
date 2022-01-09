@@ -88,8 +88,6 @@ public class StockKbarComponent {
 
 
 
-
-
     public void initAndSaveKbarData(String stockCode, String stockName, int days) {
         DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, days);
         List<StockKbar> stockKbarList = StockKbarConvert.convert(dataTable, stockCode, stockName);
@@ -254,7 +252,7 @@ public class StockKbarComponent {
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 400);
+                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 250);
             }
         });
     }
