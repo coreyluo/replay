@@ -103,13 +103,13 @@ public class ZongziReplayComponent {
                         if(currentDTO.getTradePrice().compareTo(avgPrice)>0){
                             overJump++;
                         }
-                        if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *80){
+                        if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *50){
                             buyIndex = j;
                             break;
                         }
                     }
 
-                    if(overJump * 100 < buyIndex * 70){
+                    if(overJump * 100 < buyIndex * 50){
                         continue;
                     }
 
