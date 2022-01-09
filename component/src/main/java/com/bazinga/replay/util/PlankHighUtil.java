@@ -27,6 +27,26 @@ public class PlankHighUtil {
         return planks;
     }
 
+    public static int calTodaySerialsPlank(List<StockKbar> stockKbarList) {
+        int planks = 1;
+        int unPlanks = 0;
+        for (int i = stockKbarList.size() - 2; i > 0; i--) {
+            StockKbar stockKbar = stockKbarList.get(i);
+            StockKbar preStockKbar = stockKbarList.get(i - 1);
+            if (StockKbarUtil.isUpperPrice(stockKbar, preStockKbar)) {
+                planks++;
+                continue;
+            } else {
+                //unPlanks++;
+                return planks;
+            }
+          /*  if(unPlanks>=2){
+                return planks;
+            }*/
+        }
+        return planks;
+    }
+
     public static boolean isTodayFirstPlank(List<StockKbar> stockKbarList){
         StockKbar stockKbar = stockKbarList.get(stockKbarList.size()-2);
         StockKbar pre1StockKbar = stockKbarList.get(stockKbarList.size()-3);

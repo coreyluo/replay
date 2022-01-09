@@ -54,6 +54,9 @@ public class MiddlePlankReplayComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    @Autowired
+    private CommonReplayComponent commonReplayComponent;
+
     public void invokeSecond(){
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
         ExcelExportUtil excelExportUtil = new ExcelExportUtil();
@@ -94,7 +97,7 @@ public class MiddlePlankReplayComponent {
               //  BigDecimal day10Rate = calDay10Rate(kbar10List);
 
                 int plank = calSerialsPlank(kbarList);
-                if(plank<2 || plank >4){
+                if(plank<2 ){
                     continue;
                 }
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
@@ -188,7 +191,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank包含炸板纯粹连板去20天新股含1.8秒级.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\所有连板包含炸板纯粹连板去20天新股含1.8秒级.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
@@ -419,6 +422,7 @@ public class MiddlePlankReplayComponent {
 
     public void invoke(){
        // Map<String, BlockCompeteDTO> blockCompeteMap = blockReplayComponent.getBlockRateMap();
+        Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
         ExcelExportUtil excelExportUtil = new ExcelExportUtil();
         excelExportUtil.setWorkbook(workbook);
@@ -439,7 +443,7 @@ public class MiddlePlankReplayComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20210401");
+            query.setKbarDateFrom("20191215");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
 
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
@@ -454,31 +458,43 @@ public class MiddlePlankReplayComponent {
                 List<StockKbar> kbarList = stockKbars.subList(i - 7, i + 1);
                 List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
                 List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
-
+                int plank = calSerialsPlank(kbarList);
+                if(plank<4 /*|| plank > 4*/ ){
+                    continue;
+                }
+              /*  PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
+                if(plankHighDTO.getPlankHigh()<2 || plankHighDTO.getPlankHigh() > 4 ){
+                    continue;
+                }*/
                 if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
                     continue;
                 }
                 BigDecimal day10Rate = calDay10Rate(kbar10List);
-               /* if(stockKbar.getHighPrice().compareTo(stockKbar.getClosePrice())!=0){
-                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
-                    for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
-                        if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
-                           // log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                            stockKbar.setClosePrice(stockKbar.getHighPrice());
-                            break;
-                        }
+              /*  boolean isUpperS = false;
+
+                List<ThirdSecondTransactionDataDTO> plankList = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : plankList) {
+                    if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
+                       // log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                       // stockKbar.setClosePrice(stockKbar.getHighPrice());
+                        isUpperS = true;
+                        break;
                     }
                 }*/
 
-                int plank = calSerialsPlank(kbarList);
-                if(plank<2 || plank >4){
+               /* if(!isUpperS){
+                    log.info("没有出现涨停S stockCode{},kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
-                }
+                }*/
                 Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
                 if(plank == oneLinePlank){
                     log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }
+                /*if(oneLinePlank >= 2){
+                    log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                    continue;
+                }*/
                 String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
                 /*BlockCompeteDTO blockCompeteDTO = blockCompeteMap.get(uniqueKey);
                 if(blockCompeteDTO == null ){
@@ -513,9 +529,14 @@ public class MiddlePlankReplayComponent {
                     continue;
                 }
                 list = historyTransactionDataComponent.getPreOneHourData(list);
+                if(CollectionUtils.isEmpty(list)|| list.size()<3){
+                    log.info("分时成交行情不足stockCode{} kbarDate{}",sellStockKbar.getStockCode(),sellStockKbar.getKbarDate());
+                    continue;
+                }
                 Map<String, Object> map = new HashMap<>();
                 map.put("stockCode",sellStockKbar.getStockCode());
                 map.put("stockName",sellStockKbar.getStockName());
+                map.put("preTradeAmount",stockKbar.getTradeAmount());
                 map.put("kbarDate",sellStockKbar.getKbarDate());
                 Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
                 BigDecimal sellUpperPrice = PriceUtil.calUpperPrice(sellStockKbar.getStockCode(),stockKbar.getClosePrice());
@@ -524,6 +545,9 @@ public class MiddlePlankReplayComponent {
                 }*/
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                    if("09:25".equals(transactionDataDTO.getTradeTime())){
+                        map.put("openAmount",transactionDataDTO.getTradePrice().multiply(new BigDecimal(String.valueOf(transactionDataDTO.getTradeQuantity()*100))));
+                    }
                    /* if(!"09:25".equals(transactionDataDTO.getTradeTime())){
                         List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
                         if(minList == null){
@@ -571,26 +595,38 @@ public class MiddlePlankReplayComponent {
         groupByMap.forEach((key,list)->{
             Map map = new HashMap<>();
             map.put("kbarDate",key);
-            map.put("count",list.size()-1);
+            map.put("count",list.size());
             Map<String,BigDecimal> openRateMap = new HashMap<>();
-            for (int i = 2; i < headList.length; i++) {
+            BigDecimal preTradeAmount = BigDecimal.ZERO;
+            BigDecimal openAmount = BigDecimal.ZERO;
+            for (Map itemMap : list) {
+                preTradeAmount = preTradeAmount.add(new BigDecimal(itemMap.get("preTradeAmount").toString()));
+                openAmount = openAmount.add(new BigDecimal(itemMap.get("openAmount").toString()));
+            }
+            map.put("preTradeAmount",preTradeAmount);
+            map.put("openAmount",openAmount);
+            map.put("shOpenRate",shOpenRateMap.get(key));
+            for (int i = 11; i < headList.length; i++) {
                 String attrKey = headList[i];
                 BigDecimal totalRate = BigDecimal.ZERO;
                 BigDecimal preRate = BigDecimal.ZERO;
                 BigDecimal minRate = new BigDecimal("20");
                 BigDecimal maxRate = new BigDecimal("-20");
                 List<BigDecimal> rateList = Lists.newArrayList();
-
+                int overOpenCount = 0;
                 for (Map itemMap : list) {
                     String stockCode = itemMap.get("stockCode").toString();
                     BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
-                    if(i==2){
+                    if(i==11){
                         openRateMap.put(stockCode,rate);
                     }
                     if(itemMap.get(attrKey) != null){
                         preRate = new BigDecimal(itemMap.get(attrKey).toString());
                     }
-                  //  BigDecimal relativeOpenRate = rate.subtract(openRateMap.get(stockCode));
+                    BigDecimal relativeOpenRate = rate.subtract(openRateMap.get(stockCode));
+                    if(relativeOpenRate.compareTo(BigDecimal.ZERO) > 0){
+                        overOpenCount = overOpenCount + 1;
+                    }
                     totalRate = totalRate.add(rate);
 
                     if(rate.compareTo(minRate)<0){
@@ -598,11 +634,9 @@ public class MiddlePlankReplayComponent {
                     }
                    // rateList.add(rate);
                 }
-                List<BigDecimal> sortList = rateList.stream().sorted(BigDecimal::compareTo).collect(Collectors.toList());
-               /* for (int j = 0; j < 2; j++) {
-                    totalRate = totalRate.subtract(sortList.get(j));
-                }*/
-                totalRate = totalRate.subtract(minRate);
+                if(i>11 && i<18){
+                    map.put("overOpen"+ attrKey,""+ overOpenCount +"/"+ list.size());
+                }
                 map.put(attrKey,totalRate);
             }
             exportList.add(map);
@@ -613,7 +647,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\middlePlank去最值去一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\2-4断板去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
@@ -707,6 +741,15 @@ public class MiddlePlankReplayComponent {
       //  headList.add("stockName");
         headList.add("kbarDate");
         headList.add("count");
+        headList.add("preTradeAmount");
+        headList.add("openAmount");
+        headList.add("shOpenRate");
+        headList.add("overOpen09:30");
+        headList.add("overOpen09:31");
+        headList.add("overOpen09:32");
+        headList.add("overOpen09:33");
+        headList.add("overOpen09:34");
+        headList.add("overOpen09:35");
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;

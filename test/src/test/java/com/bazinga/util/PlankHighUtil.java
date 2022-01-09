@@ -107,4 +107,34 @@ public class PlankHighUtil {
         }
         return new PlankHighDTO(planks,unPlanks);
     }
+
+    public static PlankHighDTO calSpecialPlank(List<StockKbar> stockKbarList) {
+        int planks = 0;
+        int unPlanks = 0;
+        boolean prePlank = true;
+
+        boolean isPlank = false;
+        for (int i = stockKbarList.size() - 1; i > 0; i--) {
+            StockKbar stockKbar = stockKbarList.get(i);
+            StockKbar preStockKbar = stockKbarList.get(i - 1);
+            if (StockKbarUtil.isUpperPrice(stockKbar, preStockKbar)) {
+                planks++;
+                prePlank = true;
+                isPlank = true;
+            } else {
+                if(isPlank){
+                    unPlanks++;
+                    prePlank = false;
+                }
+            }
+            if(unPlanks>=2){
+                if(prePlank){
+                    return new PlankHighDTO(planks,unPlanks-1);
+                }else {
+                    return new PlankHighDTO(planks,0);
+                }
+            }
+        }
+        return new PlankHighDTO(planks,unPlanks);
+    }
 }

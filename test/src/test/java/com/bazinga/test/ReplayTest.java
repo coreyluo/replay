@@ -55,6 +55,30 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
+    @Autowired
+    private Plank3to4Component plank3to4Component;
+
+    @Autowired
+    private SuddenAbsortComponent suddenAbsortComponent;
+
+    @Autowired
+    private PrePlankAbsortComponent prePlankAbsortComponent;
+
+    @Autowired
+    private HighPlankReplayComponent highPlankReplayComponent;
+
+    @Autowired
+    private MiddlePlankUpdateReplayComponent middlePlankUpdateReplayComponent;
+
+    @Autowired
+    private PlankFirstSealReplayComponent plankFirstSealReplayComponent;
+
+    @Autowired
+    private BankerStockReplayComponent bankerStockReplayComponent;
+
+    @Autowired
+    private ZongziReplayComponent zongziReplayComponent;
+
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -73,7 +97,7 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test4(){
-        positionOwnReplayComponent.replay();
+        positionOwnReplayComponent.positionOwnAdd();
     }
 
     @Test
@@ -111,7 +135,7 @@ public class ReplayTest extends BaseTestCase {
     public void test10(){
        // rotPlankReplayComponent.replay(2);
        // rotPlankReplayComponent.replay(3);
-      //  rotPlankReplayComponent.replay(4);
+        rotPlankReplayComponent.replay(4);
        // rotPlankReplayComponent.replay(5);
 
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
@@ -121,6 +145,15 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test11(){
-        Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
+        //Map<String, OpenCompeteDTO> competeInfo = commonReplayComponent.get300CompeteInfo();
+     //   plank3to4Component.replay();
+     //   suddenAbsortComponent.replay();
+     //   prePlankAbsortComponent.replay();
+      //  middlePlankUpdateReplayComponent.invoke();
+     //   highPlankReplayComponent.replay();
+        zongziReplayComponent.replay();
+      //  plankFirstSealReplayComponent.replay();
+      //  bankerStockReplayComponent.replay();
+
     }
 }

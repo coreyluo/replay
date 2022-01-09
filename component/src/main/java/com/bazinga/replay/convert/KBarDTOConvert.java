@@ -1,6 +1,8 @@
 package com.bazinga.replay.convert;
 
+import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.dto.KBarDTO;
+import com.bazinga.replay.model.StockKbar;
 import com.bazinga.util.DateUtil;
 import com.google.common.collect.Lists;
 import com.tradex.model.suport.DataTable;
@@ -16,6 +18,29 @@ import java.util.List;
  * @date 2019/3/4
  */
 public class KBarDTOConvert {
+
+    public static List<StockKbar> convertStockKbar (String stockCode,DataTable dataTable){
+        int rows = dataTable.rows();
+        List<StockKbar> kBarList = Lists.newArrayList();
+        for(int i=0;i<rows;i++){
+            String[] row = dataTable.getRow(i);
+            StockKbar stockKbar = new StockKbar();
+            stockKbar.setOpenPrice(new BigDecimal(row[1]).setScale(2, BigDecimal.ROUND_HALF_UP));
+            stockKbar.setClosePrice(new BigDecimal(row[2]).setScale(2, BigDecimal.ROUND_HALF_UP));
+            stockKbar.setHighPrice(new BigDecimal(row[3]).setScale(2, BigDecimal.ROUND_HALF_UP));
+            stockKbar.setLowPrice(new BigDecimal(row[4]).setScale(2, BigDecimal.ROUND_HALF_UP));
+            stockKbar.setTradeQuantity(Long.valueOf(row[5])/100);
+            stockKbar.setTradeAmount(new BigDecimal(row[6]).setScale(2,BigDecimal.ROUND_HALF_UP));
+            stockKbar.setStockCode(stockCode);
+            Date tradeDate = DateUtil.parseDate(row[0], DateUtil.yyyyMMdd);
+            stockKbar.setUniqueKey(stockCode+ SymbolConstants.UNDERLINE + row[0]);
+            stockKbar.setKbarDate(row[0]);
+            stockKbar.setAdjFactor(new BigDecimal("1.0"));
+            kBarList.add(stockKbar);
+
+        }
+        return kBarList;
+    }
 
     public static List<KBarDTO> convertKBar(DataTable dataTable){
         int rows = dataTable.rows();

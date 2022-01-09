@@ -4,6 +4,8 @@ package com.bazinga.component;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.OpenCompeteDTO;
+import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
@@ -35,6 +37,9 @@ public class CommonReplayComponent {
 
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
 
     @Autowired
     private CirculateInfoService circulateInfoService;
@@ -95,6 +100,23 @@ public class CommonReplayComponent {
 
 
 
+        return resultMap;
+    }
+
+    public Map<String,BigDecimal> initShOpenRateMap() {
+
+        Map<String,BigDecimal> resultMap = new HashMap<>();
+
+        StockKbarQuery query= new StockKbarQuery();
+        query.setStockCode("999999");
+        query.setKbarDateFrom("20210101");
+        query.addOrderBy("kbar_date", Sort.SortType.ASC);
+        List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+        for (int i = 1; i < kbarList.size(); i++) {
+            StockKbar preStockKbar = kbarList.get(i - 1);
+            StockKbar stockKbar = kbarList.get(i);
+            resultMap.put(stockKbar.getKbarDate(),PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice()));
+        }
         return resultMap;
     }
 

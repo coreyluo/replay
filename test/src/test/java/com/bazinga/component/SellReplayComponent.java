@@ -88,7 +88,7 @@ public class SellReplayComponent {
                 exportDTO.setStockCode(importDTO.getStockCode());
                 exportDTO.setStockName(importDTO.getStockName());
                 exportDTO.setKbarDate(kbarDate);
-                exportDTO.setOrderTime(DateUtil.format(importDTO.getOrderTime(),DateUtil.HH_MM));
+               // exportDTO.setOrderTime(DateUtil.format(importDTO.getOrderTime(),DateUtil.HH_MM));
                 exportDTO.setSealType(importDTO.getSealType());
                 exportDTO.setPremiumRate(importDTO.getPremiumRate().multiply(CommonConstant.DECIMAL_HUNDRED).setScale(2,BigDecimal.ROUND_HALF_UP));
 

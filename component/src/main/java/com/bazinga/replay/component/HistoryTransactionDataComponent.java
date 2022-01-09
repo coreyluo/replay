@@ -119,7 +119,36 @@ public class HistoryTransactionDataComponent {
                 break;
             }
         }
-        return list.get(index-1);
+        return list.get(index);
+    }
+
+    public List<ThirdSecondTransactionDataDTO> getRangeTimeData(List<ThirdSecondTransactionDataDTO> list,String fromTime,String toTime){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = 1;
+        fromTime = fromTime.replace(":","");
+        for(int i=0; i<list.size(); i++){
+            String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+            if(Integer.parseInt(minTradeTime)>=Integer.parseInt(fromTime)){
+                index = i;
+                break;
+            }
+        }
+
+        int toIndex= list.size();
+        if(!toTime.startsWith("15")){
+            toTime = toTime.replace(":","");
+            for(int i=0; i<list.size(); i++){
+                String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+                if(Integer.parseInt(minTradeTime)>Integer.parseInt(toTime)){
+                    index = i;
+                    break;
+                }
+            }
+        }
+        return list.subList(index,toIndex);
+
     }
 
     public List<ThirdSecondTransactionDataDTO> getFixTimeData(List<ThirdSecondTransactionDataDTO> list,String fixTime){
@@ -136,6 +165,22 @@ public class HistoryTransactionDataComponent {
             }
         }
         return list.subList(0,index);
+    }
+
+    public List<ThirdSecondTransactionDataDTO> getAfterFixTimeData(List<ThirdSecondTransactionDataDTO> list,String fixTime){
+        if(CollectionUtils.isEmpty(list)){
+            return list;
+        }
+        int index = 1;
+        fixTime = fixTime.replace(":","");
+        for(int i=0; i<list.size(); i++){
+            String minTradeTime = list.get(i).getTradeTime().replace(":", "");
+            if(Integer.parseInt(minTradeTime)>=Integer.parseInt(fixTime)){
+                index = i;
+                break;
+            }
+        }
+        return list.subList(index,list.size());
     }
 
     public Integer getUpperOpenCount(BigDecimal upperPrice, List<ThirdSecondTransactionDataDTO> list){
@@ -191,6 +236,15 @@ public class HistoryTransactionDataComponent {
             totalQuantity += item.getTradeQuantity();
         }
         return (float) (Math.round(totalPrice / totalQuantity * 100)) / 100;
+    }
+    public BigDecimal calBigDecimalAveragePrice(List<ThirdSecondTransactionDataDTO> list){
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        Integer totalQuantity = 0;
+        for (ThirdSecondTransactionDataDTO item : list) {
+            totalPrice = totalPrice.add(item.getTradePrice().multiply(new BigDecimal(item.getTradeQuantity().toString())));
+            totalQuantity += item.getTradeQuantity();
+        }
+        return totalPrice.divide(new BigDecimal(totalQuantity.toString()),2,BigDecimal.ROUND_HALF_UP);
     }
 
     public BigDecimal calAvgPrice(String stockCode, Date tradeDate) {

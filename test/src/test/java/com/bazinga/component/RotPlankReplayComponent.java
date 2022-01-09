@@ -112,7 +112,9 @@ public class RotPlankReplayComponent {
                     exportDTO.setShOpenRate(shIndexMap.get(buyStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + "09:25"));
                     exportDTO.setUnPlankHigh(plankHighDTO.getUnPlank());
                     BigDecimal avgPrice = historyTransactionDataComponent.calPre1HourAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
-                    exportDTO.setPremium(PriceUtil.getPricePercentRate(avgPrice.subtract(buyStockKbar.getHighPrice()),buyStockKbar.getHighPrice()));
+                    if(avgPrice!=null){
+                        exportDTO.setPremium(PriceUtil.getPricePercentRate(avgPrice.subtract(buyStockKbar.getHighPrice()),buyStockKbar.getHighPrice()));
+                    }
                     resultList.add(exportDTO);
                 }
             }

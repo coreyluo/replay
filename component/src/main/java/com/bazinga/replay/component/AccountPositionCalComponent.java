@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.PlankHighDTO;
 import com.bazinga.replay.dto.PositionCalDTO;
 import com.bazinga.replay.dto.SellGroupDTO;
@@ -17,6 +19,9 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -24,6 +29,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -114,7 +120,7 @@ public class AccountPositionCalComponent {
                                 positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellGroupDTO.getSellAmount()));
                             }
                             positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
+                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
                         }else {
                             for (int i = 0; i < unResultList.size(); i++) {
                                 PositionCalDTO positionCalDTO = unResultList.get(i);
@@ -127,7 +133,7 @@ public class AccountPositionCalComponent {
                                     positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellAmount));
                                 }
                                 positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
-                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()));
+                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
                             }
                         }
                     }else {
@@ -186,6 +192,9 @@ public class AccountPositionCalComponent {
                     positionCalDTO.setTradeDate(DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd));
                     positionCalDTO.setOrderTime(objArr[0]);
                     positionCalDTO.setStockCode(objArr[1]);
+                    if(positionCalDTO.getStockCode().startsWith("1")){
+                        continue;
+                    }
                     positionCalDTO.setStockName(objArr[2]);
                     positionCalDTO.setTradeQuantity(Integer.valueOf(objArr[7]));
                     positionCalDTO.setBuyAmount(new BigDecimal(objArr[8]));
@@ -204,7 +213,13 @@ public class AccountPositionCalComponent {
                     String uniqueKey = positionCalDTO.getStockCode() +SymbolConstants.UNDERLINE + kbarDate;
                     StockKbar byUniqueKey = stockKbarService.getByUniqueKey(uniqueKey);
                     if(byUniqueKey ==null){
-                        throw new Exception(positionCalDTO.getStockCode());
+                        DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, positionCalDTO.getStockCode(), 0, 1);
+                        List<StockKbar> stockKbarList = KBarDTOConvert.convertStockKbar(positionCalDTO.getStockCode(),securityBars);
+                        if(CollectionUtils.isEmpty(stockKbarList)){
+                            throw new Exception(positionCalDTO.getStockCode());
+                        }else {
+                            byUniqueKey = stockKbarList.get(0);
+                        }
                     }
                     StockKbarQuery query = new StockKbarQuery();
                     query.setStockCode(positionCalDTO.getStockCode());
@@ -212,6 +227,10 @@ public class AccountPositionCalComponent {
                     query.addOrderBy("kbar_date", Sort.SortType.DESC);
                     query.setLimit(10);
                     List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+                    if(kbarList.size()==0){
+                        DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, positionCalDTO.getStockCode(), 0, 10);
+                        kbarList= KBarDTOConvert.convertStockKbar(positionCalDTO.getStockCode(),securityBars);
+                    }
                     StockKbar stockKbar = kbarList.get(0);
                     StockKbar preStockKbar = kbarList.get(1);
                     PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(Lists.reverse(kbarList));
@@ -238,7 +257,8 @@ public class AccountPositionCalComponent {
                         if(plankHighDTO.getUnPlank()==0){
                             positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh().toString());
                         }else {
-                            positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh() + "+"+ plankHighDTO.getUnPlank());
+                            int plank = PlankHighUtil.calTodaySerialsPlank(Lists.reverse(kbarList));
+                            positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh()-plank + "+"+ plank);
                         }
                         positionCalDTO.setMode("自动化普打");
                     }
