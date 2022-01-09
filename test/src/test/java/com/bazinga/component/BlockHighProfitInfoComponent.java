@@ -82,19 +82,34 @@ public class BlockHighProfitInfoComponent {
         List<BlockProfitDTO> list = Lists.newArrayList();
         for (String key:map.keySet()){
             List<LevelDTO> levelDTOS = map.get(key);
-            if(levelDTOS==null||levelDTOS.size()<=1){
+            if(levelDTOS==null||levelDTOS.size()<=3){
                 continue;
             }
             Collections.sort(levelDTOS);
-            LevelDTO first = levelDTOS.get(0);
-            LevelDTO two = levelDTOS.get(1);
-            if(first.getRate().compareTo(two.getRate().multiply(new BigDecimal(1.5)))!=-1){
-                BigDecimal divide = first.getRate().divide(two.getRate(), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalFirst = BigDecimal.ZERO;
+            BigDecimal totalTwo = BigDecimal.ZERO;
+            int countTwo = 0;
+            int i = 0;
+            for (LevelDTO levelDTO:levelDTOS){
+                i++;
+                if(i<=3){
+                    totalFirst = totalFirst.add(levelDTO.getRate());
+                }
+                if(i>3&&i<=6){
+                    countTwo++;
+                    totalTwo = totalTwo.add(levelDTO.getRate());
+                }
+
+            }
+            BigDecimal avgFirst = totalFirst.divide(new BigDecimal(3), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal avgTwo = totalTwo.divide(new BigDecimal(countTwo), 2, BigDecimal.ROUND_HALF_UP);
+            if(avgFirst.compareTo(avgTwo.multiply(new BigDecimal(1.5)))!=-1){
+                BigDecimal divide = avgFirst.divide(avgTwo, 2, BigDecimal.ROUND_HALF_UP);
                 BlockProfitDTO blockProfitDTO = new BlockProfitDTO();
                 blockProfitDTO.setTradeDate(key);
-                blockProfitDTO.setTotalProfit(first.getRate());
-                blockProfitDTO.setBlockCode(first.getKey());
-                blockProfitDTO.setBlockName(blockInfoMap.get(first.getKey()).getBlockName());
+                blockProfitDTO.setTotalProfit(avgFirst);
+                blockProfitDTO.setBlockCode(levelDTOS.get(0).getKey());
+                blockProfitDTO.setBlockName(blockInfoMap.get(levelDTOS.get(0).getKey()).getBlockName());
                 blockProfitDTO.setRateThanTwo(divide);
                 list.add(blockProfitDTO);
             }
