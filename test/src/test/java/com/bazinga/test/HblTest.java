@@ -73,6 +73,8 @@ public class HblTest extends BaseTestCase {
     private TwoToThreePlankInfoComponent twoToThreePlankInfoComponent;
     @Autowired
     private BlockHighProfitInfoComponent blockHighProfitInfoComponent;
+    @Autowired
+    private EastTherProvinceComponent eastTherProvinceComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -88,7 +90,8 @@ public class HblTest extends BaseTestCase {
         //twoToThreePlankInfoComponent.badPlankInfo();
         //twoToThreePlankInfoComponent.badPlankInfo();
 
-        blockHighProfitInfoComponent.badPlankInfo();
+        //blockHighProfitInfoComponent.badPlankInfo();
+        eastTherProvinceComponent.dongBeiInfo();
 
     }
     @Test
