@@ -93,7 +93,7 @@ public class MarketPlankReplayComponent {
                     continue;
                 }
                 PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(stockKbars.subList(i - 7, i + 1));
-                if(plankHighDTO.getPlankHigh()>0 && plankHighDTO.getPlankHigh()<2 && plankHighDTO.getUnPlank()==0){
+                if(plankHighDTO.getPlankHigh()>0 && plankHighDTO.getPlankHigh()<3 && plankHighDTO.getUnPlank()==0){
 
                     List<ThirdSecondTransactionDataDTO> todayList = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     if(CollectionUtils.isEmpty(todayList)){

@@ -466,7 +466,7 @@ public class MiddlePlankReplayComponent {
                 List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
                 List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
                 int plank = calSerialsPlank(kbarList);
-                if(plank<4 /*|| plank > 4*/ ){
+                if(plank<2 || plank > 4 ){
                     continue;
                 }
               /*  PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
