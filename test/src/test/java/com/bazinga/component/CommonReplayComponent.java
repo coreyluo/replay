@@ -3,8 +3,11 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
+import com.bazinga.dto.IndexRateDTO;
 import com.bazinga.dto.OpenCompeteDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
@@ -19,6 +22,9 @@ import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,4 +126,28 @@ public class CommonReplayComponent {
         return resultMap;
     }
 
+
+    public Map<String, IndexRateDTO> initIndexRateMap(String indexCode) {
+
+        Map<String,IndexRateDTO> resultMap = new HashMap<>();
+
+        List<KBarDTO> list = Lists.newArrayList();
+        for (int i = 0; i < 250; i++) {
+            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, indexCode, i, 1);
+            KBarDTO kBarDTO = KBarDTOConvert.convertSZKBar(dataTable);
+            list.add(kBarDTO);
+        }
+
+        list = Lists.reverse(list);
+        for (int i = 1; i < list.size()-1; i++) {
+            KBarDTO preKbar = list.get(i - 1);
+            KBarDTO currentKbar = list.get(i);
+            KBarDTO keyKbar = list.get(i + 1);
+
+            BigDecimal highRate = PriceUtil.getPricePercentRate(currentKbar.getHighestPrice().subtract(preKbar.getEndPrice()), preKbar.getEndPrice());
+            BigDecimal closeRate = PriceUtil.getPricePercentRate(currentKbar.getEndPrice().subtract(preKbar.getEndPrice()), preKbar.getEndPrice());
+            resultMap.put(keyKbar.getDateStr(),new IndexRateDTO(closeRate,highRate));
+        }
+        return resultMap;
+    }
 }

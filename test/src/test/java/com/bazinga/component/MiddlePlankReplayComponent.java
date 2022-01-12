@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.BlockCompeteDTO;
+import com.bazinga.dto.IndexRateDTO;
 import com.bazinga.dto.PlankHighDTO;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -23,6 +24,7 @@ import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.tradex.util.ExcelExportUtil;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -422,6 +424,11 @@ public class MiddlePlankReplayComponent {
 
     public void invoke(){
        // Map<String, BlockCompeteDTO> blockCompeteMap = blockReplayComponent.getBlockRateMap();
+
+        Map<String, IndexRateDTO> zrztIndexRateMap = commonReplayComponent.initIndexRateMap("880863");
+        Map<String, IndexRateDTO> zrlbIndexRateMap = commonReplayComponent.initIndexRateMap("880812");
+        Map<String, IndexRateDTO> zcztIndexRateMap = commonReplayComponent.initIndexRateMap("880874");
+
         Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
         ExcelExportUtil excelExportUtil = new ExcelExportUtil();
@@ -443,7 +450,7 @@ public class MiddlePlankReplayComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20191215");
+            query.setKbarDateFrom("20200415");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
 
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
@@ -606,6 +613,12 @@ public class MiddlePlankReplayComponent {
             map.put("preTradeAmount",preTradeAmount);
             map.put("openAmount",openAmount);
             map.put("shOpenRate",shOpenRateMap.get(key));
+            map.put("zrztHighRate",zrztIndexRateMap.get(key)==null?null:zrztIndexRateMap.get(key).getHighRate());
+            map.put("zrztCloseRate",zrztIndexRateMap.get(key)==null ? null:zrztIndexRateMap.get(key).getCloseRate());
+            map.put("zrlbHighRate",zrlbIndexRateMap.get(key)==null ? null :zrlbIndexRateMap.get(key).getHighRate());
+            map.put("zrlbCloseRate",zrlbIndexRateMap.get(key) == null ? null : zrlbIndexRateMap.get(key).getCloseRate());
+            map.put("zcztHighRate",zcztIndexRateMap.get(key) == null? null : zcztIndexRateMap.get(key).getHighRate());
+            map.put("zcztCloseRate",zcztIndexRateMap.get(key) ==null? null : zcztIndexRateMap.get(key).getCloseRate());
             for (int i = 11; i < headList.length; i++) {
                 String attrKey = headList[i];
                 BigDecimal totalRate = BigDecimal.ZERO;
@@ -634,9 +647,9 @@ public class MiddlePlankReplayComponent {
                     }
                    // rateList.add(rate);
                 }
-                if(i>11 && i<18){
+              /*  if(i>11 && i<18){
                     map.put("overOpen"+ attrKey,""+ overOpenCount +"/"+ list.size());
-                }
+                }*/
                 map.put(attrKey,totalRate);
             }
             exportList.add(map);
@@ -744,12 +757,12 @@ public class MiddlePlankReplayComponent {
         headList.add("preTradeAmount");
         headList.add("openAmount");
         headList.add("shOpenRate");
-        headList.add("overOpen09:30");
-        headList.add("overOpen09:31");
-        headList.add("overOpen09:32");
-        headList.add("overOpen09:33");
-        headList.add("overOpen09:34");
-        headList.add("overOpen09:35");
+        headList.add("zrztHighRate");
+        headList.add("zrztCloseRate");
+        headList.add("zrlbHighRate");
+        headList.add("zrlbCloseRate");
+        headList.add("zcztHighRate");
+        headList.add("zcztCloseRate");
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
