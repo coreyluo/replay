@@ -90,7 +90,13 @@ public class BigBuyComponent {
     public List<BigOrderBuyDTO>  highProfitBlock(){
         List<BigOrderBuyDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        int i = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
+            i++;
+            if(i>=500){
+                break;
+            }
+            System.out.println(i);
             List<BigOrderBuyDTO> buys = judgePlankInfo(circulateInfo);
             list.addAll(buys);
             /*if(list.size()>0){
@@ -107,16 +113,21 @@ public class BigBuyComponent {
         if(CollectionUtils.isEmpty(stockKbars)){
             return list;
         }
-        List<ThirdSecondTransactionDataDTO> currenDatas = null;
         StockKbar preKbar = null;
         int i = 0;
         LimitQueue<StockKbar> limitQueue = new LimitQueue<>(5);
+        LimitQueue<StockKbar> limitQueuePlanks = new LimitQueue<>(10);
         for (StockKbar stockKbar:stockKbars){
             BigDecimal beforeDay5Avg = beforeAvgAmount(limitQueue);
             limitQueue.offer(stockKbar);
+            limitQueuePlanks.offer(stockKbar);
             List<BigOrderBuyDTO> buys = Lists.newArrayList();
             if(preKbar!=null) {
-                buys = nextDayTransactionDatas(currenDatas, circulateInfo, preKbar, stockKbar);
+                boolean isUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
+                if(isUpper) {
+                    List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), stockKbar.getKbarDate());
+                    buys = nextDayTransactionDatas(datas, circulateInfo, preKbar, stockKbar);
+                }
             }
             preKbar = stockKbar;
             i++;
@@ -127,19 +138,54 @@ public class BigBuyComponent {
                     DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))){
                 continue;
             }
-            currenDatas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(),stockKbars.get(i).getKbarDate());
-            BigDecimal avgPrice = calAvgPrice(currenDatas);
-            for (BigOrderBuyDTO buy:buys){
-                avgPrice = chuQuanAvgPrice(avgPrice, stockKbars.get(i));
-                BigDecimal chuQuanBuyPrice = chuQuanAvgPrice(buy.getBuyPrice(), stockKbars.get(i));
-                BigDecimal profit = PriceUtil.getPricePercentRate(avgPrice.subtract(chuQuanBuyPrice), chuQuanBuyPrice);
-                buy.setProfit(profit);
-                buy.setAvgTradeAmountDay5(beforeDay5Avg);
-                list.add(buy);
+            if(!CollectionUtils.isEmpty(buys)) {
+                BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(circulateInfo.getStockCode(), stockKbars.get(i).getKbarDate());
+                Integer planks = planks(limitQueuePlanks);
+                BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
+                for (BigOrderBuyDTO buy : buys) {
+                    avgPrice = chuQuanAvgPrice(avgPrice, stockKbars.get(i));
+                    BigDecimal chuQuanBuyPrice = chuQuanAvgPrice(buy.getBuyPrice(), stockKbars.get(i));
+                    BigDecimal profit = PriceUtil.getPricePercentRate(avgPrice.subtract(chuQuanBuyPrice), chuQuanBuyPrice);
+                    buy.setProfit(profit);
+                    buy.setAvgTradeAmountDay5(beforeDay5Avg);
+                    buy.setPlanks(planks);
+                    buy.setOpenRate(openRate);
+                    list.add(buy);
+                }
             }
         }
         return list;
     }
+
+    public Integer planks(LimitQueue<StockKbar> limitQueue){
+        if(limitQueue.size()<=2){
+            return null;
+        }
+        List<StockKbar> list = Lists.newArrayList();
+        Iterator<StockKbar> iterator = limitQueue.iterator();
+        while(iterator.hasNext()){
+            StockKbar stockKbar = iterator.next();
+            list.add(stockKbar);
+        }
+        List<StockKbar> reverse = Lists.reverse(list);
+        StockKbar nextKbar = null;
+        int planks = 0;
+        int i = 0;
+        for (StockKbar stockKbar:reverse){
+            i++;
+            if(i>=2){
+                boolean isUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice());
+                if(isUpper){
+                    planks++;
+                }else{
+                    return planks;
+                }
+            }
+            nextKbar = stockKbar;
+        }
+        return planks;
+    }
+
     public BigDecimal beforeAvgAmount(LimitQueue<StockKbar> limitQueue){
         if(limitQueue.size()==0){
             return null;
@@ -165,7 +211,7 @@ public class BigBuyComponent {
         int count= 0;
         for (ThirdSecondTransactionDataDTO data:datas){
             total = total.add(data.getTradePrice().multiply(new BigDecimal(data.getTradeQuantity()*100)));
-            count++;
+            count = count+data.getTradeQuantity();
             BigDecimal avgPrice = total.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
             limitQueue.offer(data);
             BigOrderBuyDTO buyDTO = new BigOrderBuyDTO();
@@ -215,6 +261,8 @@ public class BigBuyComponent {
                     return false;
                 }
                 buyDTO.setBuyAmount(tradeAmount);
+                buyDTO.setChangePrice(data.getTradePrice().subtract(prePrice));
+                buyDTO.setDirect(data.getTradeType());
             }
             prePrice = data.getTradePrice();
         }
