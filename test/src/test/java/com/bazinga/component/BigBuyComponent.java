@@ -74,12 +74,16 @@ public class BigBuyComponent {
             list.add(dto.getBuyAmount());
             list.add(dto.getBuyTimeAvgPrice());
             list.add(dto.getAvgTradeAmountDay5());
+            list.add(dto.getPlanks());
+            list.add(dto.getOpenRate());
+            list.add(dto.getDirect());
+            list.add(dto.getChangePrice());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","买入日期","买入时间","买入价格","买入涨幅","买入时候成交额","买入时候均价","买入前5日成交额","盈利"};
+        String[] rowNames = {"index","股票代码","股票名称","流通z","买入日期","买入时间","买入价格","买入涨幅","买入时候成交额","买入时候均价","买入前5日成交额","连板数","开盘涨幅","方向","跳变价格","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("18个点",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("大单跟随");
@@ -93,13 +97,13 @@ public class BigBuyComponent {
         int i = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
             i++;
-            if(i>=500){
+            /*if(i>=500){
                 break;
-            }
+            }*/
             System.out.println(i);
             List<BigOrderBuyDTO> buys = judgePlankInfo(circulateInfo);
             list.addAll(buys);
-            /*if(list.size()>0){
+            /*if(list.size()>20){
                 break;
             }*/
         }
@@ -123,25 +127,26 @@ public class BigBuyComponent {
             limitQueuePlanks.offer(stockKbar);
             List<BigOrderBuyDTO> buys = Lists.newArrayList();
             if(preKbar!=null) {
-                boolean isUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
+                BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
+                boolean isUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice());
                 if(isUpper) {
                     List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), stockKbar.getKbarDate());
-                    buys = nextDayTransactionDatas(datas, circulateInfo, preKbar, stockKbar);
+                    buys = nextDayTransactionDatas(datas, circulateInfo, preKbar, stockKbar,openRate);
                 }
             }
+
             preKbar = stockKbar;
             i++;
             if(i==stockKbars.size()-1){
                 break;
             }
-            if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20211130",DateUtil.yyyyMMdd))||
+            if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210430",DateUtil.yyyyMMdd))||
                     DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))){
                 continue;
             }
             if(!CollectionUtils.isEmpty(buys)) {
                 BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(circulateInfo.getStockCode(), stockKbars.get(i).getKbarDate());
                 Integer planks = planks(limitQueuePlanks);
-                BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preKbar.getAdjClosePrice()), preKbar.getAdjClosePrice());
                 for (BigOrderBuyDTO buy : buys) {
                     avgPrice = chuQuanAvgPrice(avgPrice, stockKbars.get(i));
                     BigDecimal chuQuanBuyPrice = chuQuanAvgPrice(buy.getBuyPrice(), stockKbars.get(i));
@@ -149,7 +154,6 @@ public class BigBuyComponent {
                     buy.setProfit(profit);
                     buy.setAvgTradeAmountDay5(beforeDay5Avg);
                     buy.setPlanks(planks);
-                    buy.setOpenRate(openRate);
                     list.add(buy);
                 }
             }
@@ -173,7 +177,7 @@ public class BigBuyComponent {
         int i = 0;
         for (StockKbar stockKbar:reverse){
             i++;
-            if(i>=2){
+            if(i>2){
                 boolean isUpper = PriceUtil.isUpperPrice(stockKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice());
                 if(isUpper){
                     planks++;
@@ -201,7 +205,7 @@ public class BigBuyComponent {
         BigDecimal divide = total.divide(new BigDecimal(4800 * count), 2, BigDecimal.ROUND_HALF_UP);
         return divide;
     }
-    public List<BigOrderBuyDTO> nextDayTransactionDatas(List<ThirdSecondTransactionDataDTO> datas,CirculateInfo circulateInfo,StockKbar preKbar,StockKbar stockKbar){
+    public List<BigOrderBuyDTO> nextDayTransactionDatas(List<ThirdSecondTransactionDataDTO> datas,CirculateInfo circulateInfo,StockKbar preKbar,StockKbar stockKbar,BigDecimal openRate){
         List<BigOrderBuyDTO> list = Lists.newArrayList();
         if(CollectionUtils.isEmpty(datas)){
             return list;
@@ -211,7 +215,7 @@ public class BigBuyComponent {
         int count= 0;
         for (ThirdSecondTransactionDataDTO data:datas){
             total = total.add(data.getTradePrice().multiply(new BigDecimal(data.getTradeQuantity()*100)));
-            count = count+data.getTradeQuantity();
+            count = count+data.getTradeQuantity()*100;
             BigDecimal avgPrice = total.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
             limitQueue.offer(data);
             BigOrderBuyDTO buyDTO = new BigOrderBuyDTO();
@@ -227,7 +231,11 @@ public class BigBuyComponent {
                 buyDTO.setBuyPrice(data.getTradePrice());
                 buyDTO.setBuyRate(rate);
                 buyDTO.setBuyTimeAvgPrice(avgPrice);
-                list.add(buyDTO);
+                buyDTO.setOpenRate(openRate);
+                boolean upperPrice = PriceUtil.isUpperPrice(circulateInfo.getStockCode(), data.getTradePrice(), preKbar.getClosePrice());
+                if(upperPrice) {
+                    list.add(buyDTO);
+                }
             }
         }
         return list;
@@ -262,7 +270,13 @@ public class BigBuyComponent {
                 }
                 buyDTO.setBuyAmount(tradeAmount);
                 buyDTO.setChangePrice(data.getTradePrice().subtract(prePrice));
-                buyDTO.setDirect(data.getTradeType());
+                if(data.getTradeType()!=null&&data.getTradeType()==1) {
+                    buyDTO.setDirect("S");
+                }else if(data.getTradeType()!=null&&data.getTradeType()==0){
+                    buyDTO.setDirect("B");
+                }else{
+                    buyDTO.setDirect(null);
+                }
             }
             prePrice = data.getTradePrice();
         }

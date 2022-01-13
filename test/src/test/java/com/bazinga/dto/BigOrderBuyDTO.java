@@ -21,6 +21,6 @@ public class BigOrderBuyDTO {
     private Integer planks;
     private BigDecimal openRate;
     private BigDecimal changePrice;
-    private Integer direct;
+    private String direct;
     private BigDecimal profit;
 }
