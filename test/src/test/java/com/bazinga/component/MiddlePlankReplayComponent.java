@@ -502,17 +502,6 @@ public class MiddlePlankReplayComponent {
                     log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }*/
-                String uniqueKey = preStockKbar.getKbarDate() + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
-                /*BlockCompeteDTO blockCompeteDTO = blockCompeteMap.get(uniqueKey);
-                if(blockCompeteDTO == null ){
-                    continue;
-                }else {
-                    log.info("stockCode{} blockCompeteNum{} rate{}",stockKbar.getStockCode(),blockCompeteDTO.getCompeteNum(),blockCompeteDTO.getRate());
-                }*/
-           /*     if(plank ==2 && day10Rate.compareTo(new BigDecimal("60")) > 0){
-                    log.info("10日涨幅大于60个点stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                    continue;
-                }*/
                 if(commonComponent.isNewStock(stockKbar.getStockCode(),stockKbar.getKbarDate())){
                     log.info("新股判定 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
@@ -522,14 +511,6 @@ public class MiddlePlankReplayComponent {
                     log.info("满足大于1.8系数 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }
-              /*  if(isFirstPlankOneLine(kbarList,plank)){
-                    log.info("满足首板1字开盘 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                    continue;
-                }*/
-               /* if(isOneLineOpen(stockKbar,preStockKbar)){
-                    log.info("满足连续2字板开盘 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                    continue;
-                }*/
                 log.info("满足中位股条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list)){
@@ -555,38 +536,14 @@ public class MiddlePlankReplayComponent {
                     if("09:25".equals(transactionDataDTO.getTradeTime())){
                         map.put("openAmount",transactionDataDTO.getTradePrice().multiply(new BigDecimal(String.valueOf(transactionDataDTO.getTradeQuantity()*100))));
                     }
-                   /* if(!"09:25".equals(transactionDataDTO.getTradeTime())){
-                        List<ThirdSecondTransactionDataDTO> minList = tempMap.get(transactionDataDTO.getTradeTime());
-                        if(minList == null){
-                            minList = new ArrayList<>();
-                            minList.add(transactionDataDTO);
-                            tempMap.put(transactionDataDTO.getTradeTime(),minList);
-                        }else {
-                            minList.add(transactionDataDTO);
-                        }
-                    }else {
-                        map.put(transactionDataDTO.getTradeTime(),rate);
-                    }*/
                     map.put(transactionDataDTO.getTradeTime(),rate);
-
                 }
-                /*tempMap.forEach((minStr,minlist)->{
-                    for (int j = 0; j < minlist.size(); j++) {
-                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(j);
-                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
-                        map.put(minStr+ SymbolConstants.UNDERLINE + (j+1),rate);
-                    }
-                    if(minlist.size()<20){
-                        ThirdSecondTransactionDataDTO transactionDataDTO = minlist.get(minlist.size()-1);
-                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
-                        for (int j = 20; j > minlist.size() ; j--) {
-                            map.put(minStr+ SymbolConstants.UNDERLINE + j,rate);
-                        }
-                    }
-                });*/
+
                 dataList.add(map);
             }
         }
+
+        getDiTianInfo();
 
         Map<String,List<Map>> groupByMap = new HashMap<>();
 
@@ -613,13 +570,7 @@ public class MiddlePlankReplayComponent {
             map.put("preTradeAmount",preTradeAmount);
             map.put("openAmount",openAmount);
             map.put("shOpenRate",shOpenRateMap.get(key));
-            map.put("zrztHighRate",zrztIndexRateMap.get(key)==null?null:zrztIndexRateMap.get(key).getHighRate());
-            map.put("zrztCloseRate",zrztIndexRateMap.get(key)==null ? null:zrztIndexRateMap.get(key).getCloseRate());
-            map.put("zrlbHighRate",zrlbIndexRateMap.get(key)==null ? null :zrlbIndexRateMap.get(key).getHighRate());
-            map.put("zrlbCloseRate",zrlbIndexRateMap.get(key) == null ? null : zrlbIndexRateMap.get(key).getCloseRate());
-            map.put("zcztHighRate",zcztIndexRateMap.get(key) == null? null : zcztIndexRateMap.get(key).getHighRate());
-            map.put("zcztCloseRate",zcztIndexRateMap.get(key) ==null? null : zcztIndexRateMap.get(key).getCloseRate());
-            for (int i = 11; i < headList.length; i++) {
+            for (int i = 5; i < headList.length; i++) {
                 String attrKey = headList[i];
                 BigDecimal totalRate = BigDecimal.ZERO;
                 BigDecimal preRate = BigDecimal.ZERO;
@@ -666,6 +617,14 @@ public class MiddlePlankReplayComponent {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void getDiTianInfo() {
+
+
+
+
+
     }
 
     private boolean isFirstPlankOneLine(List<StockKbar> kbarList,Integer plank) {
@@ -757,12 +716,7 @@ public class MiddlePlankReplayComponent {
         headList.add("preTradeAmount");
         headList.add("openAmount");
         headList.add("shOpenRate");
-        headList.add("zrztHighRate");
-        headList.add("zrztCloseRate");
-        headList.add("zrlbHighRate");
-        headList.add("zrlbCloseRate");
-        headList.add("zcztHighRate");
-        headList.add("zcztCloseRate");
+
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;

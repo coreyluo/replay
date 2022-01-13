@@ -197,7 +197,6 @@ public class ZongziReplayComponent {
         }
 
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\粽子低吸.xls");
-
     }
 
 }

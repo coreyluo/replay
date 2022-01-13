@@ -151,7 +151,8 @@ public class ReplayTest extends BaseTestCase {
      //   prePlankAbsortComponent.replay();
       //  middlePlankUpdateReplayComponent.invoke();
      //   highPlankReplayComponent.replay();
-        zongziReplayComponent.replay();
+     //   zongziReplayComponent.replay();
+        commonReplayComponent.replay();
       //  plankFirstSealReplayComponent.replay();
       //  bankerStockReplayComponent.replay();
 
