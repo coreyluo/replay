@@ -1,7 +1,6 @@
 package com.bazinga.component;
 
 import com.bazinga.base.Sort;
-import com.bazinga.dto.HighPositionDTO;
 import com.bazinga.dto.StockPlankTimeInfoDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import javax.swing.*;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -37,7 +35,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class BlockControlInfoComponent {
+public class FeiDaoComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -61,12 +59,10 @@ public class BlockControlInfoComponent {
     public Map<String,List<ThsBlockStockDetail>> THS_BLOCK_STOCK_DETAIL_MAP = new HashMap<>();
 
     public void badPlankInfo(){
-        getBlockInfo();
         Map<String, Map<String, StockPlankTimeInfoDTO>> stockPlankTimeInfoMaps = new HashMap<>();
         getPlankMaps(stockPlankTimeInfoMaps);
-        List<StockPlankTimeInfoDTO> buys = blockPlankCountInfo(stockPlankTimeInfoMaps);
         Map<String, Integer> map = new HashMap<>();
-        List<Object[]> datas = Lists.newArrayList();
+       /* List<Object[]> datas = Lists.newArrayList();
         for(StockPlankTimeInfoDTO dto:buys){
             if(map.get(dto.getStockCode()+dto.getBuyDateStr())!=null){
                 continue;
@@ -100,118 +96,11 @@ public class BlockControlInfoComponent {
             poiExcelUtil.exportExcelUseExcelTitle("高位板战法");
         }catch (Exception e){
             log.info(e.getMessage());
-        }
+        }*/
     }
 
 
-    public void planksInfo(Map<String, Map<String, List<StockPlankTimeInfoDTO>>> map){
-        for (String tradeDateStr:map.keySet()){
-            Date buyDate = commonComponent.afterTradeDate(DateUtil.parseDate(tradeDateStr, DateUtil.yyyyMMdd));
-            Map<String, List<StockPlankTimeInfoDTO>> buyStockMaps = map.get(tradeDateStr);
-            for (String blockCode:buyStockMaps.keySet()){
-                List<StockPlankTimeInfoDTO> buyStocks = buyStockMaps.get(blockCode);
-                for (StockPlankTimeInfoDTO buyStock:buyStocks){
-                    buyStock.setBuyDateStr(DateUtil.format(buyDate,DateUtil.yyyyMMdd));
 
-                }
-            }
-
-        }
-    }
-
-    public void getBlockInfo(){
-        List<ThsBlockInfo> thsBlockInfos = thsBlockInfoService.listByCondition(new ThsBlockInfoQuery());
-        THS_BLOCK_INFOS.addAll(thsBlockInfos);
-        for (ThsBlockInfo thsBlockInfo:thsBlockInfos){
-            ThsBlockStockDetailQuery query = new ThsBlockStockDetailQuery();
-            query.setBlockCode(thsBlockInfo.getBlockCode());
-            List<ThsBlockStockDetail> details = thsBlockStockDetailService.listByCondition(query);
-            THS_BLOCK_STOCK_DETAIL_MAP.put(thsBlockInfo.getBlockCode(),details);
-        }
-    }
-
-    public List<StockPlankTimeInfoDTO> blockPlankCountInfo(Map<String, Map<String, StockPlankTimeInfoDTO>> stockPlankTimeInfoMaps){
-        List<StockPlankTimeInfoDTO> buys = Lists.newArrayList();
-        for (String tradeDateStr:stockPlankTimeInfoMaps.keySet()){
-            Map<String, StockPlankTimeInfoDTO> plankTimeInfoDTOMap = stockPlankTimeInfoMaps.get(tradeDateStr);
-            if(plankTimeInfoDTOMap==null||plankTimeInfoDTOMap.size()<10){
-                continue;
-            }
-            for (ThsBlockInfo thsBlockInfo:THS_BLOCK_INFOS){
-                List<StockPlankTimeInfoDTO> list = Lists.newArrayList();
-                List<ThsBlockStockDetail> details = THS_BLOCK_STOCK_DETAIL_MAP.get(thsBlockInfo.getBlockCode());
-                for (ThsBlockStockDetail detail:details){
-                    StockPlankTimeInfoDTO stockPlankTimeInfoDTO = plankTimeInfoDTOMap.get(detail.getStockCode());
-                    if(stockPlankTimeInfoDTO!=null) {
-                        list.add(stockPlankTimeInfoDTO);
-                    }
-                }
-                if(list.size()>=10){
-                    List<StockPlankTimeInfoDTO> planksLevel = StockPlankTimeInfoDTO.planksLevel(list);
-                    List<StockPlankTimeInfoDTO> buyStocks = buyStocks(planksLevel);
-                    for (StockPlankTimeInfoDTO dto:buyStocks){
-                        StockPlankTimeInfoDTO buy = new StockPlankTimeInfoDTO();
-                        BeanUtils.copyProperties(dto,buy);
-                        buy.setBlockName(thsBlockInfo.getBlockName());
-                        buys.add(buy);
-                    }
-
-                }
-            }
-        }
-        return buys;
-    }
-
-    public List<StockPlankTimeInfoDTO> buyStocks(List<StockPlankTimeInfoDTO> list){
-        List<StockPlankTimeInfoDTO> buyStocks = Lists.newArrayList();
-        if(list==null||list.size()<1){
-            return null;
-        }
-        int buyCounts = 0;
-        if(list.size()>=10&&list.size()<=20){
-            buyCounts=1;
-        }else if(list.size()<=30){
-            buyCounts = 3;
-        }else if(list.size()>30){
-            buyCounts = 5;
-        }
-        int planks = 0;
-        for(StockPlankTimeInfoDTO dto:list){
-            if(dto.getPlanks()>=planks){
-                buyStocks.add(dto);
-            }
-            if(buyStocks.size()==buyCounts) {
-                planks = dto.getPlanks();
-            }
-        }
-        List<StockPlankTimeInfoDTO> buys = Lists.newArrayList();
-        List<StockPlankTimeInfoDTO> sames = Lists.newArrayList();
-        int sameCounts = buyCounts;
-        for (StockPlankTimeInfoDTO buyStock:buyStocks){
-            if(buyStock.getPlanks()>planks){
-                sameCounts = sameCounts -1;
-            }
-            if(buyStock.getPlankTime()==null){
-                continue;
-            }
-            if(buyStock.getPlanks()==planks){
-                sames.add(buyStock);
-            }else{
-                buys.add(buyStock);
-            }
-        }
-        if(sames.size()>1){
-            List<StockPlankTimeInfoDTO> sameLevels = StockPlankTimeInfoDTO.plankTimeLevel(sames);
-            int i = 0;
-            for (StockPlankTimeInfoDTO sameLeve:sameLevels){
-                i++;
-                if(i<=sameCounts){
-                    buys.add(sameLeve);
-                }
-            }
-        }
-        return buys;
-    }
 
     public void getPlankMaps(Map<String, Map<String, StockPlankTimeInfoDTO>> stockPlankTimeInfoMaps){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
@@ -225,41 +114,13 @@ public class BlockControlInfoComponent {
                 continue;
             }
             LimitQueue<StockKbar> limitQueue = new LimitQueue<>(12);
-            StockPlankTimeInfoDTO preBuyDTO = null;
             StockKbar preKbar = null;
             for (StockKbar stockKbar:stockKbars){
                 limitQueue.offer(stockKbar);
                 if(preKbar!=null) {
-                    if(preBuyDTO!=null){
-                        Boolean highPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice());
-                        if(highPlank) {
-                            isPlank(stockKbar, preKbar.getClosePrice(), preBuyDTO);
-                            preBuyDTO.setStockKbar(stockKbar);
-                            preBuyDTO.setBuyDateStr(stockKbar.getKbarDate());
-                            calProfit(stockKbars, preBuyDTO);
-                        }
-                    }
-                    Boolean endPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice());
-                    if(endPlank){
-                        StockPlankTimeInfoDTO stockPlankTimeInfoDTO = new StockPlankTimeInfoDTO();
-                        stockPlankTimeInfoDTO.setStockCode(stockKbar.getStockCode());
-                        stockPlankTimeInfoDTO.setStockName(circulateInfo.getStockName());
-                        stockPlankTimeInfoDTO.setCirculateZ(circulateInfo.getCirculateZ());
-                        stockPlankTimeInfoDTO.setPreStockKbar(stockKbar);
-                        Integer continuePlanks = calEndPlanks(limitQueue);
-                        if(continuePlanks==null){
-                            continuePlanks = 1;
-                        }
-                        stockPlankTimeInfoDTO.setPlanks(continuePlanks);
-                        Map<String, StockPlankTimeInfoDTO> plankTimeMap = stockPlankTimeInfoMaps.get(stockKbar.getKbarDate());
-                        if(plankTimeMap==null){
-                            plankTimeMap   = new HashMap<>();
-                            stockPlankTimeInfoMaps.put(stockKbar.getKbarDate(),plankTimeMap);
-                        }
-                        plankTimeMap.put(stockKbar.getStockCode(),stockPlankTimeInfoDTO);
-                        preBuyDTO = stockPlankTimeInfoDTO;
-                    }else{
-                        preBuyDTO = null;
+                    Boolean highPlank = PriceUtil.isUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice());
+                    if(highPlank){
+                        Integer planks = calEndPlanks(limitQueue);
                     }
                 }
                 preKbar = stockKbar;
@@ -307,7 +168,7 @@ public class BlockControlInfoComponent {
     }
 
     public Integer calEndPlanks(LimitQueue<StockKbar> limitQueue){
-        if(limitQueue==null||limitQueue.size()<2){
+        if(limitQueue==null||limitQueue.size()<3){
             return null;
         }
         List<StockKbar> list = Lists.newArrayList();
@@ -319,18 +180,20 @@ public class BlockControlInfoComponent {
         List<StockKbar> reverse = Lists.reverse(list);
         StockKbar nextKbar = null;
         int planks  = 0;
+        int i = 0;
         for (StockKbar stockKbar:reverse){
-            if(nextKbar!=null) {
+            if(i>=2) {
                 boolean endUpper = PriceUtil.isUpperPrice(nextKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice());
                 if (!endUpper) {
                     endUpper = PriceUtil.isUpperPrice(nextKbar.getStockCode(), nextKbar.getAdjClosePrice(), stockKbar.getAdjClosePrice());
                 }
-                if(endUpper){
+                if (endUpper) {
                     planks++;
-                }else{
+                } else {
                     return planks;
                 }
             }
+            i++;
             nextKbar = stockKbar;
         }
         return planks;
