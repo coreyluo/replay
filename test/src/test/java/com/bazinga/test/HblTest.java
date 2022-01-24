@@ -4,10 +4,13 @@ package com.bazinga.test;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.util.DateUtil;
 import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,6 +107,8 @@ public class HblTest extends BaseTestCase {
         //highPlankBuyInfoComponent.badPlankInfo();
         //blockControlInfoComponent.badPlankInfo();
         feiDaoComponent.jieFeiDaoInfo();
+        //zhongZheng500Component.zz500Buy();
+
 
     }
     @Test

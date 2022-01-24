@@ -21,6 +21,11 @@ public class StockUtils {
         return null;
     }
 
+    public static ExchangeId getBlockExchangeId(String stockCode) {
+        return ExchangeId.SH;
+
+    }
+
     public static String getMarket(String stockCode) {
         if (StringUtils.isNotBlank(stockCode)) {
             if (stockCode.startsWith("000")||stockCode.startsWith("001") || stockCode.startsWith("003")) {
