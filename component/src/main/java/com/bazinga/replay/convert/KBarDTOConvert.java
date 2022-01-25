@@ -65,6 +65,9 @@ public class KBarDTOConvert {
 
     public static KBarDTO convertSZKBar(DataTable dataTable){
         KBarDTO commonQuoteDTO = new KBarDTO();
+        if(dataTable.rows()<=0){
+            return null;
+        }
         for(int i=0;i<1;i++){
             String[] row = dataTable.getRow(i);
             commonQuoteDTO.setStartPrice(new BigDecimal(row[1]).setScale(2, BigDecimal.ROUND_HALF_UP));

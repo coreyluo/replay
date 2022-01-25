@@ -15,12 +15,16 @@ public class BadPeopleBuyDTO {
     private String stockName;
     private BigDecimal circulateZ;
     private String tradeDate;
+    private boolean badFlag = false;
     private int highDays;
     private int lowDays;
+    private int secondLowDays;
     private BigDecimal highRate;
     private BigDecimal highPrice;
     private BigDecimal lowPrice;
     private BigDecimal secondLowRate;
+    private BigDecimal secondLowPrice;
+
     private BigDecimal avgAmount;
     private BigDecimal lowDayAmount;
     private BigDecimal lowDayEndRate;

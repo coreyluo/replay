@@ -6,18 +6,20 @@ import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockKbarComponent;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.model.StockKbar;
-import com.bazinga.replay.model.ThsBlockInfo;
-import com.bazinga.replay.model.ThsBlockStockDetail;
+import com.bazinga.replay.model.*;
+import com.bazinga.replay.query.BlockInfoQuery;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.*;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
-import com.sun.org.apache.regexp.internal.RE;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,7 +35,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class BadPeopleComponent {
+public class BlockHighBuyComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -49,9 +51,7 @@ public class BadPeopleComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
     @Autowired
-    private ThsBlockInfoService thsBlockInfoService;
-    @Autowired
-    private ThsBlockStockDetailService thsBlockStockDetailService;
+    private BlockInfoService blockInfoService;
 
     public List<ThsBlockInfo> THS_BLOCK_INFOS = Lists.newArrayList();
     public Map<String,List<ThsBlockStockDetail>> THS_BLOCK_STOCK_DETAIL_MAP = new HashMap<>();
@@ -99,47 +99,76 @@ public class BadPeopleComponent {
 
     public List<BadPeopleBuyDTO> getFeiDao(){
         List<BadPeopleBuyDTO> result = Lists.newArrayList();
-        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-        for (CirculateInfo circulateInfo:circulateInfos){
+        Map<String, List<BlockRateBuyDTO>> blockKbarMap = new HashMap<>();
+        Map<String, List<BlockRateBuyDTO>> map = new HashMap<>();
+        List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
+        for (BlockInfo blockInfo:blockInfos){
            /* if(!circulateInfo.getStockCode().equals("002858")){
                 continue;
             }*/
-            System.out.println(circulateInfo.getStockCode());
-            List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 300);
-            if(CollectionUtils.isEmpty(stockKbars)){
-                continue;
-            }
-            LimitQueue<StockKbar> limitQueue = new LimitQueue<>(12);
-            LimitQueue<StockKbar> limitQueue31 = new LimitQueue<>(31);
-            StockKbar preKbar = null;
-            for (StockKbar stockKbar:stockKbars){
-                if(stockKbar.getKbarDate().equals("20211223")){
-                    System.out.println(1);
-                }
-                limitQueue.offer(stockKbar);
-                limitQueue31.offer(stockKbar);
-                if(preKbar!=null) {
-                    BadPeopleBuyDTO badPeopleBuyDTO = new BadPeopleBuyDTO();
-                    badPeopleBuyDTO.setStockCode(circulateInfo.getStockCode());
-                    badPeopleBuyDTO.setStockName(circulateInfo.getStockName());
-                    badPeopleBuyDTO.setCirculateZ(new BigDecimal(circulateInfo.getCirculateZ()).divide(new BigDecimal(100000000),2,BigDecimal.ROUND_HALF_UP));
-                    badPeopleBuyDTO.setTradeDate(stockKbar.getKbarDate());
-                    isBadManPlank(limitQueue31,badPeopleBuyDTO);
-                    if(badPeopleBuyDTO.isBadFlag()){
-                        String tradeTime = plankTime(stockKbar, preKbar.getClosePrice());
-                        if(tradeTime!=null){
-                            badPeopleBuyDTO.setPlankTime(tradeTime);
-                            BigDecimal profit = calProfit(stockKbars, stockKbar);
-                            badPeopleBuyDTO.setProfit(profit);
-                            badPeopleBuyDTO.setBuyPrice(stockKbar.getHighPrice());
-                            result.add(badPeopleBuyDTO);
-                        }
-                    }
-                }
-                preKbar = stockKbar;
-            }
+            System.out.println(blockInfo.getBlockCode());
+            List<KBarDTO> stockKbars = getBlockKbars(blockInfo.getBlockCode());
+            blockKbarInfo(stockKbars,blockInfo,blockKbarMap);
+        }
+        for (String key:blockKbarMap.keySet()){
+            List<BlockRateBuyDTO> blockKbarInfos = blockKbarMap.get(key);
+            blockMinuteDate(map,blockKbarInfos);
         }
         return result;
+    }
+    public void blockKbarInfo(List<KBarDTO> stockKbars,BlockInfo blockInfo,Map<String, List<BlockRateBuyDTO>> map){
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return;
+        }
+        KBarDTO preKbar = null;
+        BlockRateBuyDTO preBlockDto  = null;
+        for (KBarDTO kBarDTO:stockKbars){
+            BlockRateBuyDTO blockDto = new BlockRateBuyDTO();
+            if(preKbar!=null){
+                blockDto.setBlockCode(blockInfo.getBlockCode());
+                blockDto.setBlockName(blockInfo.getBlockName());
+                blockDto.setPreClosePrice(preKbar.getEndPrice());
+                blockDto.setClosePrice(kBarDTO.getEndPrice());
+                List<BlockRateBuyDTO> blockDtos = map.get(kBarDTO.getDateStr());
+                if(blockDtos==null){
+                    blockDtos = Lists.newArrayList();
+                    map.put(kBarDTO.getDateStr(),blockDtos);
+                }
+                blockDtos.add(blockDto);
+            }
+            if(blockDto!=null){
+                preBlockDto.setNextTradeDate(kBarDTO.getDateStr());
+            }
+            preBlockDto = blockDto;
+            preKbar = kBarDTO;
+        }
+    }
+    public void blockMinuteDate(Map<String, List<BlockRateBuyDTO>> map,List<BlockRateBuyDTO> blockKbarInfos){
+        for (BlockRateBuyDTO blockKbarInfo:blockKbarInfos) {
+            String tradeDate = blockKbarInfo.getTradeDate();
+            BigDecimal preClosePrice = blockKbarInfo.getPreClosePrice();
+            String blockCode = blockKbarInfo.getBlockCode();
+            List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(blockCode, tradeDate);
+            if (CollectionUtils.isEmpty(datas)) {
+                return;
+            }
+            Map<String, BlockRateBuyDTO> rateMap = new HashMap();
+            for (ThirdSecondTransactionDataDTO data : datas) {
+                String key = tradeDate + "_" + data.getTradeTime();
+                BlockRateBuyDTO rateDto = new BlockRateBuyDTO();
+                BigDecimal rate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preClosePrice), preClosePrice);
+                rateDto.setRate(rate);
+                rateMap.put(key, rateDto);
+            }
+            for (String key : rateMap.keySet()) {
+                List<BlockRateBuyDTO> blockRateBuyDTOS = map.get(key);
+                if (blockRateBuyDTOS == null) {
+                    blockRateBuyDTOS = Lists.newArrayList();
+                    map.put(key, blockRateBuyDTOS);
+                }
+                blockRateBuyDTOS.add(rateMap.get(key));
+            }
+        }
     }
 
     public void isBadManPlank(LimitQueue<StockKbar> limitQueue,BadPeopleBuyDTO badPeopleBuyDTO){
@@ -431,29 +460,16 @@ public class BadPeopleComponent {
         return null;
     }
 
-
-
-    public List<StockKbar> getStockKBarsDelete30Days(String stockCode, int size){
-        try {
-            StockKbarQuery query = new StockKbarQuery();
-            query.setStockCode(stockCode);
-            query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setLimit(size);
-            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-            if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<21){
-                return null;
+    public List<KBarDTO> getBlockKbars(String blockCode){
+        List<KBarDTO> list = Lists.newArrayList();
+        for (int i=300;i>=0;i--) {
+            DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, blockCode, i, 1);
+            KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
+            if(kbar!=null) {
+                list.add(kbar);
             }
-            stockKbars = stockKbars.subList(20, stockKbars.size());
-            List<StockKbar> result = Lists.newArrayList();
-            for (StockKbar stockKbar:stockKbars){
-                if(stockKbar.getTradeQuantity()>0){
-                    result.add(stockKbar);
-                }
-            }
-            return result;
-        }catch (Exception e){
-            return null;
         }
+        return list;
     }
 
     public BigDecimal chuQuanAvgPrice(BigDecimal avgPrice,StockKbar kbar){
