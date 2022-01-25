@@ -100,7 +100,6 @@ public class BlockHighBuyComponent {
     public List<BadPeopleBuyDTO> getFeiDao(){
         List<BadPeopleBuyDTO> result = Lists.newArrayList();
         Map<String, List<BlockRateBuyDTO>> blockKbarMap = new HashMap<>();
-        Map<String, List<BlockRateBuyDTO>> map = new HashMap<>();
         List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
         for (BlockInfo blockInfo:blockInfos){
            /* if(!circulateInfo.getStockCode().equals("002858")){
@@ -112,11 +111,12 @@ public class BlockHighBuyComponent {
         }
         for (String key:blockKbarMap.keySet()){
             List<BlockRateBuyDTO> blockKbarInfos = blockKbarMap.get(key);
-            blockMinuteDate(map,blockKbarInfos);
+            blockMinuteDate(blockKbarInfos);
         }
         return result;
     }
-    public void blockMinuteDate(Map<String, List<BlockRateBuyDTO>> map,List<BlockRateBuyDTO> blockKbarInfos){
+    public void blockMinuteDate(List<BlockRateBuyDTO> blockKbarInfos){
+        Map<String, List<BlockRateBuyDTO>> map = new HashMap<>();
         for (BlockRateBuyDTO blockKbarInfo:blockKbarInfos) {
             String tradeDate = blockKbarInfo.getTradeDate();
             BigDecimal preClosePrice = blockKbarInfo.getPreClosePrice();
@@ -129,6 +129,11 @@ public class BlockHighBuyComponent {
             for (ThirdSecondTransactionDataDTO data : datas) {
                 String key = tradeDate + "_" + data.getTradeTime();
                 BlockRateBuyDTO rateDto = new BlockRateBuyDTO();
+                rateDto.setBlockCode(blockKbarInfo.getBlockCode());
+                rateDto.setBlockName(blockKbarInfo.getBlockName());
+                rateDto.setTradeDate(tradeDate);
+                rateDto.setTradeTime(data.getTradeTime());
+                rateDto.setClosePrice(blockKbarInfo.getClosePrice());
                 BigDecimal rate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preClosePrice), preClosePrice);
                 rateDto.setRate(rate);
                 rateMap.put(key, rateDto);
