@@ -116,33 +116,6 @@ public class BlockHighBuyComponent {
         }
         return result;
     }
-    public void blockKbarInfo(List<KBarDTO> stockKbars,BlockInfo blockInfo,Map<String, List<BlockRateBuyDTO>> map){
-        if(CollectionUtils.isEmpty(stockKbars)){
-            return;
-        }
-        KBarDTO preKbar = null;
-        BlockRateBuyDTO preBlockDto  = null;
-        for (KBarDTO kBarDTO:stockKbars){
-            BlockRateBuyDTO blockDto = new BlockRateBuyDTO();
-            if(preKbar!=null){
-                blockDto.setBlockCode(blockInfo.getBlockCode());
-                blockDto.setBlockName(blockInfo.getBlockName());
-                blockDto.setPreClosePrice(preKbar.getEndPrice());
-                blockDto.setClosePrice(kBarDTO.getEndPrice());
-                List<BlockRateBuyDTO> blockDtos = map.get(kBarDTO.getDateStr());
-                if(blockDtos==null){
-                    blockDtos = Lists.newArrayList();
-                    map.put(kBarDTO.getDateStr(),blockDtos);
-                }
-                blockDtos.add(blockDto);
-            }
-            if(blockDto!=null){
-                preBlockDto.setNextTradeDate(kBarDTO.getDateStr());
-            }
-            preBlockDto = blockDto;
-            preKbar = kBarDTO;
-        }
-    }
     public void blockMinuteDate(Map<String, List<BlockRateBuyDTO>> map,List<BlockRateBuyDTO> blockKbarInfos){
         for (BlockRateBuyDTO blockKbarInfo:blockKbarInfos) {
             String tradeDate = blockKbarInfo.getTradeDate();
@@ -168,6 +141,34 @@ public class BlockHighBuyComponent {
                 }
                 blockRateBuyDTOS.add(rateMap.get(key));
             }
+        }
+    }
+
+    public void blockKbarInfo(List<KBarDTO> stockKbars,BlockInfo blockInfo,Map<String, List<BlockRateBuyDTO>> map){
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return;
+        }
+        KBarDTO preKbar = null;
+        BlockRateBuyDTO preBlockDto  = null;
+        for (KBarDTO kBarDTO:stockKbars){
+            BlockRateBuyDTO blockDto = new BlockRateBuyDTO();
+            if(preKbar!=null){
+                blockDto.setBlockCode(blockInfo.getBlockCode());
+                blockDto.setBlockName(blockInfo.getBlockName());
+                blockDto.setPreClosePrice(preKbar.getEndPrice());
+                blockDto.setClosePrice(kBarDTO.getEndPrice());
+                List<BlockRateBuyDTO> blockDtos = map.get(kBarDTO.getDateStr());
+                if(blockDtos==null){
+                    blockDtos = Lists.newArrayList();
+                    map.put(kBarDTO.getDateStr(),blockDtos);
+                }
+                blockDtos.add(blockDto);
+            }
+            if(blockDto!=null){
+                preBlockDto.setNextTradeDate(kBarDTO.getDateStr());
+            }
+            preBlockDto = blockDto;
+            preKbar = kBarDTO;
         }
     }
 
