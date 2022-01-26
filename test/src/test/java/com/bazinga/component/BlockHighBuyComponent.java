@@ -56,39 +56,28 @@ public class BlockHighBuyComponent {
     public List<ThsBlockInfo> THS_BLOCK_INFOS = Lists.newArrayList();
     public Map<String,List<ThsBlockStockDetail>> THS_BLOCK_STOCK_DETAIL_MAP = new HashMap<>();
 
-    public void jieFeiDaoInfo(){
-        List<BadPeopleBuyDTO> feiDaos = getFeiDao();
+    public void jieFeiDaoInfo(List<BlockInfo> bLockInfos){
+        List<BlockRateBuyDTO> feiDaos = getFeiDao(bLockInfos);
         List<Object[]> datas = Lists.newArrayList();
-        for(BadPeopleBuyDTO dto:feiDaos){
+        for(BlockRateBuyDTO dto:feiDaos){
             List<Object> list = new ArrayList<>();
-            list.add(dto.getStockCode());
-            list.add(dto.getStockCode());
-            list.add(dto.getStockName());
-            list.add(dto.getCirculateZ());
+            list.add(dto.getBlockCode());
+            list.add(dto.getBlockCode());
+            list.add(dto.getBlockName());
             list.add(dto.getTradeDate());
-            list.add(dto.getPlankTime());
-            list.add(dto.getBuyPrice());
-            list.add(dto.getHighPrice());
-            list.add(dto.getHighRate());
-            list.add(dto.getHighDays());
-            list.add(dto.getSecondLowPrice());
-            list.add(dto.getSecondLowRate());
-            list.add(dto.getSecondLowDays());
-            list.add(dto.getLowPrice());
-            list.add(dto.getLowDays());
-            list.add(dto.getLowDayAmount());
-            list.add(dto.getLowDayEndRate());
-            list.add(dto.getAvgAmount());
+            list.add(dto.getCount());
+            list.add(dto.getAvgRate());
             list.add(dto.getProfit());
+            list.add(dto.getProfit2());
+            list.add(dto.getProfit3());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","买入日期","可买入时间","买入价格","最高价格","最高点相比最低点涨幅","最高点相比买入点天数","次低点价格","次低点相对高点跌幅","次低点相对买入点天数","最低点价格","最低点相对买入点天使",
-                "最大跌幅成交额","最大收盘跌幅","平均成交额","溢价"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("庄股1",rowNames,datas);
+        String[] rowNames = {"index","股票代码","股票名称","买入日期","买入次数","买入平均涨幅","盈利1","盈利2","盈利3"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("板块买入",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("庄股1");
+            poiExcelUtil.exportExcelUseExcelTitle("板块买入");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -96,26 +85,28 @@ public class BlockHighBuyComponent {
 
 
 
-
-    public List<BadPeopleBuyDTO> getFeiDao(){
-        List<BadPeopleBuyDTO> result = Lists.newArrayList();
+    public List<BlockRateBuyDTO> getFeiDao(List<BlockInfo> blockInfos){
+        List<BlockRateBuyDTO> result = Lists.newArrayList();
         Map<String, List<BlockRateBuyDTO>> blockKbarMap = new HashMap<>();
-        List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
         for (BlockInfo blockInfo:blockInfos){
            /* if(!circulateInfo.getStockCode().equals("002858")){
                 continue;
             }*/
+            System.out.println(blockInfo.getBlockCode());
             System.out.println(blockInfo.getBlockCode());
             List<KBarDTO> stockKbars = getBlockKbars(blockInfo.getBlockCode());
             blockKbarInfo(stockKbars,blockInfo,blockKbarMap);
         }
         for (String key:blockKbarMap.keySet()){
             List<BlockRateBuyDTO> blockKbarInfos = blockKbarMap.get(key);
-            blockMinuteDate(blockKbarInfos);
+            List<BlockRateBuyDTO> buys = blockMinuteDate(blockKbarInfos, key);
+            result.addAll(buys);
         }
         return result;
     }
-    public void blockMinuteDate(List<BlockRateBuyDTO> blockKbarInfos){
+    public List<BlockRateBuyDTO> blockMinuteDate(List<BlockRateBuyDTO> blockKbarInfos,String tradeDateStr){
+        List<BlockRateBuyDTO> list = Lists.newArrayList();
+        Map<String,List<BlockRateBuyDTO>> buyMap = new HashMap<>();
         Map<String, List<BlockRateBuyDTO>> map = new HashMap<>();
         for (BlockRateBuyDTO blockKbarInfo:blockKbarInfos) {
             String tradeDate = blockKbarInfo.getTradeDate();
@@ -123,7 +114,7 @@ public class BlockHighBuyComponent {
             String blockCode = blockKbarInfo.getBlockCode();
             List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(blockCode, tradeDate);
             if (CollectionUtils.isEmpty(datas)) {
-                return;
+                return list;
             }
             Map<String, BlockRateBuyDTO> rateMap = new HashMap();
             for (ThirdSecondTransactionDataDTO data : datas) {
@@ -133,7 +124,12 @@ public class BlockHighBuyComponent {
                 rateDto.setBlockName(blockKbarInfo.getBlockName());
                 rateDto.setTradeDate(tradeDate);
                 rateDto.setTradeTime(data.getTradeTime());
+                rateDto.setTradePrice(data.getTradePrice());
                 rateDto.setClosePrice(blockKbarInfo.getClosePrice());
+                rateDto.setPreClosePrice(blockKbarInfo.getPreClosePrice());
+                rateDto.setNextTradeDate(blockKbarInfo.getNextTradeDate());
+                rateDto.setNextTwoTradeDate(blockKbarInfo.getNextTwoTradeDate());
+                rateDto.setNextThreeTradeDate(blockKbarInfo.getNextThreeTradeDate());
                 BigDecimal rate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preClosePrice), preClosePrice);
                 rateDto.setRate(rate);
                 rateMap.put(key, rateDto);
@@ -147,6 +143,54 @@ public class BlockHighBuyComponent {
                 blockRateBuyDTOS.add(rateMap.get(key));
             }
         }
+        for(String key:map.keySet()){
+            List<BlockRateBuyDTO> blockRateBuyDTOS = map.get(key);
+            List<BlockRateBuyDTO> levelDtos = BlockRateBuyDTO.rateSort(blockRateBuyDTOS);
+            int i=0;
+            for(BlockRateBuyDTO blockRateBuyDTO:levelDtos){
+                i++;
+                if(i<=10) {
+                    if(blockRateBuyDTO.getRate().compareTo(new BigDecimal(0))!=-1) {
+                        List<BlockRateBuyDTO> buyDtos = buyMap.get(blockRateBuyDTO.getBlockCode());
+                        if (buyDtos == null) {
+                            buyDtos = Lists.newArrayList();
+                            buyMap.put(blockRateBuyDTO.getBlockCode(), buyDtos);
+                        }
+                        buyDtos.add(blockRateBuyDTO);
+                    }
+                }
+            }
+        }
+        for(String key:buyMap.keySet()){
+            List<BlockRateBuyDTO> blockRateBuyDTOS = buyMap.get(key);
+            BlockRateBuyDTO buy = blockRateBuyDTOS.get(0);
+            BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(key, DateUtil.parseDate(buy.getNextTradeDate(), DateUtil.yyyyMMdd));
+            BigDecimal avgTwoPrice = historyTransactionDataComponent.calAvgPrice(key, DateUtil.parseDate(buy.getNextTwoTradeDate(), DateUtil.yyyyMMdd));
+            BigDecimal avgThreePrice = historyTransactionDataComponent.calAvgPrice(key, DateUtil.parseDate(buy.getNextThreeTradeDate(), DateUtil.yyyyMMdd));
+
+            BigDecimal total = BigDecimal.ZERO;
+            for(BlockRateBuyDTO blockRateBuyDTO:blockRateBuyDTOS){
+                total = total.add(blockRateBuyDTO.getTradePrice());
+            }
+            BigDecimal avgBuyPrice = total.divide(new BigDecimal(blockRateBuyDTOS.size()), 2, BigDecimal.ROUND_HALF_UP);
+            if(avgPrice!=null) {
+                BigDecimal rate = PriceUtil.getPricePercentRate(avgPrice.subtract(avgBuyPrice), avgBuyPrice);
+                buy.setProfit(rate);
+            }
+            if(avgTwoPrice!=null) {
+                BigDecimal rate = PriceUtil.getPricePercentRate(avgTwoPrice.subtract(avgBuyPrice), avgBuyPrice);
+                buy.setProfit2(rate);
+            }
+            if(avgThreePrice!=null) {
+                BigDecimal rate = PriceUtil.getPricePercentRate(avgThreePrice.subtract(avgBuyPrice), avgBuyPrice);
+                buy.setProfit3(rate);
+            }
+            BigDecimal avgRate = PriceUtil.getPricePercentRate(avgBuyPrice.subtract(buy.getPreClosePrice()), buy.getPreClosePrice());
+            buy.setAvgRate(avgRate);
+            buy.setCount(blockRateBuyDTOS.size());
+            list.add(buy);
+        }
+        return list;
     }
 
     public void blockKbarInfo(List<KBarDTO> stockKbars,BlockInfo blockInfo,Map<String, List<BlockRateBuyDTO>> map){
@@ -162,6 +206,9 @@ public class BlockHighBuyComponent {
                 blockDto.setBlockName(blockInfo.getBlockName());
                 blockDto.setPreClosePrice(preKbar.getEndPrice());
                 blockDto.setClosePrice(kBarDTO.getEndPrice());
+                blockDto.setTradeDate(kBarDTO.getDateStr());
+                blockDto.setPreTradeDate(preKbar.getDateStr());
+                setBlockRateDayInfo(stockKbars,blockDto);
                 List<BlockRateBuyDTO> blockDtos = map.get(kBarDTO.getDateStr());
                 if(blockDtos==null){
                     blockDtos = Lists.newArrayList();
@@ -169,12 +216,33 @@ public class BlockHighBuyComponent {
                 }
                 blockDtos.add(blockDto);
             }
-            if(blockDto!=null){
+            if(preBlockDto!=null){
                 preBlockDto.setNextTradeDate(kBarDTO.getDateStr());
             }
             preBlockDto = blockDto;
             preKbar = kBarDTO;
         }
+    }
+
+    public void setBlockRateDayInfo(List<KBarDTO> stockKbars,BlockRateBuyDTO dto){
+        int i = 0;
+        boolean flag = false;
+        for (KBarDTO kBarDTO:stockKbars){
+            if(flag){
+                i++;
+            }
+            if(i==2){
+                dto.setNextTwoTradeDate(kBarDTO.getDateStr());
+            }
+            if(i==3){
+                dto.setNextThreeTradeDate(kBarDTO.getDateStr());
+                return;
+            }
+            if(kBarDTO.getDateStr().equals(dto.getTradeDate())){
+                flag = true;
+            }
+        }
+
     }
 
     public void isBadManPlank(LimitQueue<StockKbar> limitQueue,BadPeopleBuyDTO badPeopleBuyDTO){
@@ -468,7 +536,7 @@ public class BlockHighBuyComponent {
 
     public List<KBarDTO> getBlockKbars(String blockCode){
         List<KBarDTO> list = Lists.newArrayList();
-        for (int i=300;i>=0;i--) {
+        for (int i=10;i>=0;i--) {
             DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, blockCode, i, 1);
             KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
             if(kbar!=null) {
@@ -492,26 +560,8 @@ public class BlockHighBuyComponent {
     }
 
     public static void main(String[] args) {
-        StockPlankTimeInfoDTO infoDTO1 = new StockPlankTimeInfoDTO();
-        infoDTO1.setPlanks(1);
-        StockPlankTimeInfoDTO infoDTO2 = new StockPlankTimeInfoDTO();
-        infoDTO2.setPlanks(3);
-        StockPlankTimeInfoDTO infoDTO3 = new StockPlankTimeInfoDTO();
-        infoDTO3.setPlanks(3);
-        StockPlankTimeInfoDTO infoDTO4 = new StockPlankTimeInfoDTO();
-        infoDTO4.setPlanks(4);
-        StockPlankTimeInfoDTO infoDTO5 = new StockPlankTimeInfoDTO();
-        infoDTO5.setPlanks(6);
-        List<StockPlankTimeInfoDTO> list = Lists.newArrayList();
-        list.add(infoDTO2);
-        list.add(infoDTO4);
-        list.add(infoDTO1);
-        list.add(infoDTO2);
-        list.add(infoDTO5);
-        List<StockPlankTimeInfoDTO> haha = list.subList(list.size() - 3,list.size());
 
-        List<StockPlankTimeInfoDTO> stockPlankTimeInfoDTOS = StockPlankTimeInfoDTO.planksLevel(list);
-        System.out.println(haha.get(0));
+
     }
 
 

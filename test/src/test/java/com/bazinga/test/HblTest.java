@@ -111,9 +111,11 @@ public class HblTest extends BaseTestCase {
         //highPlankBuyInfoComponent.badPlankInfo();
         //blockControlInfoComponent.badPlankInfo();
         //feiDaoComponent.jieFeiDaoInfo();
-        //zhongZheng500Component.zz500Buy();
-        // badPeopleComponent.jieFeiDaoInfo();
-        blockHighBuyComponent.jieFeiDaoInfo();
+        /*zhongZheng500Component.zz500Buy();
+         badPeopleComponent.jieFeiDaoInfo();*/
+        synExcelComponent.hangye();
+        /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
+        System.out.println(data);*/
 
 
     }

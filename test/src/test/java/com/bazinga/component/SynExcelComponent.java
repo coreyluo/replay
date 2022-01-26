@@ -3,6 +3,7 @@ package com.bazinga.component;
 
 import com.bazinga.dto.*;
 import com.bazinga.exception.BusinessException;
+import com.bazinga.replay.model.BlockInfo;
 import com.bazinga.replay.model.ThsBlockInfo;
 import com.bazinga.replay.model.ThsBlockStockDetail;
 import com.bazinga.replay.query.ThsBlockInfoQuery;
@@ -45,6 +46,8 @@ public class SynExcelComponent {
     private ThsZhuanZaiComponent thsZhuanZaiComponent;
     @Autowired
     private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
+    @Autowired
+    private BlockHighBuyComponent blockHighBuyComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -206,6 +209,30 @@ public class SynExcelComponent {
             List<ZhuanZaiExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(ZhuanZaiExcelDTO.class);
             thsDataUtilComponent.zhuanZaiStocks(dataList);
             //thsDataUtilComponent.threadTest(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void hangye() {
+        File file = new File("D:\\circulate\\hangye.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\hangye.xlsx") + "不存在");
+        }
+        try {
+            List<HangYeExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(HangYeExcelDTO.class);
+            List<BlockInfo> list = Lists.newArrayList();
+            for (HangYeExcelDTO hangYeExcelDTO:dataList){
+                BlockInfo blockInfo = new BlockInfo();
+                blockInfo.setBlockCode(hangYeExcelDTO.getBlockCode());
+                blockInfo.setBlockName(hangYeExcelDTO.getBlockName());
+                list.add(blockInfo);
+            }
+            blockHighBuyComponent.jieFeiDaoInfo(list);
+
             log.info("更新流通 z 信息完毕 size = {}", dataList.size());
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
