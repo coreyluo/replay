@@ -536,7 +536,7 @@ public class BlockHighBuyComponent {
 
     public List<KBarDTO> getBlockKbars(String blockCode){
         List<KBarDTO> list = Lists.newArrayList();
-        for (int i=10;i>=0;i--) {
+        for (int i=300;i>=0;i--) {
             DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, blockCode, i, 1);
             KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
             if(kbar!=null) {
