@@ -55,8 +55,8 @@ public class Zz500RepalyComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20210501");
-            query.setKbarDateTo("20211202");
+            query.setKbarDateFrom("20211202");
+           // query.setKbarDateTo("20211202");
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             stockKbarList = stockKbarList.stream().filter(item-> item.getTradeQuantity()!=0).collect(Collectors.toList());
 
@@ -149,6 +149,9 @@ public class Zz500RepalyComponent {
 
                         BigDecimal highRelativeRate = PriceUtil.getPricePercentRate(highPrice.subtract(highAvgPrice), firstPlankKbar.getClosePrice());
                         BigDecimal lowRelativeRate = PriceUtil.getPricePercentRate(lowPrice.subtract(lowAvgPrice), firstPlankKbar.getClosePrice());
+                        BigDecimal highRate = PriceUtil.getPricePercentRate(lowPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
+                        BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
+                        BigDecimal avgRate = PriceUtil.getPricePercentRate(avgPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
 
                         exportDTO.setTotalJump(buyIndex);
                         exportDTO.setOverJump(overJump);
@@ -165,7 +168,11 @@ public class Zz500RepalyComponent {
                         exportDTO.setOpenRate(openRate);
                         exportDTO.setBuyRate(PriceUtil.getPricePercentRate(exportDTO.getBuyPrice().subtract(firstPlankKbar.getClosePrice()),firstPlankKbar.getClosePrice()));
                         exportDTO.setPreDayTradeAmount(firstPlankKbar.getTradeAmount());
-
+                        exportDTO.setHighRelativeRate(highRelativeRate);
+                        exportDTO.setLowRelativeRate(lowRelativeRate);
+                        exportDTO.setHighRate(highRate);
+                        exportDTO.setLowRate(lowRate);
+                        exportDTO.setAvgRate(avgRate);
 
                         BigDecimal total10Amount = stockKbarList.subList(i - 10, i).stream().map(StockKbar::getTradeAmount).reduce(BigDecimal::add).get();
                         BigDecimal sellPrice = historyTransactionDataComponent.calMorningAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
@@ -194,7 +201,7 @@ public class Zz500RepalyComponent {
 
         }
 
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸0501-1202.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸20211220-今.xls");
 
     }
 
