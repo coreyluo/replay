@@ -1,6 +1,7 @@
 package com.bazinga.dto;
 
 
+import com.bazinga.replay.dto.KBarDTO;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -28,6 +29,16 @@ public class BlockRateBuyDTO {
     private BigDecimal profit;
     private BigDecimal profit2;
     private BigDecimal profit3;
+
+    private BigDecimal rateDay5;
+    private BigDecimal rateDay10;
+    private BigDecimal rateDay15;
+    private BigDecimal rateDay30;
+    private BigDecimal rateDay60;
+    private BigDecimal rateDay90;
+    private BigDecimal rateHighToBuy;
+    private KBarDTO yearAgoKbar;
+
 
     public static List<BlockRateBuyDTO> rateSort(List<BlockRateBuyDTO> list){
         Collections.sort(list,new BlockRateBuyDTO.RateComparator());

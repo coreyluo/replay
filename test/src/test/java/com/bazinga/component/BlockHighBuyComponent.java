@@ -67,6 +67,13 @@ public class BlockHighBuyComponent {
             list.add(dto.getTradeDate());
             list.add(dto.getCount());
             list.add(dto.getAvgRate());
+            list.add(dto.getRateDay5());
+            list.add(dto.getRateDay10());
+            list.add(dto.getRateDay15());
+            list.add(dto.getRateDay30());
+            list.add(dto.getRateDay60());
+            list.add(dto.getRateDay90());
+            list.add(dto.getRateHighToBuy());
             list.add(dto.getProfit());
             list.add(dto.getProfit2());
             list.add(dto.getProfit3());
@@ -74,7 +81,7 @@ public class BlockHighBuyComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","买入日期","买入次数","买入平均涨幅","盈利1","盈利2","盈利3"};
+        String[] rowNames = {"index","股票代码","股票名称","买入日期","买入次数","买入平均涨幅","5日涨幅","10日涨幅","15日涨幅","30日涨幅","60日涨幅","90日涨幅","最高点至买入日开盘涨幅","盈利1","盈利2","盈利3"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("板块买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("板块买入");
@@ -93,11 +100,17 @@ public class BlockHighBuyComponent {
                 continue;
             }*/
             System.out.println(blockInfo.getBlockCode());
-            System.out.println(blockInfo.getBlockCode());
             List<KBarDTO> stockKbars = getBlockKbars(blockInfo.getBlockCode());
             blockKbarInfo(stockKbars,blockInfo,blockKbarMap);
         }
+        int i = 0;
         for (String key:blockKbarMap.keySet()){
+            Date date = DateUtil.parseDate(key, DateUtil.yyyyMMdd);
+            if(date.before(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd))){
+                continue;
+            }
+            i++;
+            System.out.println(key+"===="+i);
             List<BlockRateBuyDTO> blockKbarInfos = blockKbarMap.get(key);
             List<BlockRateBuyDTO> buys = blockMinuteDate(blockKbarInfos, key);
             result.addAll(buys);
@@ -130,6 +143,14 @@ public class BlockHighBuyComponent {
                 rateDto.setNextTradeDate(blockKbarInfo.getNextTradeDate());
                 rateDto.setNextTwoTradeDate(blockKbarInfo.getNextTwoTradeDate());
                 rateDto.setNextThreeTradeDate(blockKbarInfo.getNextThreeTradeDate());
+                rateDto.setRateDay5(blockKbarInfo.getRateDay5());
+                rateDto.setRateDay10(blockKbarInfo.getRateDay10());
+                rateDto.setRateDay15(blockKbarInfo.getRateDay15());
+                rateDto.setRateDay30(blockKbarInfo.getRateDay30());
+                rateDto.setRateDay60(blockKbarInfo.getRateDay60());
+                rateDto.setRateDay90(blockKbarInfo.getRateDay90());
+                rateDto.setYearAgoKbar(blockKbarInfo.getYearAgoKbar());
+                rateDto.setRateHighToBuy(blockKbarInfo.getRateHighToBuy());
                 BigDecimal rate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(preClosePrice), preClosePrice);
                 rateDto.setRate(rate);
                 rateMap.put(key, rateDto);
@@ -209,6 +230,7 @@ public class BlockHighBuyComponent {
                 blockDto.setTradeDate(kBarDTO.getDateStr());
                 blockDto.setPreTradeDate(preKbar.getDateStr());
                 setBlockRateDayInfo(stockKbars,blockDto);
+                kbarRateInfo(stockKbars,kBarDTO,blockDto);
                 List<BlockRateBuyDTO> blockDtos = map.get(kBarDTO.getDateStr());
                 if(blockDtos==null){
                     blockDtos = Lists.newArrayList();
@@ -222,6 +244,90 @@ public class BlockHighBuyComponent {
             preBlockDto = blockDto;
             preKbar = kBarDTO;
         }
+    }
+
+    public void kbarRateInfo(List<KBarDTO> stockKbars,KBarDTO kBarDTO, BlockRateBuyDTO blockDTO){
+        String dateStr = kBarDTO.getDateStr();
+        Date date = DateUtil.parseDate(dateStr, DateUtil.yyyyMMdd);
+        Date yearBefore = DateUtil.addMonths(date, -12);
+        LimitQueue<KBarDTO> limitQueue6 = new LimitQueue<>(7);
+        LimitQueue<KBarDTO> limitQueue11 = new LimitQueue<>(12);
+        LimitQueue<KBarDTO> limitQueue16 = new LimitQueue<>(17);
+        LimitQueue<KBarDTO> limitQueue31 = new LimitQueue<>(32);
+        LimitQueue<KBarDTO> limitQueue61 = new LimitQueue<>(62);
+        LimitQueue<KBarDTO> limitQueue91 = new LimitQueue<>(92);
+        KBarDTO highKbar = null;
+        for (KBarDTO dto:stockKbars){
+            limitQueue6.offer(dto);
+            limitQueue11.offer(dto);
+            limitQueue16.offer(dto);
+            limitQueue31.offer(dto);
+            limitQueue61.offer(dto);
+            limitQueue91.offer(dto);
+           if(dto.getDate().before(yearBefore)){
+               continue;
+           }
+            if(dto.getDateStr().equals(kBarDTO.getDateStr())){
+                if(highKbar!=null) {
+                    BigDecimal highToBuyRate = PriceUtil.getPricePercentRate(highKbar.getHighestPrice().subtract(dto.getStartPrice()), highKbar.getHighestPrice());
+                    blockDTO.setRateHighToBuy(highToBuyRate);
+                }
+                if(limitQueue6.size()==7){
+                    BigDecimal rate = rateInfo(limitQueue6);
+                    blockDTO.setRateDay5(rate);
+                }
+                if(limitQueue11.size()==12){
+                    BigDecimal rate = rateInfo(limitQueue11);
+                    blockDTO.setRateDay10(rate);
+                }
+                if(limitQueue16.size()==17){
+                    BigDecimal rate = rateInfo(limitQueue16);
+                    blockDTO.setRateDay15(rate);
+                }
+                if(limitQueue31.size()==32){
+                    BigDecimal rate = rateInfo(limitQueue31);
+                    blockDTO.setRateDay30(rate);
+                }
+                if(limitQueue61.size()==62){
+                    BigDecimal rate = rateInfo(limitQueue61);
+                    blockDTO.setRateDay60(rate);
+                }
+                if(limitQueue91.size()==92){
+                    BigDecimal rate = rateInfo(limitQueue91);
+                    blockDTO.setRateDay90(rate);
+                }
+                return;
+            }
+            if(highKbar==null||dto.getHighestPrice().compareTo(highKbar.getHighestPrice())==1){
+                highKbar = dto;
+            }
+        }
+    }
+
+    public BigDecimal rateInfo(LimitQueue<KBarDTO> limitQueue){
+        if(limitQueue.size()<=3){
+            return null;
+        }
+        int size = limitQueue.size();
+        Iterator<KBarDTO> iterator = limitQueue.iterator();
+        KBarDTO first = null;
+        KBarDTO last = null;
+        int i =0 ;
+        while (iterator.hasNext()){
+            i++;
+            KBarDTO next = iterator.next();
+            if(first==null){
+                first = next;
+            }
+            if(i==size-1){
+                last = next;
+            }
+        }
+        if(last!=null&&first!=null){
+            BigDecimal rate = PriceUtil.getPricePercentRate(last.getEndPrice().subtract(first.getEndPrice()), first.getEndPrice());
+            return rate;
+        }
+        return null;
     }
 
     public void setBlockRateDayInfo(List<KBarDTO> stockKbars,BlockRateBuyDTO dto){
@@ -536,7 +642,7 @@ public class BlockHighBuyComponent {
 
     public List<KBarDTO> getBlockKbars(String blockCode){
         List<KBarDTO> list = Lists.newArrayList();
-        for (int i=300;i>=0;i--) {
+        for (int i=600;i>=0;i--) {
             DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, blockCode, i, 1);
             KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
             if(kbar!=null) {
