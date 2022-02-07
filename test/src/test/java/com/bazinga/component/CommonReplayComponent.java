@@ -52,6 +52,31 @@ public class CommonReplayComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
 
+
+    public void getIndex500RateMap(){
+
+        TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
+        tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd));
+        tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
+        BigDecimal closePrice = BigDecimal.ZERO;
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+
+            String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+            List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getIndexData("000905", "20220128");
+            if(closePrice.compareTo(BigDecimal.ZERO)==0){
+                continue;
+            }
+
+
+
+
+            closePrice = list.get(list.size()-1).getTradePrice();
+        }
+
+    }
+
+
     public Map<String, OpenCompeteDTO> get300CompeteInfo() {
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());

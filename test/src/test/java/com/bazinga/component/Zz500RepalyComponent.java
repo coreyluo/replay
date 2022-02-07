@@ -42,7 +42,7 @@ public class Zz500RepalyComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
-    public void replay(){
+    public void replay(String kbarDateFrom ,String kbarDateTo){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
         circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
@@ -55,8 +55,8 @@ public class Zz500RepalyComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20211202");
-           // query.setKbarDateTo("20211202");
+            query.setKbarDateFrom(kbarDateFrom);
+            query.setKbarDateTo(kbarDateTo);
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             stockKbarList = stockKbarList.stream().filter(item-> item.getTradeQuantity()!=0).collect(Collectors.toList());
 
@@ -73,7 +73,7 @@ public class Zz500RepalyComponent {
 
 
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
-                if(CollectionUtils.isEmpty(list)){
+                if(CollectionUtils.isEmpty(list) || list.size()<3){
                     continue;
                 }
                 BigDecimal openRate = PriceUtil.getPricePercentRate(list.get(0).getTradePrice().subtract(firstPlankKbar.getClosePrice()),firstPlankKbar.getClosePrice());
@@ -100,6 +100,9 @@ public class Zz500RepalyComponent {
                     }
                     totalTradeAmount = totalTradeAmount.add(currentDTO.getTradePrice().multiply(new BigDecimal(currentDTO.getTradeQuantity().toString())));
                     totalTradeQuantity = totalTradeQuantity + currentDTO.getTradeQuantity();
+                    if(totalTradeAmount.compareTo(BigDecimal.ZERO)==0){
+                        continue;
+                    }
                     BigDecimal avgPrice = totalTradeAmount.divide(new BigDecimal(totalTradeQuantity.toString()),2,BigDecimal.ROUND_HALF_UP);
                     if(currentDTO.getTradePrice().compareTo(avgPrice)>0){
                         overJump++;
@@ -146,10 +149,13 @@ public class Zz500RepalyComponent {
                         Zz500ReplayDTO exportDTO = new Zz500ReplayDTO();
                         BigDecimal highAvgPrice = historyTransactionDataComponent.calBigDecimalAveragePrice(list.subList(0, highIndex + 1));
                         BigDecimal lowAvgPrice = historyTransactionDataComponent.calBigDecimalAveragePrice(list.subList(0, lowIndex + 1));
+                        if(highAvgPrice == null || lowAvgPrice ==null ){
+                            continue;
+                        }
 
                         BigDecimal highRelativeRate = PriceUtil.getPricePercentRate(highPrice.subtract(highAvgPrice), firstPlankKbar.getClosePrice());
                         BigDecimal lowRelativeRate = PriceUtil.getPricePercentRate(lowPrice.subtract(lowAvgPrice), firstPlankKbar.getClosePrice());
-                        BigDecimal highRate = PriceUtil.getPricePercentRate(lowPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
+                        BigDecimal highRate = PriceUtil.getPricePercentRate(highPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
                         BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
                         BigDecimal avgRate = PriceUtil.getPricePercentRate(avgPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
 
@@ -201,7 +207,7 @@ public class Zz500RepalyComponent {
 
         }
 
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸20211220-今.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸"+kbarDateFrom+"-"+kbarDateTo+".xls");
 
     }
 
@@ -211,7 +217,7 @@ public class Zz500RepalyComponent {
             StockKbar stockKbar = list.get(i);
             StockKbar preStockKbar = list.get(i-1);
             BigDecimal closeRate = PriceUtil.getPricePercentRate(stockKbar.getClosePrice().subtract(stockKbar.getOpenPrice()),preStockKbar.getClosePrice());
-            if(closeRate.compareTo(new BigDecimal("-2"))<0){
+            if(closeRate.compareTo(new BigDecimal("0"))<0){
                 return closeRate;
             }
 

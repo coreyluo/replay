@@ -64,6 +64,24 @@ public class HistoryTransactionDataComponent {
 
     }
 
+    public List<ThirdSecondTransactionDataDTO> getIndexData(String stockCode, String kbarDate){
+        List<ThirdSecondTransactionDataDTO> resultList = Lists.newArrayList();
+        int dateAsInt = Integer.parseInt(kbarDate);
+        int loopTimes = 0;
+        int count =600;
+        while (loopTimes<30 &&(CollectionUtils.isEmpty(resultList) || !"09:25".equals(resultList.get(0).getTradeTime()))){
+            DataTable historyTransactionData = TdxHqUtil.getIndexHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
+            loopTimes++;
+            if(historyTransactionData ==null ){
+                break;
+            }
+            List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(historyTransactionData);
+            resultList.addAll(0,list);
+        }
+        return resultList;
+
+    }
+
     public List<ThirdSecondTransactionDataDTO> getMorningData(List<ThirdSecondTransactionDataDTO> list){
         if(CollectionUtils.isEmpty(list)){
             return list;
@@ -243,6 +261,9 @@ public class HistoryTransactionDataComponent {
         for (ThirdSecondTransactionDataDTO item : list) {
             totalPrice = totalPrice.add(item.getTradePrice().multiply(new BigDecimal(item.getTradeQuantity().toString())));
             totalQuantity += item.getTradeQuantity();
+        }
+        if(totalQuantity==0){
+            return null;
         }
         return totalPrice.divide(new BigDecimal(totalQuantity.toString()),2,BigDecimal.ROUND_HALF_UP);
     }

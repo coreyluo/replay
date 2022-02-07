@@ -159,7 +159,11 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
-        zz500RepalyComponent.replay();
+       /* zz500RepalyComponent.replay("20180101","20190120");
+        zz500RepalyComponent.replay("20190101","20200120");
+        zz500RepalyComponent.replay("20200101","20210120");*/
+
+       commonReplayComponent.getIndex500RateMap();
 
       //  plankFirstSealReplayComponent.replay();
       //  bankerStockReplayComponent.replay();

@@ -755,6 +755,51 @@ public class TdxHqUtil extends TdxHqPollManager {
         return null;
     }
 
+    public static DataTable getIndexHistoryTransactionData(String stockCode, int date, int start, int count){
+        Preconditions.checkState(stockCode != null, "stockCodes参数不能为null.");
+        ShortByReference countRef = new ShortByReference((short) count);
+        byte[] errData = new byte[256];
+        byte[] rltData = new byte[1024 * 1024];
+        Long accountId = getAccountIdByRoute(stockCode);
+        for (int i = 0; i < LOOP_TIMES; i++) {
+            TdxHqClient tdxHqClient = getL1Client(accountId);
+            try {
+                TdxLibrary tdxLibrary = tdxHqClient.getTdxLibrary();
+                tdxLibrary.TdxHq_GetHistoryTransactionData(tdxHqClient.getConnId(), ExchangeId.SH.getByteId(),stockCode, (short) start, countRef,
+                        date, rltData, errData);
+                String result = Native.toString(rltData, "GBK");
+                String error = Native.toString(errData, "GBK");
+                error = PubUtil.repalcWarp2Blank(error);
+                if (StringUtils.isBlank(error)) {
+                    return new DataTable("HistoryTransactionData", result);
+                } else {
+                    logger.error("第{}次调用l1行情服务器是失败！原因是:{}", i + 1, error);
+                    if (StringUtils.containsAny(error, NEED_RECONNECT_ERROR)) {
+                        disconnect(tdxHqClient);
+                        connectNew(accountId);
+                    }
+                    // 最后一次
+                    if (i == LOOP_TIMES - 1) {
+                        System.out.println(stockCode);
+                        throw new TradeException("调用l1行情服务器失败！原因是:" + error);
+                    }
+                }
+            } catch (TradeException tradeException) {
+                logger.error(tradeException.getMessage(), tradeException);
+            } catch (Exception e) {
+                logger.error("调用l1行情服务器失败！", e);
+            } finally {
+                try {
+                    releaseLock(accountId);
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return null;
+    }
+
+
     /**
      * 方法介绍: 同时只能一个服务器申请连接 后续如果遇到瓶颈 这里可以修改</br>
      * 注意事项：无</br>
