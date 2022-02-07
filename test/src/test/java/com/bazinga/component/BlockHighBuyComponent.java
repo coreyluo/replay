@@ -11,6 +11,7 @@ import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.BlockInfoQuery;
+import com.bazinga.replay.query.BlockStockDetailQuery;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.*;
@@ -52,11 +53,14 @@ public class BlockHighBuyComponent {
     private TradeDatePoolService tradeDatePoolService;
     @Autowired
     private BlockInfoService blockInfoService;
+    @Autowired
+    private BlockStockDetailService blockStockDetailService;
 
     public List<ThsBlockInfo> THS_BLOCK_INFOS = Lists.newArrayList();
     public Map<String,List<ThsBlockStockDetail>> THS_BLOCK_STOCK_DETAIL_MAP = new HashMap<>();
 
     public void jieFeiDaoInfo(List<BlockInfo> bLockInfos){
+        Map<String, Integer> blockCountMap = getBlockCount();
         List<BlockRateBuyDTO> feiDaos = getFeiDao(bLockInfos);
         List<Object[]> datas = Lists.newArrayList();
         for(BlockRateBuyDTO dto:feiDaos){
@@ -74,6 +78,7 @@ public class BlockHighBuyComponent {
             list.add(dto.getRateDay60());
             list.add(dto.getRateDay90());
             list.add(dto.getRateHighToBuy());
+            list.add(blockCountMap.get(dto.getBlockCode()));
             list.add(dto.getProfit());
             list.add(dto.getProfit2());
             list.add(dto.getProfit3());
@@ -81,7 +86,7 @@ public class BlockHighBuyComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","买入日期","买入次数","买入平均涨幅","5日涨幅","10日涨幅","15日涨幅","30日涨幅","60日涨幅","90日涨幅","最高点至买入日开盘涨幅","盈利1","盈利2","盈利3"};
+        String[] rowNames = {"index","股票代码","股票名称","买入日期","买入次数","买入平均涨幅","5日涨幅","10日涨幅","15日涨幅","30日涨幅","60日涨幅","90日涨幅","最高点至买入日开盘涨幅","股票数量","盈利1","盈利2","盈利3"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("板块买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("板块买入");
@@ -116,6 +121,20 @@ public class BlockHighBuyComponent {
             result.addAll(buys);
         }
         return result;
+    }
+
+    public Map<String,Integer> getBlockCount(){
+        Map<String, Integer> map = new HashMap<>();
+        List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
+        for (BlockInfo blockInfo:blockInfos){
+            BlockStockDetailQuery query = new BlockStockDetailQuery();
+            query.setBlockCode(blockInfo.getBlockCode());
+            List<BlockStockDetail> details = blockStockDetailService.listByCondition(query);
+            if(!CollectionUtils.isEmpty(details)) {
+                map.put(blockInfo.getBlockCode(), details.size());
+            }
+        }
+        return map;
     }
     public List<BlockRateBuyDTO> blockMinuteDate(List<BlockRateBuyDTO> blockKbarInfos,String tradeDateStr){
         List<BlockRateBuyDTO> list = Lists.newArrayList();
