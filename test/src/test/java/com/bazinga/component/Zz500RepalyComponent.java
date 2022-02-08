@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.bazinga.ReplayConstant;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
+import com.bazinga.dto.IndexRate500DTO;
 import com.bazinga.dto.ZongZiExportDTO;
 import com.bazinga.dto.Zz500ReplayDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -27,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,7 +44,13 @@ public class Zz500RepalyComponent {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    @Autowired
+    private Index500Component index500Component;
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
+
+        Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
+
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
         circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
@@ -167,6 +175,16 @@ public class Zz500RepalyComponent {
                         exportDTO.setBuykbarDate(buyStockKbar.getKbarDate());
                         exportDTO.setBuyPrice(realBuyDTO.getTradePrice());
                         exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
+
+                        IndexRate500DTO indexRate500DTO = index500RateMap.get(buyStockKbar.getKbarDate() + realBuyDTO.getTradeTime());
+                        IndexRate500DTO index0935DTO = index500RateMap.get(buyStockKbar.getKbarDate() + "09:34");
+                        exportDTO.setOpenRate500(indexRate500DTO.getOpenRate());
+                        exportDTO.setHighRate500(indexRate500DTO.getHighRate());
+                        exportDTO.setLowRate500(indexRate500DTO.getLowRate());
+                        exportDTO.setBuyRate500(indexRate500DTO.getBuyRate());
+                        exportDTO.setHighRateMin5(index0935DTO.getHighRate());
+                        exportDTO.setLowRateMin5(index0935DTO.getLowRate());
+
 
                         exportDTO.setDay10HighPrice(day10HighPrice);
                         exportDTO.setMoonRate(moonRate);

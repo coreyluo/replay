@@ -84,6 +84,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private Zz500RepalyComponent zz500RepalyComponent;
+
+    @Autowired
+    private Index500Component index500Component;
     @Test
     public void test(){
         blockHeadReplayComponent.invokeStrategy();
@@ -159,11 +162,13 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
-       /* zz500RepalyComponent.replay("20180101","20190120");
-        zz500RepalyComponent.replay("20190101","20200120");
-        zz500RepalyComponent.replay("20200101","20210120");*/
+      /*  zz500RepalyComponent.replay("20180101","20190120");
+        zz500RepalyComponent.replay("20190101","20200120");*/
+        zz500RepalyComponent.replay("20200101","20210120");
+        zz500RepalyComponent.replay("20210101","20220120");
+        zz500RepalyComponent.replay("20220101","20230120");
 
-       commonReplayComponent.getIndex500RateMap();
+      // index500Component.getIndex500RateMap();
 
       //  plankFirstSealReplayComponent.replay();
       //  bankerStockReplayComponent.replay();
