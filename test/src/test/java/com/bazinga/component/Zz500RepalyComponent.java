@@ -68,7 +68,7 @@ public class Zz500RepalyComponent {
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             stockKbarList = stockKbarList.stream().filter(item-> item.getTradeQuantity()!=0).collect(Collectors.toList());
 
-            if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<13){
+            if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<16){
                 continue;
             }
 

@@ -42,7 +42,7 @@ public class SellReplayImportDTO {
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
-    @ExcelField(name = "流通z")
+    @ExcelField(name = "流通")
     private Long circulateZ;
 
     @ExcelField(name = "买入价格")
