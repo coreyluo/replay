@@ -8,7 +8,10 @@ import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
+import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
+import com.google.common.collect.Lists;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
@@ -16,6 +19,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.AbstractCollection;
+import java.util.Date;
 import java.util.List;
 
 public class HblTest extends BaseTestCase {
@@ -90,6 +94,8 @@ public class HblTest extends BaseTestCase {
     private BadPeopleComponent badPeopleComponent;
     @Autowired
     private BlockHighBuyComponent blockHighBuyComponent;
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -117,7 +123,6 @@ public class HblTest extends BaseTestCase {
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
 
-
     }
     @Test
     public void test2(){
@@ -130,6 +135,8 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.zhuanZaiQuoteInfo();
         //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
         synExcelComponent.zhuanZaiQuoteInfo();
+
+
 
     }
 
@@ -144,7 +151,7 @@ public class HblTest extends BaseTestCase {
         //lowExchangePercentComponent.lowExchangeAvg();
         //oneMinutePlankComponent.firstMinutePlankInfo();
         //badChungYePlankInfoComponent.badPlankInfo();
-        highExchangeChungYePlankInfoComponent.badPlankInfo();
+       // highExchangeChungYePlankInfoComponent.badPlankInfo();
         /*chungYePlankReturnInfoComponent.chuangYePlankTwo();
         chungYePlankFirstInfoComponent.chuangYePlankFirst();*/
        /* synExcelComponent.zhuanZaiBugInfo();*/
@@ -152,7 +159,18 @@ public class HblTest extends BaseTestCase {
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
         //raiseDropComponent.raiseDrop();
-        List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
+       // List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
+
+            for (int i=1250;i>=0;i--) {
+                DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
+                KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
+                TradeDatePool tradeDatePool = new TradeDatePool();
+                String format = DateUtil.format(kbar.getDate(), DateUtil.yyyy_MM_dd);
+                tradeDatePool.setTradeDate(DateUtil.parseDate(format+" 09:09:09",DateUtil.DEFAULT_FORMAT));
+                tradeDatePool.setCreateTime(new Date());
+                tradeDatePoolService.save(tradeDatePool);
+            }
+
 
 
 

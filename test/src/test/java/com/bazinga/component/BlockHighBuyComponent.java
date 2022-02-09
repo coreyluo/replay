@@ -111,7 +111,10 @@ public class BlockHighBuyComponent {
         int i = 0;
         for (String key:blockKbarMap.keySet()){
             Date date = DateUtil.parseDate(key, DateUtil.yyyyMMdd);
-            if(date.before(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd))){
+            if(date.before(DateUtil.parseDate("20180101",DateUtil.yyyyMMdd))){
+                continue;
+            }
+            if(date.after(DateUtil.parseDate("20180601",DateUtil.yyyyMMdd))){
                 continue;
             }
             i++;
@@ -661,9 +664,12 @@ public class BlockHighBuyComponent {
 
     public List<KBarDTO> getBlockKbars(String blockCode){
         List<KBarDTO> list = Lists.newArrayList();
-        for (int i=600;i>=0;i--) {
+        for (int i=1250;i>=750;i--) {
             DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, blockCode, i, 1);
             KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
+            if(i==750){
+                System.out.println(111);
+            }
             if(kbar!=null) {
                 list.add(kbar);
             }
