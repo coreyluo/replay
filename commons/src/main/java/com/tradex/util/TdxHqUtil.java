@@ -664,6 +664,61 @@ public class TdxHqUtil extends TdxHqPollManager {
         return null;
     }
 
+    public synchronized static DataTable getIndexSecurityBars(KCate cCate, String stockCode, int start, int count)
+            throws TradeException {
+        // 暂时单线程
+        Preconditions.checkState(cCate != null, "cCate参数不能为null.");
+        Preconditions.checkState(stockCode != null, "stockCode参数不能为null.");
+        Preconditions.checkState(start >= 0, "start不能小小于0");
+
+        byte[] errData = new byte[256];
+        byte[] rltData = new byte[1024 * 1024];
+        ExchangeId market = ExchangeId.SH;
+        Long accountId = getAccountIdByRoute(market);
+        for (int i = 0; i < LOOP_TIMES; i++) {
+            TdxHqClient tdxHqClient = getL1Client(accountId);
+            try {
+                TdxLibrary tdxLibrary = tdxHqClient.getTdxLibrary();
+                ShortByReference countRef = new ShortByReference((short) count);
+                tdxLibrary.TdxHq_GetSecurityBars(tdxHqClient.getConnId(), cCate.getByteId(), market.getByteId(),
+                        stockCode, (short) start, countRef, rltData, errData);
+
+                String result = Native.toString(rltData, "GBK");
+                String error = Native.toString(errData, "GBK");
+                error = PubUtil.repalcWarp2Blank(error);
+
+                if (StringUtils.isBlank(error)) {
+                    return new DataTable(
+                            stockCode + " " + cCate.getName() + "(" + start + "~" + (start + countRef.getValue()) + ")",
+                            result);
+                } else {
+                    logger.error("第{}次调用l1行情服务器是失败！原因是:{}", i + 1, error);
+                    if (StringUtils.containsAny(error, NEED_RECONNECT_ERROR)) {
+                        disconnect(tdxHqClient);
+                        connectNew(accountId);
+                    }
+                    // 最后一次
+                    if (i == LOOP_TIMES - 1) {
+                        throw new TradeException("调用l1行情服务器失败！原因是:" + error);
+                    }
+                }
+            } catch (TradeException tradeException) {
+                logger.error(tradeException.getMessage(), tradeException);
+                throw tradeException;
+            } catch (Exception e) {
+                logger.error("调用l1行情服务器失败！", e);
+                throw new TradeException("调用l1行情器失败！");
+            } finally {
+                try {
+                    releaseLock(accountId);
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return null;
+    }
+
     /**
      * 获取除权除息信息
      *

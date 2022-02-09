@@ -16,11 +16,14 @@ public class IndexRate500DTO {
 
     private BigDecimal buyRate;
 
+    //前5分钟高于开盘条数
+    private Integer overOpenCount;
 
-    public IndexRate500DTO(BigDecimal openRate, BigDecimal lowRate, BigDecimal highRate, BigDecimal buyRate) {
+    public IndexRate500DTO(BigDecimal openRate, BigDecimal lowRate, BigDecimal highRate, BigDecimal buyRate,Integer overOpenCount) {
         this.openRate = openRate;
         this.lowRate = lowRate;
         this.highRate = highRate;
         this.buyRate = buyRate;
+        this.overOpenCount = overOpenCount;
     }
 }

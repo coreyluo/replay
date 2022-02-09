@@ -40,12 +40,14 @@ public class Zz500ReplayDTO {
     @ExcelField(name = "500买入时涨幅")
     private BigDecimal buyRate500;
 
-    @ExcelField(name = "前五分钟最高涨幅")
+    @ExcelField(name = "500前五分钟最高涨幅")
     private BigDecimal highRateMin5;
 
-    @ExcelField(name = "前五分钟最低涨幅")
+    @ExcelField(name = "500前五分钟最低涨幅")
     private BigDecimal lowRateMin5;
 
+    @ExcelField(name = "500前5分钟高于开盘跳数")
+    private Integer overOpenCountMin5;
 
     @ExcelField(name = "最高点相对均价点数")
     private  BigDecimal highRelativeRate;
@@ -64,6 +66,25 @@ public class Zz500ReplayDTO {
 
     @ExcelField(name = "买入时涨幅")
     private BigDecimal buyRate;
+
+    @ExcelField(name = "5日涨幅")
+    private BigDecimal day5Rate;
+
+    @ExcelField(name = "10日涨幅")
+    private BigDecimal day10Rate;
+
+    @ExcelField(name = "15日涨幅")
+    private BigDecimal day15Rate;
+
+
+    @ExcelField(name = "5日涨幅500")
+    private BigDecimal day5Rate500;
+
+    @ExcelField(name = "10日涨幅500")
+    private BigDecimal day10Rate500;
+
+    @ExcelField(name = "15日涨幅500")
+    private BigDecimal day15Rate500;
 
     @ExcelField(name = "总跳数")
     private Integer totalJump;

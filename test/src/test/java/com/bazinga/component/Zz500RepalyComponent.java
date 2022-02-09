@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.bazinga.ReplayConstant;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
+import com.bazinga.dto.Index500NDayDTO;
 import com.bazinga.dto.IndexRate500DTO;
 import com.bazinga.dto.ZongZiExportDTO;
 import com.bazinga.dto.Zz500ReplayDTO;
@@ -48,7 +49,7 @@ public class Zz500RepalyComponent {
     private Index500Component index500Component;
 
     public void replay(String kbarDateFrom ,String kbarDateTo){
-
+        Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1000);
         Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
@@ -56,7 +57,6 @@ public class Zz500RepalyComponent {
         circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
-
 
         for (CirculateInfo circulateInfo : circulateInfos) {
 
@@ -72,7 +72,7 @@ public class Zz500RepalyComponent {
                 continue;
             }
 
-            for (int i = 13; i < stockKbarList.size()-1; i++) {
+            for (int i = 16; i < stockKbarList.size()-1; i++) {
                 StockKbar buyStockKbar = stockKbarList.get(i);
                 StockKbar sellStockKbar = stockKbarList.get(i+1);
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
@@ -178,13 +178,23 @@ public class Zz500RepalyComponent {
 
                         IndexRate500DTO indexRate500DTO = index500RateMap.get(buyStockKbar.getKbarDate() + realBuyDTO.getTradeTime());
                         IndexRate500DTO index0935DTO = index500RateMap.get(buyStockKbar.getKbarDate() + "09:34");
+                        if(indexRate500DTO ==null){
+                            log.info("dto为空 tradeTime{}",realBuyDTO.getTradeTime());
+                            continue;
+                        }
                         exportDTO.setOpenRate500(indexRate500DTO.getOpenRate());
                         exportDTO.setHighRate500(indexRate500DTO.getHighRate());
                         exportDTO.setLowRate500(indexRate500DTO.getLowRate());
                         exportDTO.setBuyRate500(indexRate500DTO.getBuyRate());
                         exportDTO.setHighRateMin5(index0935DTO.getHighRate());
                         exportDTO.setLowRateMin5(index0935DTO.getLowRate());
-
+                        exportDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),5));
+                        exportDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),10));
+                        exportDTO.setDay15Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),15));
+                        exportDTO.setDay5Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay5Rate());
+                        exportDTO.setDay10Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay10Rate());
+                        exportDTO.setDay15Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay15Rate());
+                        exportDTO.setOverOpenCountMin5(indexRate500DTO.getOverOpenCount());
 
                         exportDTO.setDay10HighPrice(day10HighPrice);
                         exportDTO.setMoonRate(moonRate);
