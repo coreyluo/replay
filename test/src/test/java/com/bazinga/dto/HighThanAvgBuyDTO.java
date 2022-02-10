@@ -11,6 +11,7 @@ public class HighThanAvgBuyDTO {
     private String stockCode;
     private String stockName;
     private  BigDecimal marketMoney;
+    private String tradeDate;
     private Integer nQuantity;
     private Integer mQuantity;
     private Integer xTimes;
@@ -27,6 +28,10 @@ public class HighThanAvgBuyDTO {
     private BigDecimal before1AvgThanN;
     private BigDecimal before5AvgThanN;
     private BigDecimal before15AvgThanN;
+
+    private BigDecimal before1AvgThanM;
+    private BigDecimal before5AvgThanM;
+    private BigDecimal before15AvgThanM;
     private BigDecimal profit;
 
 

@@ -96,6 +96,8 @@ public class HblTest extends BaseTestCase {
     private BlockHighBuyComponent blockHighBuyComponent;
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+    @Autowired
+    private HighAvgComponent highAvgComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -119,9 +121,10 @@ public class HblTest extends BaseTestCase {
         //feiDaoComponent.jieFeiDaoInfo();
         /*zhongZheng500Component.zz500Buy();
          badPeopleComponent.jieFeiDaoInfo();*/
-        synExcelComponent.hangye();
+        //synExcelComponent.hangye();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
+        highAvgComponent.highThanAvgBuys();
 
     }
     @Test
