@@ -56,6 +56,7 @@ public class AccountPositionCalComponent {
         ACCOUNT_NAME_MAP.put("398000104352","产品");
         ACCOUNT_NAME_MAP.put("398000104348","大佬");
         ACCOUNT_NAME_MAP.put("398000102550","问");
+        ACCOUNT_NAME_MAP.put("398000104865","产品二");
     }
 
     public void cal(String preName){
