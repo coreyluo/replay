@@ -62,13 +62,15 @@ public class HighAvgComponent {
         List<HighThanAvgBuyDTO> dailys = Lists.newArrayList();
         List<String> minutes = tradeTimeInfo();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        int i = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
-            System.out.println(circulateInfo.getStockCode());
+            i++;
+            System.out.println(circulateInfo.getStockCode()+"===="+i);
             List<HighThanAvgBuyDTO> fastPlank = getHighTanAvgBuys(circulateInfo,minutes);
             dailys.addAll(fastPlank);
-            if(dailys.size()>=100){
+            /*if(dailys.size()>=100){
                 break;
-            }
+            }*/
         }
 
         List<Object[]> datas = Lists.newArrayList();
@@ -104,7 +106,7 @@ public class HighAvgComponent {
 
         String[] rowNames = {"index","stockCode","stockName","流通市值","买入日期","N量","M量","买入时候的x值","买入前量符合次数",
                 "买入时均价","买入时候时间戳","买入时候涨幅", "XM/N","8天前涨幅","18天前涨幅","38天前涨幅","88天前涨幅",
-                "前1日均量/N","前5日均量/N","前15日均量/N","前1日均量/M","前5日均量/M","前15日均量/M","盈利"};
+                "N/前1日均量","N/前5日均量","N/前15日均量","M/前1日均量","M/前5日均量","N/前15日均量","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("量价买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("量价买入");
@@ -126,7 +128,8 @@ public class HighAvgComponent {
             limitQueue6.offer(stockKbar);
             limitQueue16.offer(stockKbar);
             if(preStockKbar!=null) {
-                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))){
+                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))/*&&
+                        DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))*/){
                     HighThanAvgBuyDTO buyDTO = new HighThanAvgBuyDTO();
                     buyDTO.setStockCode(circulateInfo.getStockCode());
                     buyDTO.setStockName(circulateInfo.getStockName());
@@ -160,11 +163,11 @@ public class HighAvgComponent {
                 if(totalQuantity>0){
                     long avgMinQuantity = totalQuantity / (i * 240);
                     if(buyDTO.getNQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getNQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getNQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore1AvgThanN(divide);
                     }
                     if(buyDTO.getMQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getMQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getMQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore1AvgThanM(divide);
                     }
                 }
@@ -173,11 +176,11 @@ public class HighAvgComponent {
                 if(totalQuantity>0){
                     long avgMinQuantity = totalQuantity / (i * 240);
                     if(buyDTO.getNQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getNQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getNQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore5AvgThanN(divide);
                     }
                     if(buyDTO.getMQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getMQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getMQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore5AvgThanM(divide);
                     }
                 }
@@ -186,11 +189,11 @@ public class HighAvgComponent {
                 if(totalQuantity>0){
                     long avgMinQuantity = totalQuantity / (i * 240);
                     if(buyDTO.getNQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getNQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getNQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore15AvgThanN(divide);
                     }
                     if(buyDTO.getMQuantity()!=null) {
-                        BigDecimal divide = new BigDecimal(avgMinQuantity).divide(new BigDecimal(buyDTO.getMQuantity()),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal divide = new BigDecimal(buyDTO.getMQuantity()).divide(new BigDecimal(avgMinQuantity),2,BigDecimal.ROUND_HALF_UP);
                         buyDTO.setBefore15AvgThanM(divide);
                     }
                 }
