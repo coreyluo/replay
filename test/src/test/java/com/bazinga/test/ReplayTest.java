@@ -164,7 +164,7 @@ public class ReplayTest extends BaseTestCase {
      //   zuangReplayComponent.replay();
      //   zz500RepalyComponent.replay("20180101","20190120");
       //  zz500RepalyComponent.replay("20190101","20200120");
-        zz500RepalyComponent.replay("20200101","20210120");
+     //   zz500RepalyComponent.replay("20200101","20210120");
         zz500RepalyComponent.replay("20210101","20220120");
         zz500RepalyComponent.replay("20220101","20230120");
 

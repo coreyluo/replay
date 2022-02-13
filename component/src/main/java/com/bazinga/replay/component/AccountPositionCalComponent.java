@@ -61,7 +61,7 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-        //currentTradeDate = DateUtil.parseDate("20211203",DateUtil.yyyyMMdd);
+        currentTradeDate = DateUtil.parseDate("20220211",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
