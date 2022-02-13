@@ -20,6 +20,7 @@ public class Zz500BuyDTO {
     private BigDecimal endRate;
     private BigDecimal endPrice;
     private BigDecimal exchangeAmount;
+    private int type;
     private BigDecimal profit;
 
 

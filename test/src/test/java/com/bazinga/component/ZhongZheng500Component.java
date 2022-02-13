@@ -2,9 +2,12 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.dto.*;
+import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockKbarComponent;
+import com.bazinga.replay.convert.KBarDTOConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
@@ -17,6 +20,9 @@ import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.tradex.enums.KCate;
+import com.tradex.model.suport.DataTable;
+import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -57,15 +63,12 @@ public class ZhongZheng500Component {
             list.add(dto.getStockName());
             list.add(dto.getCirculateZ());
             list.add(dto.getTradeDate());
-            list.add(dto.getEndRate());
-            list.add(dto.getEndPrice());
-            list.add(dto.getExchangeAmount());
-            list.add(dto.getProfit());
+            list.add(dto.getType());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","股票代码","股票名称","流通z","交易日期","收盘涨幅","收盘价格","成交额","溢价"};
+        String[] rowNames = {"index","股票代码","股票名称","流通z","交易日期","1收盘前50 2收盘后50 3 10天涨幅高 4 10天涨幅低"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("中证500",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("中证500");
@@ -76,56 +79,114 @@ public class ZhongZheng500Component {
 
     public List<Zz500BuyDTO> zz500LevelInfo(){
         List<Zz500BuyDTO> list = Lists.newArrayList();
+        List<KBarDTO> zz500ZhiShu = getZZ500ZhiShu();
         Map<String, List<StockKbarRateDTO>> map = zz500KbarInfo();
-        for (String key:map.keySet()){
-            if(DateUtil.parseDate(key,DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210518",DateUtil.yyyyMMdd))){
-                continue;
+        KBarDTO preKbar = null;
+        for (KBarDTO zzKbar:zz500ZhiShu){
+            if(preKbar!=null){
+                String dateyyyyMMdd = zzKbar.getDateStr();
+                Date date = DateUtil.parseDate(dateyyyyMMdd, DateUtil.yyyyMMdd);
+                BigDecimal zzRate = PriceUtil.getPricePercentRate(zzKbar.getEndPrice().subtract(preKbar.getEndPrice()), preKbar.getEndPrice());
+                if(zzRate.compareTo(new BigDecimal(-1))==-1&&date.after(DateUtil.parseDate("20210301",DateUtil.yyyyMMdd))){
+                    List<StockKbarRateDTO> dtos = map.get(dateyyyyMMdd);
+                    if(!CollectionUtils.isEmpty(dtos)&&dtos.size()>300){
+                        List<Zz500BuyDTO> stockBuys = getStockBuys(dtos);
+                        list.addAll(stockBuys);
+                        /*if(list.size()>0){
+                            return list;
+                        }*/
+                    }
+                }
             }
-            List<StockKbarRateDTO> stockKbarRateDTOS = map.get(key);
-            StockKbarRateDTO.endRateSort(stockKbarRateDTOS);
-            List<StockKbarRateDTO> reverse = Lists.reverse(stockKbarRateDTOS);
-            List<StockKbarRateDTO> high50 = stockKbarRateDTOS.subList(0, 10);
-            List<StockKbarRateDTO> low50 = reverse.subList(0, 10);
-            for (StockKbarRateDTO stockKbarRateDTO:high50){
+            preKbar = zzKbar;
+        }
+
+        return list;
+    }
+
+    public List<Zz500BuyDTO> getStockBuys(List<StockKbarRateDTO> list){
+        List<Zz500BuyDTO> result = Lists.newArrayList();
+        if(CollectionUtils.isEmpty(list)){
+            return null;
+        }
+        List<StockKbarRateDTO> listHighEnd = Lists.newArrayList();
+        List<StockKbarRateDTO> listLowEnd = Lists.newArrayList();
+        List<StockKbarRateDTO> listHighTen = Lists.newArrayList();
+        List<StockKbarRateDTO> listLowTen = Lists.newArrayList();
+        listHighEnd.addAll(list);
+        listLowEnd.addAll(list);
+        listHighTen.addAll(list);
+        listLowTen.addAll(list);
+        StockKbarRateDTO.endRateHighSort(listHighEnd);
+        StockKbarRateDTO.endRateLowSort(listLowEnd);
+        StockKbarRateDTO.day10RateHighSort(listHighTen);
+        StockKbarRateDTO.day10RateLowSort(listLowTen);
+        int i = 0;
+        for (StockKbarRateDTO stockKbarRateDTO:listHighEnd){
+            i++;
+            if(i<=50){
                 Zz500BuyDTO buyDTO = new Zz500BuyDTO();
                 buyDTO.setStockCode(stockKbarRateDTO.getStockCode());
                 buyDTO.setStockName(stockKbarRateDTO.getStockName());
-                buyDTO.setTradeDate(stockKbarRateDTO.getTradeDate());
                 buyDTO.setCirculateZ(stockKbarRateDTO.getCirculateZ());
-                buyDTO.setEndRate(stockKbarRateDTO.getEndRate());
-                buyDTO.setEndPrice(stockKbarRateDTO.getStockKbar().getClosePrice());
-                buyDTO.setExchangeAmount(stockKbarRateDTO.getStockKbar().getTradeAmount());
-                BigDecimal profit = profit(stockKbarRateDTO);
-                buyDTO.setProfit(profit);
-                list.add(buyDTO);
-            }
-            for (StockKbarRateDTO stockKbarRateDTO:low50){
-                Zz500BuyDTO buyDTO = new Zz500BuyDTO();
-                buyDTO.setStockCode(stockKbarRateDTO.getStockCode());
-                buyDTO.setStockName(stockKbarRateDTO.getStockName());
                 buyDTO.setTradeDate(stockKbarRateDTO.getTradeDate());
-                buyDTO.setCirculateZ(stockKbarRateDTO.getCirculateZ());
-                buyDTO.setEndRate(stockKbarRateDTO.getEndRate());
-                buyDTO.setEndPrice(stockKbarRateDTO.getStockKbar().getClosePrice());
-                buyDTO.setExchangeAmount(stockKbarRateDTO.getStockKbar().getTradeAmount());
-                BigDecimal profit = profit(stockKbarRateDTO);
-                buyDTO.setProfit(profit);
-                list.add(buyDTO);
+                buyDTO.setType(1);
+                result.add(buyDTO);
             }
         }
-        return list;
+        int j = 0;
+        for (StockKbarRateDTO stockKbarRateDTO:listLowEnd){
+            j++;
+            if(j<=50){
+                Zz500BuyDTO buyDTO = new Zz500BuyDTO();
+                buyDTO.setStockCode(stockKbarRateDTO.getStockCode());
+                buyDTO.setStockName(stockKbarRateDTO.getStockName());
+                buyDTO.setCirculateZ(stockKbarRateDTO.getCirculateZ());
+                buyDTO.setTradeDate(stockKbarRateDTO.getTradeDate());
+                buyDTO.setType(2);
+                result.add(buyDTO);
+            }
+        }
+        int m = 0;
+        for (StockKbarRateDTO stockKbarRateDTO:listHighTen){
+            m++;
+            if(m<=50){
+                Zz500BuyDTO buyDTO = new Zz500BuyDTO();
+                buyDTO.setStockCode(stockKbarRateDTO.getStockCode());
+                buyDTO.setStockName(stockKbarRateDTO.getStockName());
+                buyDTO.setCirculateZ(stockKbarRateDTO.getCirculateZ());
+                buyDTO.setTradeDate(stockKbarRateDTO.getTradeDate());
+                buyDTO.setType(3);
+                result.add(buyDTO);
+            }
+        }
+        int n = 0;
+        for (StockKbarRateDTO stockKbarRateDTO:listLowTen){
+            n++;
+            if(n<=50){
+                Zz500BuyDTO buyDTO = new Zz500BuyDTO();
+                buyDTO.setStockCode(stockKbarRateDTO.getStockCode());
+                buyDTO.setStockName(stockKbarRateDTO.getStockName());
+                buyDTO.setCirculateZ(stockKbarRateDTO.getCirculateZ());
+                buyDTO.setTradeDate(stockKbarRateDTO.getTradeDate());
+                buyDTO.setType(4);
+                result.add(buyDTO);
+            }
+        }
+
+        return result;
     }
 
     public Map<String, List<StockKbarRateDTO>>  zz500KbarInfo(){
         Map<String, List<StockKbarRateDTO>> map = new HashMap<>();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
-            List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 150);
-            StockKbar preKbar = null;
+            List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode(), 300);
             if(CollectionUtils.isEmpty(stockKbars)){
-                System.out.println(circulateInfo.getStockCode());
                 continue;
             }
+            LimitQueue<StockKbar> limitQueue = new LimitQueue<>(11);
+            StockKbar preKbar = null;
             StockKbarRateDTO preRateDTO = null;
             for (StockKbar stockKbar:stockKbars){
                 if(preKbar!=null){
@@ -139,6 +200,8 @@ public class ZhongZheng500Component {
                     rateDTO.setTradeDate(stockKbar.getKbarDate());
                     rateDTO.setOpenRate(openRate);
                     rateDTO.setEndRate(endRate);
+                    BigDecimal day10Rate = getDay10Rate(limitQueue);
+                    rateDTO.setDay10Rate(day10Rate);
                     List<StockKbarRateDTO> stockKbarRateDTOS = map.get(rateDTO.getTradeDate());
                     if(stockKbarRateDTOS==null){
                         stockKbarRateDTOS = Lists.newArrayList();
@@ -154,6 +217,27 @@ public class ZhongZheng500Component {
             }
         }
         return map;
+    }
+
+    public BigDecimal getDay10Rate(LimitQueue<StockKbar> limitQueue){
+        if(limitQueue.size()<11){
+            return null;
+        }
+        Iterator<StockKbar> iterator = limitQueue.iterator();
+        StockKbar first = null;
+        int i = 0;
+        while (iterator.hasNext()){
+            i++;
+            StockKbar stockKbar = iterator.next();
+            if(i==1){
+                first = stockKbar;
+            }
+            if(i==11){
+                BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(first.getAdjClosePrice()), first.getAdjClosePrice());
+                return rate;
+            }
+        }
+        return null;
     }
 
     public BigDecimal profit(StockKbarRateDTO buyDTO){
@@ -178,10 +262,10 @@ public class ZhongZheng500Component {
             query.setLimit(size);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
             List<StockKbar> reverse = Lists.reverse(stockKbars);
-            if(reverse.size()<=30){
+            if(reverse.size()<=20){
                 return null;
             }
-            List<StockKbar> bars = reverse.subList(30, reverse.size());
+            List<StockKbar> bars = reverse.subList(20, reverse.size());
             return bars;
         }catch (Exception e){
             return null;
@@ -199,6 +283,17 @@ public class ZhongZheng500Component {
             BigDecimal bigDecimal = avgPrice.multiply(reason).setScale(2, BigDecimal.ROUND_HALF_UP);
             return bigDecimal;
         }
+    }
+
+
+    public List<KBarDTO> getZZ500ZhiShu(){
+        List<KBarDTO> list = Lists.newArrayList();
+        for (int i=300;i>=0;i--) {
+            DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "000905", i, 1);
+            KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
+            list.add(kbar);
+        }
+        return list;
     }
 
     public static void main(String[] args) {
