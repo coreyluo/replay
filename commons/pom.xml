@@ -37,6 +37,11 @@
         <version.commons-io>2.6</version.commons-io>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.influxdb</groupId>
+            <artifactId>influxdb-java</artifactId>
+            <version>2.21</version>
+        </dependency>
         <!-- springframework -->
         <dependency>
             <groupId>org.springframework</groupId>
