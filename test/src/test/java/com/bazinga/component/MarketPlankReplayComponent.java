@@ -76,7 +76,7 @@ public class MarketPlankReplayComponent {
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20210501");
+            query.setKbarDateFrom("20211215");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<15){
@@ -93,7 +93,7 @@ public class MarketPlankReplayComponent {
                     continue;
                 }
                 PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(stockKbars.subList(i - 7, i + 1));
-                if(plankHighDTO.getPlankHigh()>0 && plankHighDTO.getPlankHigh()<2 && plankHighDTO.getUnPlank()==0){
+                if(plankHighDTO.getPlankHigh()>0 && plankHighDTO.getPlankHigh()<3 && plankHighDTO.getUnPlank()==0){
 
                     List<ThirdSecondTransactionDataDTO> todayList = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     if(CollectionUtils.isEmpty(todayList)){
@@ -123,7 +123,7 @@ public class MarketPlankReplayComponent {
                     }
 
                     int plankInteger= Integer.parseInt(plankTime.replaceAll(":", ""));
-                    if(plankInteger >= 1400){
+                    if(plankInteger >= 1030){
                         continue;
                     }
 
@@ -159,7 +159,7 @@ public class MarketPlankReplayComponent {
             mapList.add(map);
             groupByMap.put(map.get("kbarDate").toString(),mapList);
         }
-        List<Map> mapList = groupByMap.get("20211122");
+        List<Map> mapList = groupByMap.get("20220113");
         List<Object> stockList = mapList.stream().map(item -> item.get("stockCode")).collect(Collectors.toList());
         log.info("具体个股{}", JSONObject.toJSONString(stockList));
         List<Map> exportList = Lists.newArrayList();

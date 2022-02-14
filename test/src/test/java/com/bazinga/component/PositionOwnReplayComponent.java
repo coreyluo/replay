@@ -56,7 +56,7 @@ public class PositionOwnReplayComponent {
 
     public void positionOwnAdd(){
 
-        File file = new File("E:/excelExport/陈成交20211226.xlsx");
+        File file = new File("E:/excelExport/威20220229.xlsx");
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
 

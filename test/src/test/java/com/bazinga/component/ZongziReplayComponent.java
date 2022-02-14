@@ -103,13 +103,13 @@ public class ZongziReplayComponent {
                         if(currentDTO.getTradePrice().compareTo(avgPrice)>0){
                             overJump++;
                         }
-                        if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *80){
+                        if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *50){
                             buyIndex = j;
                             break;
                         }
                     }
 
-                    if(overJump * 100 < buyIndex * 70){
+                    if(overJump * 100 < buyIndex * 50){
                         continue;
                     }
 
@@ -122,17 +122,17 @@ public class ZongziReplayComponent {
 
                         ThirdSecondTransactionDataDTO buyDTO = list.get(buyIndex);
                         boolean isBuy = true;
-                        for (int j = buyIndex; j < buyIndex+4 && j< list.size()-1; j++) {
+                       /* for (int j = buyIndex; j < buyIndex+4 && j< list.size()-1; j++) {
                             ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
                             if(transactionDataDTO.getTradePrice().compareTo(buyDTO.getTradePrice())<0){
                                 isBuy = false;
                                 break;
                             }
-                        }
+                        }*/
                         if(isBuy){
                             log.info("满足买入条件stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
-                            BigDecimal avgPrice = historyTransactionDataComponent.calBigDecimalAveragePrice(list.subList(0, buyIndex + 4));
-                            ThirdSecondTransactionDataDTO realBuyDTO = list.get(buyIndex + 3);
+                            BigDecimal avgPrice = historyTransactionDataComponent.calBigDecimalAveragePrice(list.subList(0, buyIndex+1));
+                            ThirdSecondTransactionDataDTO realBuyDTO = list.get(buyIndex);
 
                             BigDecimal relativeRate = PriceUtil.getPricePercentRate(realBuyDTO.getTradePrice().subtract(avgPrice), firstPlankKbar.getClosePrice());
                             if(relativeRate.compareTo(new BigDecimal("-1.5"))<=0 || relativeRate.compareTo(new BigDecimal("1.5")) >= 0){
@@ -197,7 +197,6 @@ public class ZongziReplayComponent {
         }
 
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\粽子低吸.xls");
-
     }
 
 }

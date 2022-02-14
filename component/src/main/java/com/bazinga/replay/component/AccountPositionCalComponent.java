@@ -56,11 +56,12 @@ public class AccountPositionCalComponent {
         ACCOUNT_NAME_MAP.put("398000104352","产品");
         ACCOUNT_NAME_MAP.put("398000104348","大佬");
         ACCOUNT_NAME_MAP.put("398000102550","问");
+        ACCOUNT_NAME_MAP.put("398000104865","产品二");
     }
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-        //currentTradeDate = DateUtil.parseDate("20211203",DateUtil.yyyyMMdd);
+        //currentTradeDate = DateUtil.parseDate("20220211",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
