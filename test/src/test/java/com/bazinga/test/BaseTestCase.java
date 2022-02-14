@@ -137,5 +137,9 @@ public class BaseTestCase {
 
     }
 
+    public static void main(String[] args) {
+
+    }
+
 
 }

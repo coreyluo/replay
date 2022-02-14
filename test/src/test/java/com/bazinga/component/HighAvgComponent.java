@@ -65,6 +65,12 @@ public class HighAvgComponent {
         int i = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
             i++;
+            if(!circulateInfo.getStockCode().equals("603378")){
+                continue;
+            }
+            if(circulateInfo.getStockCode().startsWith("30")){
+                continue;
+            }
             System.out.println(circulateInfo.getStockCode()+"===="+i);
             List<HighThanAvgBuyDTO> fastPlank = getHighTanAvgBuys(circulateInfo,minutes);
             dailys.addAll(fastPlank);
@@ -340,13 +346,20 @@ public class HighAvgComponent {
             query.addOrderBy("kbar_date", Sort.SortType.DESC);
             query.setLimit(size);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-            List<StockKbar> reverse = Lists.reverse(stockKbars);
+            List<StockKbar> kbars = Lists.newArrayList();
+            for (StockKbar stockKbar:stockKbars){
+                if(stockKbar.getTradeQuantity()>0){
+                    kbars.add(stockKbar);
+                }
+            }
+            List<StockKbar> reverse = Lists.reverse(kbars);
             List<StockKbar> list = deleteNewStockTimes(reverse, size);
             return list;
         }catch (Exception e){
             return null;
         }
     }
+
 
     //包括新股最后一个一字板
     public List<StockKbar> deleteNewStockTimes(List<StockKbar> list,int size){

@@ -193,7 +193,7 @@ public class BlockHighBuyComponent {
             for(BlockRateBuyDTO blockRateBuyDTO:levelDtos){
                 i++;
                 if(i<=10) {
-                    if(blockRateBuyDTO.getRate().compareTo(new BigDecimal(0))!=-1) {
+                    if(blockRateBuyDTO.getRate().compareTo(new BigDecimal(2))!=-1) {
                         List<BlockRateBuyDTO> buyDtos = buyMap.get(blockRateBuyDTO.getBlockCode());
                         if (buyDtos == null) {
                             buyDtos = Lists.newArrayList();
@@ -232,6 +232,7 @@ public class BlockHighBuyComponent {
             buy.setAvgRate(avgRate);
             buy.setCount(blockRateBuyDTOS.size());
             list.add(buy);
+
         }
         return list;
     }
