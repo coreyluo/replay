@@ -3,6 +3,8 @@ package com.bazinga.component;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.dto.FastPlankDTO;
+import com.bazinga.dto.HotBlockDropBuyDTO;
+import com.bazinga.dto.ShadowKbarDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -26,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
+import javafx.scene.effect.Shadow;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -93,36 +96,64 @@ public class UpperShadowComponent {
 
     public void getStockUpperShowInfo(){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        Map<String, Date> startDateMap = kbarStartDate(circulateInfos);
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20220103",DateUtil.yyyyMMdd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
+        TradeDatePool preTradeDatePool = null;
+        TradeDatePool prePreTradeDatePool = null;
         for(TradeDatePool tradeDatePool:tradeDatePools){
-            for (CirculateInfo circulateInfo:circulateInfos){
-                List<StockKbar> stockKBars = getStockKBars(circulateInfo.getStockCode());
-                if(stockKBars.size()<=180){
-                    continue;
+            if(prePreTradeDatePool!=null) {
+                List<ShadowKbarDTO> shadows = getStockKbarByDate(circulateInfos, DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd),
+                        DateUtil.format(preTradeDatePool.getTradeDate(), DateUtil.yyyyMMdd),DateUtil.format(prePreTradeDatePool.getTradeDate(), DateUtil.yyyyMMdd), startDateMap);
+                if(shadows.size()>3){
+                    int useSize = shadows.size() / 3;
+                    ShadowKbarDTO.marketMoneySort(shadows);
+                    shadows = shadows.subList(0,useSize);
                 }
-                stockKBars = stockKBars.subList(180, stockKBars.size());
-                for (StockKbar stockKbar:stockKBars){
-                    BigDecimal marketMoney = new BigDecimal(circulateInfo.getCirculate()).multiply(stockKbar.getClosePrice()).setScale(2, BigDecimal.ROUND_HALF_UP);
 
-                }
             }
+            prePreTradeDatePool = preTradeDatePool;
+            preTradeDatePool = tradeDatePool;
         }
 
 
     }
 
+    public void calShadowLength(List<ShadowKbarDTO> shadows){
+        for (ShadowKbarDTO shadow:shadows){
+            StockKbar preStockKbar = shadow.getPreStockKbar();
+            BigDecimal upperShadow = (preStockKbar.getAdjHighPrice().subtract(preStockKbar.getAdjClosePrice())).divide(preStockKbar.getAdjClosePrice(), 2, BigDecimal.ROUND_HALF_UP);
+
+        }
+    }
+
     public Map<String, Date> kbarStartDate(List<CirculateInfo> circulateInfos){
         Map<String, Date> map = new HashMap<>();
+        int i = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
+            i++;
+            System.out.println("开始日期"+circulateInfo.getStockCode()+"==="+i);
             List<StockKbar> stockKBars = getStockKBars(circulateInfo.getStockCode());
-            if(stockKBars.size()<=180){
+            if(CollectionUtils.isEmpty(stockKBars)){
                 continue;
             }
-            stockKBars = stockKBars.subList(180, stockKBars.size());
-            Date date = DateUtil.parseDate(stockKBars.get(0).getKbarDate(), DateUtil.yyyyMMdd);
+            List<StockKbar> list = Lists.newArrayList();
+            for (StockKbar stockKbar:stockKBars){
+                if(stockKbar.getTradeQuantity()>=100){
+                    list.add(stockKbar);
+                }
+            }
+           /* if(list.size()<=180){
+                continue;
+            }
+            list = stockKBars.subList(180, list.size());*/
+            Date date = DateUtil.parseDate(list.get(0).getKbarDate(), DateUtil.yyyyMMdd);
             map.put(circulateInfo.getStockCode(),date);
+            if(map.size()>=100){
+                return map;
+            }
         }
         return map;
     }
@@ -141,11 +172,53 @@ public class UpperShadowComponent {
         }
     }
 
-    public StockKbar getStockKbarByDate(String dateStr){
+    public List<ShadowKbarDTO> getStockKbarByDate(List<CirculateInfo> circulateInfos,String dateStr,String preDateStr,String prePreDateStr,Map<String,Date> map){
+        List<ShadowKbarDTO> list = new ArrayList<>();
         StockKbarQuery kbarQuery = new StockKbarQuery();
         kbarQuery.setKbarDate(dateStr);
         List<StockKbar> stockKbars = stockKbarService.listByCondition(kbarQuery);
-        return null;
+        StockKbarQuery preKbarQuery = new StockKbarQuery();
+        preKbarQuery.setKbarDate(preDateStr);
+        List<StockKbar> preStockKbars = stockKbarService.listByCondition(preKbarQuery);
+        StockKbarQuery prePreKbarQuery = new StockKbarQuery();
+        prePreKbarQuery.setKbarDate(prePreDateStr);
+        List<StockKbar> prePreStockKbars = stockKbarService.listByCondition(prePreKbarQuery);
+
+        Map<String, StockKbar> tradeDateMap = new HashMap<>();
+        Map<String, StockKbar> preTradeDateMap = new HashMap<>();
+        Map<String, StockKbar> prePreTradeDateMap = new HashMap<>();
+        for (StockKbar stockKbar:stockKbars){
+            if(stockKbar.getTradeQuantity()>=100) {
+                tradeDateMap.put(stockKbar.getStockCode(), stockKbar);
+            }
+        }
+        for (StockKbar stockKbar:preStockKbars){
+            if(stockKbar.getTradeQuantity()>=100){
+                preTradeDateMap.put(stockKbar.getStockCode(),stockKbar);
+            }
+        }
+        for (StockKbar stockKbar:prePreStockKbars){
+            if(stockKbar.getTradeQuantity()>=100){
+                preTradeDateMap.put(stockKbar.getStockCode(),stockKbar);
+            }
+        }
+        for(CirculateInfo circulateInfo:circulateInfos){
+            StockKbar stockKbar = tradeDateMap.get(circulateInfo.getStockCode());
+            StockKbar preStockKbar = preTradeDateMap.get(circulateInfo.getStockCode());
+            StockKbar prePreStockKbar = prePreTradeDateMap.get(circulateInfo.getStockCode());
+            if(stockKbar!=null&&preStockKbar!=null) {
+                ShadowKbarDTO shadowKbarDTO = new ShadowKbarDTO();
+                shadowKbarDTO.setStockCode(circulateInfo.getStockCode());
+                shadowKbarDTO.setStockName(circulateInfo.getStockName());
+                shadowKbarDTO.setStockKbar(stockKbar);
+                shadowKbarDTO.setPreStockKbar(preStockKbar);
+                shadowKbarDTO.setPrePreStockKbar(prePreStockKbar);
+                BigDecimal marketMoney = new BigDecimal(circulateInfo.getCirculate()).multiply(shadowKbarDTO.getPreStockKbar().getClosePrice()).setScale(2, BigDecimal.ROUND_HALF_UP);
+                shadowKbarDTO.setMarketMoney(marketMoney);
+                list.add(shadowKbarDTO);
+            }
+        }
+        return list;
     }
 
     public List<StockKbar> getStockKBars(String stockCode){
