@@ -68,7 +68,7 @@ public class AccountPositionCalComponent {
         List<PositionCalDTO> resultList = Lists.newArrayList();
 
         try {
-            File orderFile = new File("E:\\positionCal\\"+preName+"_委托_"+kbarDate+".csv");
+            File orderFile = new File("E:\\positionCal\\"+preName+"_当日委托_"+kbarDate+".csv");
             List<String> orderList = FileUtils.readLines(orderFile, "GBK");
             File importFile = new File("E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+preKbarDate+".xls");
             List<PositionCalDTO> importList = new Excel2JavaPojoUtil(importFile).excel2JavaPojo(PositionCalDTO.class);
