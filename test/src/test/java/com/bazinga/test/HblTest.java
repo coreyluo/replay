@@ -98,6 +98,8 @@ public class HblTest extends BaseTestCase {
     private TradeDatePoolService tradeDatePoolService;
     @Autowired
     private HighAvgComponent highAvgComponent;
+    @Autowired
+    private UpperShadowComponent upperShadowComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -124,7 +126,8 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.hangye();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
-        highAvgComponent.highThanAvgBuys();
+        //highAvgComponent.highThanAvgBuys();
+        upperShadowComponent.getStockUpperShowInfo();
 
     }
     @Test
