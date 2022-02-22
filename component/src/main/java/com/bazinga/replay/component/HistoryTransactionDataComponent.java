@@ -8,28 +8,30 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.influx.InfluxDBConnection;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.influxdb.dto.QueryResult;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class HistoryTransactionDataComponent {
+public class HistoryTransactionDataComponent implements InitializingBean {
 
-    public List<ThirdSecondTransactionDataDTO> getDataFromDB(){
-       /* InfluxDBConnection influxDBConnection = new InfluxDBConnection("gank", "uqptVC9LHyhdgkE", "http://47.106.98.39:8086", "history_transaction_20180508", "hour");
+    private InfluxDBConnection influxDBConnection;
+
+    public List<ThirdSecondTransactionDataDTO> getDataFromDB(String stockCode, String kbarDate){
+        List<ThirdSecondTransactionDataDTO> resultList = Lists.newArrayList();
         QueryResult results = influxDBConnection
-                .query("SELECT * FROM sh_600007  limit 10");
+                .query("SELECT * FROM sz_"+stockCode+" where d = "+kbarDate);
         //results.getResults()是同时查询多条SQL语句的返回值，此处我们只有一条SQL，所以只取第一个结果集即可。
         QueryResult.Result oneResult = results.getResults().get(0);
         if (oneResult.getSeries() != null) {
@@ -37,23 +39,23 @@ public class HistoryTransactionDataComponent {
                     .collect(Collectors.toList()).get(0);
             if (valueList != null && valueList.size() > 0) {
                 for (List<Object> value : valueList) {
-                    Map<String, String> map = new HashMap<String, String>();
-                    // 数据库中字段1取值 时间 2018-05-08T09:35:00Z
-                    String field1 = value.get(0) == null ? null : value.get(0).toString();
-                    // 数据库中字段2取值  买卖方向 0，1，2
-                    String field2 = value.get(1) == null ? null : value.get(1).toString();
-                    // 数据库中字段2取值  价格 14.46
-                    String field3 = value.get(1) == null ? null : value.get(2).toString();
-
-                    // TODO 用取出的字段做你自己的业务逻辑……
-                    System.out.println(field1);
-                    System.out.println(field2);
-                    System.out.println(field3);
+                    ThirdSecondTransactionDataDTO transactionDataDTO = new ThirdSecondTransactionDataDTO();
+                    transactionDataDTO.setTradeType(new BigDecimal(value.get(1).toString()).intValue());
+                    String tradeTime = String.valueOf(new BigDecimal(value.get(4).toString()).intValue());
+                    String suffix = tradeTime.substring(tradeTime.length() - 2);
+                    String pre = tradeTime.substring(0,tradeTime.length() - 2);
+                    if(pre.startsWith("9")){
+                        pre = "0"+ pre;
+                    }
+                    transactionDataDTO.setTradeTime(pre+ ":"+ suffix);
+                    transactionDataDTO.setTradeQuantity(new BigDecimal(value.get(5).toString()).intValue());
+                    transactionDataDTO.setTradePrice(new BigDecimal(value.get(3).toString()).setScale(2,BigDecimal.ROUND_HALF_UP));
+                    resultList.add(transactionDataDTO);
                 }
             }
-        }*/
+        }
 
-        return null;
+        return resultList;
 
     }
 
@@ -404,6 +406,12 @@ public class HistoryTransactionDataComponent {
             log.error("分时成交统计数据查询分时数据异常 stockCode:{}",stockCode);
         }
         return null;
+
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        influxDBConnection = new InfluxDBConnection("gank", "uqptVC9LHyhdgkE", "http://47.106.98.39:8086", "history_transaction", "hour");
 
     }
 }
