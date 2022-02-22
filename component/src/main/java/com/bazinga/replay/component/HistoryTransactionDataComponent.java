@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class HistoryTransactionDataComponent {
 
     public List<ThirdSecondTransactionDataDTO> getDataFromDB(){
-        InfluxDBConnection influxDBConnection = new InfluxDBConnection("gank", "uqptVC9LHyhdgkE", "http://47.106.98.39:8086", "history_transaction_20180508", "hour");
+       /* InfluxDBConnection influxDBConnection = new InfluxDBConnection("gank", "uqptVC9LHyhdgkE", "http://47.106.98.39:8086", "history_transaction_20180508", "hour");
         QueryResult results = influxDBConnection
                 .query("SELECT * FROM sh_600007  limit 10");
         //results.getResults()是同时查询多条SQL语句的返回值，此处我们只有一条SQL，所以只取第一个结果集即可。
@@ -51,9 +51,9 @@ public class HistoryTransactionDataComponent {
                     System.out.println(field3);
                 }
             }
-        }
+        }*/
 
-
+        return null;
 
     }
 
