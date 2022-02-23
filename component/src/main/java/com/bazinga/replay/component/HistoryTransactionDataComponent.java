@@ -8,19 +8,57 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
+import com.influx.InfluxDBConnection;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.influxdb.dto.QueryResult;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class HistoryTransactionDataComponent {
+public class HistoryTransactionDataComponent implements InitializingBean {
+
+    private InfluxDBConnection influxDBConnection;
+
+    public List<ThirdSecondTransactionDataDTO> getDataFromDB(String stockCode, String kbarDate){
+        List<ThirdSecondTransactionDataDTO> resultList = Lists.newArrayList();
+        QueryResult results = influxDBConnection
+                .query("SELECT * FROM sz_"+stockCode+" where d = "+kbarDate);
+        //results.getResults()是同时查询多条SQL语句的返回值，此处我们只有一条SQL，所以只取第一个结果集即可。
+        QueryResult.Result oneResult = results.getResults().get(0);
+        if (oneResult.getSeries() != null) {
+            List<List<Object>> valueList = oneResult.getSeries().stream().map(QueryResult.Series::getValues)
+                    .collect(Collectors.toList()).get(0);
+            if (valueList != null && valueList.size() > 0) {
+                for (List<Object> value : valueList) {
+                    ThirdSecondTransactionDataDTO transactionDataDTO = new ThirdSecondTransactionDataDTO();
+                    transactionDataDTO.setTradeType(new BigDecimal(value.get(1).toString()).intValue());
+                    String tradeTime = String.valueOf(new BigDecimal(value.get(4).toString()).intValue());
+                    String suffix = tradeTime.substring(tradeTime.length() - 2);
+                    String pre = tradeTime.substring(0,tradeTime.length() - 2);
+                    if(pre.startsWith("9")){
+                        pre = "0"+ pre;
+                    }
+                    transactionDataDTO.setTradeTime(pre+ ":"+ suffix);
+                    transactionDataDTO.setTradeQuantity(new BigDecimal(value.get(5).toString()).intValue());
+                    transactionDataDTO.setTradePrice(new BigDecimal(value.get(3).toString()).setScale(2,BigDecimal.ROUND_HALF_UP));
+                    resultList.add(transactionDataDTO);
+                }
+            }
+        }
+
+        return resultList;
+
+    }
+
 
     public List<ThirdSecondTransactionDataDTO> getCurrentTransactionData(String stockCode){
         DataTable dataTable = TdxHqUtil.getTransactionData(stockCode, 0, 1200);
@@ -368,6 +406,12 @@ public class HistoryTransactionDataComponent {
             log.error("分时成交统计数据查询分时数据异常 stockCode:{}",stockCode);
         }
         return null;
+
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        influxDBConnection = new InfluxDBConnection("gank", "uqptVC9LHyhdgkE", "http://47.106.98.39:8086", "history_transaction", "hour");
 
     }
 }
