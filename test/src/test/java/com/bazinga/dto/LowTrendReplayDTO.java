@@ -20,6 +20,9 @@ public class LowTrendReplayDTO {
     @ExcelField(name = "买入时是否在均价下")
     private Integer buyUnderLine;
 
+    @ExcelField(name = "买入距离最高点跌幅")
+    private BigDecimal lowRate;
+
     @ExcelField(name="低于均价天数")
     private Integer underLineDays;
 

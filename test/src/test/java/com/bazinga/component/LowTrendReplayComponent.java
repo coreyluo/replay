@@ -14,6 +14,8 @@ import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockAverageLineService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.util.PriceUtil;
+import com.google.common.collect.Lists;
+import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -21,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,10 +41,16 @@ public class LowTrendReplayComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
 
+    private Set<String> buySet = new HashSet<>();
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-        circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
+        circulateInfos = circulateInfos.stream()
+                .filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode()))
+                //.filter(item-> "603638".equals(item.getStockCode()))
+                .collect(Collectors.toList());
 
+        List<LowTrendReplayDTO> resultList = Lists.newArrayList();
         for (CirculateInfo circulateInfo : circulateInfos) {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
@@ -61,7 +71,10 @@ public class LowTrendReplayComponent {
                     StockAverageLine day20Line = stockAverageLineService.getByUniqueKey(uniqueKey20);
                     StockAverageLine day5Line = stockAverageLineService.getByUniqueKey(uniqueKey5);
                     StockAverageLine day10Line = stockAverageLineService.getByUniqueKey(uniqueKey10);
-
+                    if(day20Line==null){
+                        log.info("未找到均线数据 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                        continue stock;
+                    }
                     if(stockKbar.getAdjHighPrice().compareTo(day5Line.getAveragePrice())> 0
                             ||stockKbar.getAdjHighPrice().compareTo(day10Line.getAveragePrice())>0
                             || stockKbar.getAdjHighPrice().compareTo(day20Line.getAveragePrice())>0){
@@ -74,15 +87,20 @@ public class LowTrendReplayComponent {
                     continue ;
                 }
 
-                for (int j = 0; j < 20; j++) {
+                buy:for (int j = 0; j < 20 && j + i +1< stockKbarList.size()-2; j++) {
                     StockKbar moonKbar = stockKbarList.get(j + i);
                     StockKbar sunKbar = stockKbarList.get(j + i +1);
                     int buyIndex = i+j +1;
                     if(sunKbar.getClosePrice().compareTo(sunKbar.getOpenPrice())>0 && sunKbar.getTradeQuantity() > moonKbar.getTradeQuantity()){
+                        if(buySet.contains(sunKbar.getStockCode()+ sunKbar.getKbarDate())){
+                            break;
+                        }
                         log.info("满足买入条件 stockCode{} stockName{}", sunKbar.getStockCode(), sunKbar.getKbarDate());
-                        LowTrendReplayDTO lowTrendReplayDTO = new LowTrendReplayDTO();
-                        lowTrendReplayDTO.setBuyPrice(sunKbar.getClosePrice());
-                        for (int k = i+j+1; k <i+j+41 && k+3< stockKbarList.size() ; k++) {
+                        buySet.add(sunKbar.getStockCode() + sunKbar.getKbarDate());
+                        LowTrendReplayDTO exportDTO = new LowTrendReplayDTO();
+                        exportDTO.setBuyPrice(sunKbar.getClosePrice());
+                        int betweenDay = 0;
+                        for (int k = buyIndex; k <buyIndex+40 && k+3< stockKbarList.size() ; k++) {
                             StockKbar startKbar = stockKbarList.get(k);
                             StockKbar sellDay1Kbar = stockKbarList.get(k+1);
                             StockKbar sellDay2Kbar = stockKbarList.get(k+2);
@@ -91,21 +109,37 @@ public class LowTrendReplayComponent {
                             if(lowRate.compareTo(new BigDecimal("-3"))<0){
                                 BigDecimal startSellPrice = startKbar.getClosePrice().multiply(new BigDecimal("0.97")).setScale(2,BigDecimal.ROUND_HALF_UP);
                                 BigDecimal sellPrice = startSellPrice.add(sellDay1Kbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
-                                lowTrendReplayDTO.setSellPrice(sellPrice);
-                                break  ;
+                                exportDTO.setSellKbarDate(sellDay1Kbar.getKbarDate());
+                                exportDTO.setSellPrice(sellPrice);
+                                exportDTO.setBetweenDay(betweenDay+1);
+                                break ;
                             }
                             BigDecimal sell1HighPrice = sellDay1Kbar.getOpenPrice().compareTo(sellDay1Kbar.getClosePrice())>0?sellDay1Kbar.getOpenPrice():sellDay1Kbar.getClosePrice();
                             BigDecimal sell2HighPrice = sellDay2Kbar.getOpenPrice().compareTo(sellDay2Kbar.getClosePrice())>0?sellDay2Kbar.getOpenPrice():sellDay2Kbar.getClosePrice();
                             if(sell1HighPrice.compareTo(startHighPrice) <=0 && sell2HighPrice.compareTo(startHighPrice)<=0){
-                                StockKbar sellKbar = stockKbarList.get(3);
+                                StockKbar sellKbar = stockKbarList.get(k+3);
                                 BigDecimal sellPrice = sellKbar.getOpenPrice().add(sellKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
-                                lowTrendReplayDTO.setSellPrice(sellPrice);
-                                break  ;
+                                exportDTO.setSellPrice(sellPrice);
+                                exportDTO.setSellKbarDate(sellKbar.getKbarDate());
+                                exportDTO.setBetweenDay(betweenDay+3);
+                                break ;
                             }
+                            betweenDay++;
                         }
+                        UnderInfo underInfo = getUnderInfo(stockKbarList.subList(buyIndex - 20, buyIndex + 1));
+                        exportDTO.setUnderLineDays(underInfo.getUnderDays());
+                        exportDTO.setBuyUnderLine(underInfo.getBuyUnder());
+                        exportDTO.setLowRate(underInfo.getLowRate());
+                        exportDTO.setStockCode(sunKbar.getStockCode());
+                        exportDTO.setStockName(sunKbar.getStockName());
+                        exportDTO.setBuyKbarDate(sunKbar.getKbarDate());
+                        if(exportDTO.getSellPrice()!=null){
+                            exportDTO.setPremium(PriceUtil.getPricePercentRate(exportDTO.getSellPrice().subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
+                        }
+                        resultList.add(exportDTO);
+                        break;
                     }
 
-                    getUnderInfo(stockKbarList.subList(buyIndex-20,buyIndex+1));
 
 
                 }
@@ -116,6 +150,7 @@ public class LowTrendReplayComponent {
 
         }
 
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500破趋势"+kbarDateFrom+"-"+kbarDateTo+".xls");
 
 
 
@@ -125,24 +160,24 @@ public class LowTrendReplayComponent {
 
     }
 
-    private void getUnderInfo(List<StockKbar> list) {
+    private UnderInfo getUnderInfo(List<StockKbar> list) {
         BigDecimal highPrice = list.get(0).getAdjHighPrice();
 
-        int underDays =0;
-        int buyUnder;
+        int underDays = 0;
+        int buyUnder = 0;
         for (int i = 0; i < list.size(); i++) {
             StockKbar stockKbar = list.get(i);
 
 
-            String uniqueKey5= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate() +5;
-            String uniqueKey10= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate() +10;
-            String uniqueKey20= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate() +20;
+            String uniqueKey5= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate() +SymbolConstants.UNDERLINE +5;
+            String uniqueKey10= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+SymbolConstants.UNDERLINE +10;
+            String uniqueKey20= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+SymbolConstants.UNDERLINE +20;
             StockAverageLine averageLine5 = stockAverageLineService.getByUniqueKey(uniqueKey5);
             StockAverageLine averageLine10 = stockAverageLineService.getByUniqueKey(uniqueKey5);
             StockAverageLine averageLine20 = stockAverageLineService.getByUniqueKey(uniqueKey5);
             if(stockKbar.getAdjHighPrice().compareTo(averageLine5.getAveragePrice())<0
-                &&stockKbar.getAdjHighPrice().compareTo(averageLine5.getAveragePrice())<0
-                &&stockKbar.getAdjHighPrice().compareTo(averageLine5.getAveragePrice())<0){
+                &&stockKbar.getAdjHighPrice().compareTo(averageLine10.getAveragePrice())<0
+                &&stockKbar.getAdjHighPrice().compareTo(averageLine20.getAveragePrice())<0){
                 if(i==list.size()-1){
                     buyUnder = 1;
                 }else {
@@ -155,9 +190,9 @@ public class LowTrendReplayComponent {
 
 
         }
-
-
-
+        StockKbar buyStockKbar = list.get(list.size() - 1);
+        BigDecimal lowRate = PriceUtil.getPricePercentRate(buyStockKbar.getAdjClosePrice().subtract(highPrice), highPrice);
+        return new UnderInfo(underDays, buyUnder, lowRate);
     }
 
     @Data
@@ -169,6 +204,11 @@ public class LowTrendReplayComponent {
 
         private BigDecimal lowRate;
 
+        public UnderInfo(Integer underDays, Integer buyUnder, BigDecimal lowRate) {
+            this.underDays = underDays;
+            this.buyUnder = buyUnder;
+            this.lowRate = lowRate;
+        }
     }
 
 
