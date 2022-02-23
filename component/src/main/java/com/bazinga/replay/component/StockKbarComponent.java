@@ -3,19 +3,27 @@ package com.bazinga.replay.component;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
-import com.bazinga.replay.dto.AdjFactorDTO;
 import com.bazinga.replay.convert.StockKbarConvert;
-import com.bazinga.replay.dto.KBarDTO;
+import com.bazinga.replay.dto.AdjFactorDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.*;
-import com.bazinga.replay.query.*;
-import com.bazinga.replay.service.*;
+import com.bazinga.replay.model.CirculateInfo;
+import com.bazinga.replay.model.StockAverageLine;
+import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.CirculateInfoQuery;
+import com.bazinga.replay.query.StockAverageLineQuery;
+import com.bazinga.replay.query.StockKbarQuery;
+import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.CirculateInfoService;
+import com.bazinga.replay.service.StockAverageLineService;
+import com.bazinga.replay.service.StockKbarService;
+import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateFormatUtils;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
+import com.bazinga.util.ThreadPoolUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tradex.enums.KCate;
@@ -24,7 +32,6 @@ import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +41,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -60,6 +68,8 @@ public class StockKbarComponent {
 
     @Autowired
     private StockAverageLineService stockAverageLineService;
+
+    private ExecutorService THREAD_POOL = ThreadPoolUtils.create(4,8,8);
 
     public Map<String,Long> getCybMinQuantity(){
         Map<String,Long> resultMap = Maps.newHashMap();
@@ -413,11 +423,20 @@ public class StockKbarComponent {
             int count = stockAverageLineService.countByCondition(query);
             if (count == 0) {
                 //calAvgLine(item.getStock(), item.getStockName(), 60);
-                for (int i = 5; i <=5 ; i++) {
+              /*  for (int i = 5; i <=5 ; i++) {
                     calAvgLine(item.getStockCode(), item.getStockName(), i);
+                }*/
+                for (int i = 1; i <= 4; i++) {
+                    if(i==3){
+                        continue;
+                    }
+                    final  int day = 5*i;
+                    THREAD_POOL.execute(()->{
+                        calAvgLine(item.getStockCode(), item.getStockName(), day);
+                    });
                 }
-                //calAvgLine(item.getStock(), item.getStockName(), 10);
-                //calAvgLine(item.getStock(), item.getStockName(), 5);
+
+
             }
 
         });
