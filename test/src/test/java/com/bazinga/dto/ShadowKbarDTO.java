@@ -21,7 +21,24 @@ public class ShadowKbarDTO {
     private StockKbar nextStockKbar;
     private BigDecimal rateThanAvg5;
 
+    private BigDecimal rateDay5;
+    private BigDecimal rateDay10;
+    private BigDecimal rateDay15;
+
+
+    private BigDecimal shadowDayDealMoney;
+    private BigDecimal shadowBefore10DealMoney;
+
+
+    private Long shadowBefore30AvgQuantity;
+    private BigDecimal buyRateThanHigh;
+    private BigDecimal shadowLength;
+
     private BigDecimal buyPrice;
+    private BigDecimal buyDayOpenDealMoney;
+    private BigDecimal buyBeforeDealMoney;
+    private BigDecimal buyDayOPenRate;
+    private BigDecimal buyTimeRate;
     private BigDecimal buyPercent;
     private BigDecimal profit;
     private BigDecimal moneyProfit;
