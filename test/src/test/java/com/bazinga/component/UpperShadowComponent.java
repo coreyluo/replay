@@ -93,6 +93,8 @@ public class UpperShadowComponent {
             list.add(dto.getShadowBefore30AvgQuantity());
             list.add(dto.getBuyRateThanHigh());
             list.add(dto.getShadowLength());
+            list.add(dto.getBuySize());
+            list.add(dto.getLevel());
 
             list.add(dto.getBuyPercent());
             list.add(dto.getProfit());
@@ -104,7 +106,7 @@ public class UpperShadowComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
                 "5日涨幅","10日涨幅","15日涨幅","上引线日成交金额","买入日开盘成交额","买入日买入前成交额","买入日开盘涨幅","买入时候涨幅",
                 "上影线前10日平均成交额","买入时相对5日均线距离","上引线前30天平均成交量","上引线日收盘相对前30日最高点涨幅","上引线长度",
-                "买入相对单笔比例","单笔盈利","买入比例盈利"};
+                "买入数量","排名","买入相对单笔比例","单笔盈利","买入比例盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
@@ -152,11 +154,15 @@ public class UpperShadowComponent {
         if(list.size()<=100){
             buyPercent = new BigDecimal(100).divide(new BigDecimal(list.size()), 4, BigDecimal.ROUND_HALF_UP);
         }
+        int i = 0;
         for (ShadowKbarDTO shadowKbarDTO:list){
+            i++;
             /*if(shadowKbarDTO.getStockKbar().getKbarDate().equals("20220209")&&shadowKbarDTO.getStockCode().equals("600123")){
                 System.out.println(12);
             }*/
             shadowKbarDTO.setBuyPercent(buyPercent);
+            shadowKbarDTO.setBuySize(list.size());
+            shadowKbarDTO.setLevel(i);
             calProfit(shadowKbarDTO);
         }
     }
