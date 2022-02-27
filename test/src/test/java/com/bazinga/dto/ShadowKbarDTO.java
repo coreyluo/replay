@@ -42,6 +42,12 @@ public class ShadowKbarDTO {
     private BigDecimal buyDayOPenRate;
     private BigDecimal buyTimeRate;
     private BigDecimal buyPercent;
+
+    private Integer plankTimes;
+
+    private boolean haveHighSell = false;
+    private boolean haveBestSell  = false;
+    private BigDecimal twoPointFiveProfit;
     private BigDecimal profit;
     private BigDecimal moneyProfit;
 

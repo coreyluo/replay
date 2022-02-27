@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 
 public class PriceUtil {
     public static float getPricePercentRate(Float price, Float basePrice) {
@@ -36,6 +37,23 @@ public class PriceUtil {
         return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
     }
 
+
+    /**
+     * 是否是涨停价
+     *
+     * @return
+     */
+    public static boolean isHistoryUpperPrice(String stockCode,BigDecimal currentPrice, BigDecimal yesterdayPrice,String tradeDateStr) {
+        Date date = DateUtil.parseDate(tradeDateStr, DateUtil.yyyyMMdd);
+        if(date.before(DateUtil.parseDate("20200824",DateUtil.yyyyMMdd))){
+            return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
+        }else {
+            if (StringUtils.isNotBlank(stockCode) && (stockCode.startsWith("3") || stockCode.startsWith("688"))) {
+                return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE300).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
+            }
+            return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
+        }
+    }
 
     public static boolean isStarUpperPrice(BigDecimal currentPrice, BigDecimal yesterdayPrice) {
         return currentPrice.compareTo(yesterdayPrice.multiply(CommonConstant.STAR_UPPER_RATE).setScale(2, BigDecimal.ROUND_HALF_UP)) == 0;
