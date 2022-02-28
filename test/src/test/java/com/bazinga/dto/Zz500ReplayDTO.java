@@ -28,6 +28,9 @@ public class Zz500ReplayDTO {
     @ExcelField(name = "买入均价")
     private BigDecimal buyAvgPrice;
 
+    @ExcelField(name = "买入时排名")
+    private Integer rank;
+
     @ExcelField(name = "500开盘涨幅")
     private BigDecimal openRate500;
 

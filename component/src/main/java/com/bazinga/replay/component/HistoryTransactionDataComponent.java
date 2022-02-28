@@ -69,7 +69,7 @@ public class HistoryTransactionDataComponent implements InitializingBean {
         List<ThirdSecondTransactionDataDTO> resultList = Lists.newArrayList();
         int dateAsInt = DateUtil.getDateAsInt(date);
         int loopTimes = 0;
-        int count =600;
+        int count =1200;
         while (loopTimes<30 &&(CollectionUtils.isEmpty(resultList) || !"09:25".equals(resultList.get(0).getTradeTime()))){
             DataTable historyTransactionData = TdxHqUtil.getHistoryTransactionData(stockCode, dateAsInt, loopTimes * count, count);
             loopTimes++;

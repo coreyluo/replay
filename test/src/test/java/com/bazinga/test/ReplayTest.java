@@ -5,13 +5,17 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockCompeteDTO;
 import com.bazinga.dto.OpenCompeteDTO;
+import com.bazinga.util.ThreadPoolUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.text.resources.no.JavaTimeSupplementary_no;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class ReplayTest extends BaseTestCase {
+
+    private ExecutorService THREAD_POOL = ThreadPoolUtils.create(4,8,12);
 
     @Autowired
     private BlockHeadReplayComponent blockHeadReplayComponent;
@@ -165,12 +169,21 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
-     //   zz500RepalyComponent.replay("20180101","20190120");
-      //  zz500RepalyComponent.replay("20190101","20200120");
-     //   zz500RepalyComponent.replay("20200101","20210120");
-     //   zz500RepalyComponent.replay("20210101","20220120");
-      //  zz500RepalyComponent.replay("20220101","20230120");
-        lowTrendReplayComponent.replay("20171001","20230120");
+        THREAD_POOL.execute(()->{
+               zz500RepalyComponent.replay("20180101","20190120");
+        });
+        THREAD_POOL.execute(()->{
+              zz500RepalyComponent.replay("20190101","20200120");
+        });
+        THREAD_POOL.execute(()->{
+               zz500RepalyComponent.replay("20200101","20210120");
+
+        });
+        THREAD_POOL.execute(()->{
+               zz500RepalyComponent.replay("20210101","20220120");
+        });
+        zz500RepalyComponent.replay("20220101","20230120");
+    //    lowTrendReplayComponent.replay("20171001","20230120");
 
       // index500Component.getIndex500RateMap();
 

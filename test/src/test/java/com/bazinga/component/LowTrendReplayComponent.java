@@ -89,6 +89,7 @@ public class LowTrendReplayComponent {
 
                 buy:for (int j = 0; j < 20 && j + i +1< stockKbarList.size()-2; j++) {
                     StockKbar moonKbar = stockKbarList.get(j + i);
+                   // double avgQuantity = stockKbarList.subList(j + i - 4, j + i + 1).stream().mapToLong(StockKbar::getTradeQuantity).average().getAsDouble();
                     StockKbar sunKbar = stockKbarList.get(j + i +1);
                     int buyIndex = i+j +1;
                     if(sunKbar.getClosePrice().compareTo(sunKbar.getOpenPrice())>0 && sunKbar.getTradeQuantity() > moonKbar.getTradeQuantity()){
@@ -127,6 +128,9 @@ public class LowTrendReplayComponent {
                             betweenDay++;
                         }
                         UnderInfo underInfo = getUnderInfo(stockKbarList.subList(buyIndex - 20, buyIndex + 1));
+                        if(underInfo ==null){
+                            break ;
+                        }
                         exportDTO.setUnderLineDays(underInfo.getUnderDays());
                         exportDTO.setBuyUnderLine(underInfo.getBuyUnder());
                         exportDTO.setLowRate(underInfo.getLowRate());
@@ -173,8 +177,11 @@ public class LowTrendReplayComponent {
             String uniqueKey10= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+SymbolConstants.UNDERLINE +10;
             String uniqueKey20= stockKbar.getStockCode() + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+SymbolConstants.UNDERLINE +20;
             StockAverageLine averageLine5 = stockAverageLineService.getByUniqueKey(uniqueKey5);
-            StockAverageLine averageLine10 = stockAverageLineService.getByUniqueKey(uniqueKey5);
-            StockAverageLine averageLine20 = stockAverageLineService.getByUniqueKey(uniqueKey5);
+            StockAverageLine averageLine10 = stockAverageLineService.getByUniqueKey(uniqueKey10);
+            StockAverageLine averageLine20 = stockAverageLineService.getByUniqueKey(uniqueKey20);
+            if(averageLine20==null){
+                return null;
+            }
             if(stockKbar.getAdjHighPrice().compareTo(averageLine5.getAveragePrice())<0
                 &&stockKbar.getAdjHighPrice().compareTo(averageLine10.getAveragePrice())<0
                 &&stockKbar.getAdjHighPrice().compareTo(averageLine20.getAveragePrice())<0){
