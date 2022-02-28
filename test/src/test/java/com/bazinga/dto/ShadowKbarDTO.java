@@ -37,6 +37,7 @@ public class ShadowKbarDTO {
     private Integer level;
 
     private BigDecimal buyPrice;
+    private BigDecimal afterBuyPrice;
     private BigDecimal buyDayOpenDealMoney;
     private BigDecimal buyBeforeDealMoney;
     private BigDecimal buyDayOPenRate;
@@ -51,6 +52,8 @@ public class ShadowKbarDTO {
     private BigDecimal profit;
     private BigDecimal moneyProfit;
 
+
+    private BigDecimal afterProfit;
 
     public static List<ShadowKbarDTO> marketMoneySort(List<ShadowKbarDTO> list){
         Collections.sort(list,new MarketMoneyComparator());

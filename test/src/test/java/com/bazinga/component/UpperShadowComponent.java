@@ -103,6 +103,7 @@ public class UpperShadowComponent {
             list.add(dto.getBuyPercent());
             list.add(dto.getProfit());
             list.add(dto.getMoneyProfit());
+            list.add(dto.getAfterProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
@@ -110,7 +111,7 @@ public class UpperShadowComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
                 "5日涨幅","10日涨幅","15日涨幅","上引线日成交金额","买入日开盘成交额","买入日买入前成交额","买入日开盘涨幅","买入时候涨幅",
                 "上影线前10日平均成交额","买入时相对5日均线距离","上引线前30天平均成交量","上引线日收盘相对前30日最高点涨幅","上引线长度",
-                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","买入相对单笔比例","单笔盈利","买入比例盈利"};
+                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","买入相对单笔比例","单笔盈利","买入比例盈利","买入两跳不降低盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
@@ -327,6 +328,10 @@ public class UpperShadowComponent {
             BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(buyDTO.getBuyPrice()), buyDTO.getBuyPrice());
             buyDTO.setProfit(profit);
             buyDTO.setMoneyProfit(profit.multiply(buyDTO.getBuyPercent()).setScale(2,BigDecimal.ROUND_HALF_UP));
+            if(buyDTO.getAfterBuyPrice()!=null) {
+                BigDecimal afterProfit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(buyDTO.getAfterBuyPrice()), buyDTO.getAfterBuyPrice());
+                buyDTO.setAfterProfit(afterProfit);
+            }
         }
     }
 
@@ -407,6 +412,28 @@ public class UpperShadowComponent {
             if(date.after(buyTime)){
                 break;
             }
+        }
+        int afterTimes = 0;
+        boolean afterFlag = true;
+        BigDecimal afterBuyPrice = null;
+        for (ThirdSecondTransactionDataDTO data:datas){
+            Date date = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
+            if(date.after(buyTime)){
+                afterTimes++;
+            }
+            if(afterTimes>0 && data.getTradePrice().compareTo(tradePrice)==-1){
+                afterFlag = false;
+            }
+            if(afterTimes==2){
+                if(afterFlag){
+                    afterBuyPrice = data.getTradePrice();
+                }
+                break;
+            }
+        }
+        if(afterBuyPrice !=null){
+            BigDecimal chuQuanAfterBuyPrice = chuQuanAvgPrice(afterBuyPrice, shadow.getStockKbar());
+            shadow.setAfterBuyPrice(chuQuanAfterBuyPrice);
         }
         BigDecimal chuQuanTradePrice = chuQuanAvgPrice(tradePrice, shadow.getStockKbar());
         shadow.setBuyPrice(chuQuanTradePrice);
