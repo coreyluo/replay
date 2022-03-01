@@ -105,18 +105,9 @@ public class TdxHqPollManager {
     }
 
     protected static Long getAccountIdByRoute(String stockCode) {
-        ExchangeId exchangeId = StockUtils.getExchangeId(stockCode);
-        if(exchangeId==null){
-            return 1L;
-        }
-        switch (exchangeId){
-            case SZ:
-                return 1L;
-            case SH:
-                return 2L;
-            default:
-                return 1L;
-        }
+
+
+       return Integer.parseInt(stockCode)%8+1L;
     }
 
     protected static Long getAccountIdByRoute(ExchangeId exchangeId) {

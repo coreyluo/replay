@@ -60,61 +60,54 @@ public class SellReplayComponent {
     public void replay300(){
 
         List<Sell300ExportDTO> resultList = Lists.newArrayList();
-        File file = new File("E:/excelExport/陈1109.xlsx");
+        File file = new File("E:/excelExport/威20220228.xlsx");
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
 
-            importList = importList.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
-            Map<String, OpenCompeteDTO> competeMap = commonReplayComponent.get300CompeteInfo();
+         //   importList = importList.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
+       //     Map<String, OpenCompeteDTO> competeMap = commonReplayComponent.get300CompeteInfo();
             for (SellReplayImportDTO importDTO : importList) {
 
-                if(importDTO.getSealType()==0){
+               /* if(importDTO.getSealType()==0){
                     continue;
-                }
+                }*/
 
                 String kbarDate = DateUtil.format(importDTO.getKbarDate(),DateUtil.yyyyMMdd);
                 Date sellDate = commonComponent.afterTradeDate(importDTO.getKbarDate());
                 String uniqueKey = importDTO.getStockCode() + SymbolConstants.UNDERLINE + kbarDate;
                 StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
                 Sell300ExportDTO exportDTO = new Sell300ExportDTO();
-
-                OpenCompeteDTO openCompeteDTO = competeMap.get(uniqueKey);
-                if(openCompeteDTO ==null){
-                    log.info("为获取到排名信息stockCode{} kbarDate{}",importDTO.getStockCode(),kbarDate);
-                }else {
-                    exportDTO.setOpenRate(openCompeteDTO.getRate());
-                    exportDTO.setCompeteNum(openCompeteDTO.getCompeteNum());
+                exportDTO.setStockCode(importDTO.getStockCode());
+                exportDTO.setStockName(importDTO.getStockName());
+                if(stockKbar == null ){
+                    log.info("未获取到K线数据stockCode{} stockName{}",importDTO.getStockCode(),importDTO.getKbarDate());
+                    resultList.add(exportDTO);
+                    continue;
                 }
+            //    OpenCompeteDTO openCompeteDTO = competeMap.get(uniqueKey);
+
                 exportDTO.setStockCode(importDTO.getStockCode());
                 exportDTO.setStockName(importDTO.getStockName());
                 exportDTO.setKbarDate(kbarDate);
                // exportDTO.setOrderTime(DateUtil.format(importDTO.getOrderTime(),DateUtil.HH_MM));
                 exportDTO.setSealType(importDTO.getSealType());
-                exportDTO.setPremiumRate(importDTO.getPremiumRate().multiply(CommonConstant.DECIMAL_HUNDRED).setScale(2,BigDecimal.ROUND_HALF_UP));
+//                exportDTO.setPremiumRate(importDTO.getPremiumRate().multiply(CommonConstant.DECIMAL_HUNDRED).setScale(2,BigDecimal.ROUND_HALF_UP));
 
 
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(importDTO.getStockCode(), sellDate);
                 if(!CollectionUtils.isEmpty(list)){
-                    List<ThirdSecondTransactionDataDTO> fixList = historyTransactionDataComponent.getFixTimeData(list, "13:01");
-                    if(CollectionUtils.isEmpty(fixList)){
-                        continue;
-                    }
-                    ThirdSecondTransactionDataDTO open = fixList.get(0);
-                    ThirdSecondTransactionDataDTO transactionDataDTO = fixList.get(9);
-                    Integer overOpen = transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0?1:0;
-                    exportDTO.setOverOpen(overOpen);
-                    ThirdSecondTransactionDataDTO last = fixList.get(fixList.size() - 1);
-                    exportDTO.setMonitorSellRate(PriceUtil.getPricePercentRate(last.getTradePrice().subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice()));
+                    BigDecimal sellPrice = historyTransactionDataComponent
+                            .calMorningAvgPrice(importDTO.getStockCode(), DateUtil.format(sellDate, DateUtil.yyyyMMdd));
+                    exportDTO.setMonitorSellRate(PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice()));
                 }
                 resultList.add(exportDTO);
             }
 
-
+            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\封住主板卖出回测.xls");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         }
 
-        com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\封住主板卖出回测.xls");
 
 
     }

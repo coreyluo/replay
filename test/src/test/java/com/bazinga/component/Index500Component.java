@@ -45,7 +45,7 @@ public class Index500Component {
         String[] headList = getHeadList();
         TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
         tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20171101", DateUtil.yyyyMMdd));
-        tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220208", DateUtil.yyyyMMdd));
+        tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220228", DateUtil.yyyyMMdd));
         tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
         BigDecimal closePrice = BigDecimal.ZERO;
@@ -67,11 +67,23 @@ public class Index500Component {
 
             Map<String, IndexRate500DTO> tempMap = new HashMap<>();
             Integer overOpenCount = 0;
+            BigDecimal min5TradeAmount = BigDecimal.ZERO;
             List<ThirdSecondTransactionDataDTO> list0935 = historyTransactionDataComponent.getFixTimeData(list, "09:35");
+            List<ThirdSecondTransactionDataDTO> list0940 = historyTransactionDataComponent.getFixTimeData(list, "09:40");
             ThirdSecondTransactionDataDTO open = list.get(0);
             for (ThirdSecondTransactionDataDTO transactionDataDTO : list0935) {
+                min5TradeAmount = min5TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
                 if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
                     overOpenCount++;
+                }
+            }
+
+            Integer overOpen10 = 0;
+            BigDecimal min10TradeAmount = BigDecimal.ZERO;
+            for (ThirdSecondTransactionDataDTO transactionDataDTO : list0940) {
+                min10TradeAmount = min10TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
+                if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
+                    overOpen10++;
                 }
             }
 
@@ -85,7 +97,7 @@ public class Index500Component {
                 BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(closePrice),closePrice);
                 BigDecimal highRate = PriceUtil.getPricePercentRate(highPrice.subtract(closePrice),closePrice);
                 BigDecimal buyRate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(closePrice),closePrice);
-                tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount));
+                tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount,overOpen10,min5TradeAmount,min10TradeAmount));
             }
             for (int i = 0; i < headList.length-1; i++) {
                 IndexRate500DTO indexRate500DTO = tempMap.get(headList[i]);
@@ -146,7 +158,7 @@ public class Index500Component {
             BigDecimal day5Rate = StockKbarUtil.getNDaysUpperRate(resultList.subList(i - 16, i), 5);
             BigDecimal day10Rate = StockKbarUtil.getNDaysUpperRate(resultList.subList(i - 16, i), 10);
             BigDecimal day15Rate = StockKbarUtil.getNDaysUpperRate(resultList.subList(i - 16, i), 15);
-            resultMap.put(stockKbar.getKbarDate(),new Index500NDayDTO(day5Rate,day10Rate,day15Rate));
+            resultMap.put(stockKbar.getKbarDate(),new Index500NDayDTO(stockKbar.getTradeAmount(),day5Rate,day10Rate,day15Rate));
         }
 
         return resultMap;

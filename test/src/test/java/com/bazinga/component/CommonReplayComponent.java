@@ -132,6 +132,48 @@ public class CommonReplayComponent {
     }
 
 
+    public Map<String,Integer> getPlankHighCountMap(){
+        Map<String,Integer> resultMap = new HashMap<>();
+
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20210415");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> kbarList = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<20){
+                continue;
+            }
+            for (int i = 8; i < kbarList.size(); i++) {
+                int plank = PlankHighUtil.calSerialsPlank(kbarList.subList(i - 8, i + 1));
+                StockKbar stockKbar = kbarList.get(i);
+                if(plank==2){
+                    String mapKey = stockKbar.getKbarDate()+ SymbolConstants.UNDERLINE + 2;
+                    Integer count = resultMap.get(mapKey);
+                    if(count==null){
+                        resultMap.put(mapKey,1);
+                    }else {
+                        count = count+1;
+                        resultMap.put(mapKey,count);
+                    }
+                }
+                if(plank>=3){
+                    String mapKey = stockKbar.getKbarDate()+ SymbolConstants.UNDERLINE + 3;
+                    Integer count = resultMap.get(mapKey);
+                    if(count==null){
+                        resultMap.put(mapKey,1);
+                    }else {
+                        count = count+1;
+                        resultMap.put(mapKey,count);
+                    }
+                }
+            }
+        }
+        return resultMap;
+    }
+
+
     public Map<String, IndexRateDTO> initIndexRateMap(String indexCode) {
 
         Map<String, IndexRateDTO> resultMap = new HashMap<>();
