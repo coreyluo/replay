@@ -49,23 +49,18 @@ public class TdxHqUtil extends TdxHqPollManager {
     private static void initPoolConnect() {
         String server = Conf.get("tdx.hq.server");
         String[] ss = StringUtils.split(server, ",;| ");
-        ArrayList<String[]> hosts1 = new ArrayList<>();
+     /*   ArrayList<String[]> hosts1 = new ArrayList<>();
         ArrayList<String[]> hosts2 = new ArrayList<>();
-        ArrayList<String[]> hosts3 = new ArrayList<>();
+        ArrayList<String[]> hosts3 = new ArrayList<>();*/
         for (int i = 0; i < ss.length; i++) {
+            List<String[]> host = new ArrayList<>();
+
             String s = ss[i];
             String[] hostPort = StringUtils.split(s, ':');
-            if (i < 2) {
-                hosts1.add(hostPort);
-            } else if(i<4){
-                hosts2.add(hostPort);
-            }else {
-                hosts3.add(hostPort);
-            }
+            host.add(hostPort);
+            CONNECT_HOST_LIST_MAP.put(i+1L,host);
         }
-        CONNECT_HOST_LIST_MAP.put(1L, hosts1);
-        CONNECT_HOST_LIST_MAP.put(2L, hosts2);
-        CONNECT_HOST_LIST_MAP.put(3L, hosts3);
+
     }
 
     /**
@@ -841,6 +836,7 @@ public class TdxHqUtil extends TdxHqPollManager {
                     return new DataTable("HistoryTransactionData", result);
                 } else {
                     logger.error("第{}次调用l1行情服务器是失败！原因是:{}", i + 1, error);
+                    TimeUnit.MILLISECONDS.sleep(200);
                     if (StringUtils.containsAny(error, NEED_RECONNECT_ERROR)) {
                         disconnect(tdxHqClient);
                         connectNew(accountId);

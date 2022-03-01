@@ -92,13 +92,18 @@ public class LowTrendReplayComponent {
                    // double avgQuantity = stockKbarList.subList(j + i - 4, j + i + 1).stream().mapToLong(StockKbar::getTradeQuantity).average().getAsDouble();
                     StockKbar sunKbar = stockKbarList.get(j + i +1);
                     int buyIndex = i+j +1;
-                    if(sunKbar.getClosePrice().compareTo(sunKbar.getOpenPrice())>0 && sunKbar.getTradeQuantity() > moonKbar.getTradeQuantity()){
+                    if(sunKbar.getClosePrice().compareTo(sunKbar.getOpenPrice())>0 && sunKbar.getTradeAmount().compareTo(moonKbar.getTradeAmount())>0){
                         if(buySet.contains(sunKbar.getStockCode()+ sunKbar.getKbarDate())){
                             break;
                         }
                         log.info("满足买入条件 stockCode{} stockName{}", sunKbar.getStockCode(), sunKbar.getKbarDate());
                         buySet.add(sunKbar.getStockCode() + sunKbar.getKbarDate());
+                        BigDecimal avgPrice = getAvgTradeAmount(stockKbarList.subList(buyIndex-5,buyIndex));
+
                         LowTrendReplayDTO exportDTO = new LowTrendReplayDTO();
+                        exportDTO.setBuyTradeAmount(sunKbar.getTradeAmount());
+                        exportDTO.setPreBuyTradeAmount(moonKbar.getTradeAmount());
+
                         exportDTO.setBuyPrice(sunKbar.getClosePrice());
                         int betweenDay = 0;
                         for (int k = buyIndex; k <buyIndex+40 && k+3< stockKbarList.size() ; k++) {
@@ -162,6 +167,13 @@ public class LowTrendReplayComponent {
 
 
 
+    }
+
+    private BigDecimal getAvgTradeAmount(List<StockKbar> list) {
+
+        //
+
+        return null;
     }
 
     private UnderInfo getUnderInfo(List<StockKbar> list) {

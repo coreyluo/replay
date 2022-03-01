@@ -2,6 +2,7 @@ package com.bazinga.dto;
 
 
 import com.bazinga.annotation.ExcelElement;
+import com.xuxueli.poi.excel.annotation.ExcelField;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -48,5 +49,6 @@ public class Sell300ExportDTO {
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
+    @ExcelField(name = "上午均价收益")
     private BigDecimal monitorSellRate;
 }

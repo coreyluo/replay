@@ -31,6 +31,9 @@ public class Zz500ReplayDTO {
     @ExcelField(name = "买入时排名")
     private Integer rank;
 
+    @ExcelField(name = "集合时具体成交额")
+    private BigDecimal openTradeAmount;
+
     @ExcelField(name = "500开盘涨幅")
     private BigDecimal openRate500;
 
@@ -51,6 +54,18 @@ public class Zz500ReplayDTO {
 
     @ExcelField(name = "500前5分钟高于开盘跳数")
     private Integer overOpenCountMin5;
+
+    @ExcelField(name = "500前10分钟高于开盘跳数")
+    private Integer overOpenCount10;
+
+    @ExcelField(name = "500前5分钟成交额")
+    private BigDecimal min5TradeAmount;
+
+    @ExcelField(name = "500前10分钟成交额")
+    private BigDecimal min10TradeAmount;
+
+    @ExcelField(name = "500上一日成交额")
+    private BigDecimal preDay500Amount;
 
     @ExcelField(name = "最高点相对均价点数")
     private  BigDecimal highRelativeRate;

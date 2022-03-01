@@ -5,10 +5,7 @@ import com.bazinga.ReplayConstant;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
-import com.bazinga.dto.Index500NDayDTO;
-import com.bazinga.dto.IndexRate500DTO;
-import com.bazinga.dto.ZongZiExportDTO;
-import com.bazinga.dto.Zz500ReplayDTO;
+import com.bazinga.dto.*;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.PlankHighDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
@@ -58,13 +55,15 @@ public class Zz500RepalyComponent {
 
     public void replay(String kbarDateFrom ,String kbarDateTo){
         Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1000);
+        log.info("获取500涨幅成功");
         Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
+        log.info("获取500分时map成功");
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
         circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
 
-        Map<String,Integer> rankMap = getStockDayRank(circulateInfos,kbarDateFrom,kbarDateTo);
+        Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos,kbarDateFrom,kbarDateTo);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
 
@@ -185,9 +184,10 @@ public class Zz500RepalyComponent {
                         exportDTO.setBuykbarDate(buyStockKbar.getKbarDate());
                         exportDTO.setBuyPrice(realBuyDTO.getTradePrice());
                         exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
-                        Integer rank = rankMap.get(buyStockKbar.getStockCode() + SymbolConstants.UNDERLINE + buyStockKbar.getKbarDate());
-                        if(rank!=null){
-                            exportDTO.setRank(rank);
+                        RankDTO rankDTO = rankMap.get(buyStockKbar.getStockCode() + SymbolConstants.UNDERLINE + buyStockKbar.getKbarDate());
+                        if(rankDTO!=null){
+                            exportDTO.setRank(rankDTO.getRank());
+                            exportDTO.setOpenTradeAmount(rankDTO.getTradeAmount());
                         }
 
                         IndexRate500DTO indexRate500DTO = index500RateMap.get(buyStockKbar.getKbarDate() + realBuyDTO.getTradeTime());
@@ -196,6 +196,10 @@ public class Zz500RepalyComponent {
                             log.info("dto为空 tradeTime{}",realBuyDTO.getTradeTime());
                             continue;
                         }
+                        exportDTO.setPreDay500Amount(ndayRateMap.get(firstPlankKbar.getKbarDate()).getTradeAmount());
+                        exportDTO.setOverOpenCount10(indexRate500DTO.getOverOpenCount10());
+                        exportDTO.setMin5TradeAmount(indexRate500DTO.getMin5TradeAmount());
+                        exportDTO.setMin10TradeAmount(indexRate500DTO.getMin10TradeAmount());
                         exportDTO.setOpenRate500(indexRate500DTO.getOpenRate());
                         exportDTO.setHighRate500(indexRate500DTO.getHighRate());
                         exportDTO.setLowRate500(indexRate500DTO.getLowRate());
@@ -248,20 +252,19 @@ public class Zz500RepalyComponent {
 
 
         }
-
+        log.info("输出文件500低吸");
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸"+kbarDateFrom+"-"+kbarDateTo+".xls");
 
     }
 
-    private Map<String, Integer> getStockDayRank(List<CirculateInfo> circulateInfos,String kbarDateFrom ,String kbarDateTo) {
+    private Map<String, RankDTO> getStockDayRank(List<CirculateInfo> circulateInfos, String kbarDateFrom , String kbarDateTo) {
 
-        Map<String,Integer> resultMap = new HashMap<>();
+        Map<String,RankDTO> resultMap = new HashMap<>();
 
         TradeDatePoolQuery query = new TradeDatePoolQuery();
         query.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
         query.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
-        Map<String,Integer> rankMap = new HashMap<>();
         for (TradeDatePool tradeDatePool : tradeDatePools) {
             Map<String,BigDecimal> tempMap = new HashMap<>();
             for (CirculateInfo circulateInfo : circulateInfos) {
@@ -278,7 +281,7 @@ public class Zz500RepalyComponent {
 
             int rank= 1;
             for (Map.Entry<String, BigDecimal> entry : sortedMap.entrySet()) {
-                resultMap.put(entry.getKey(),rank);
+                resultMap.put(entry.getKey(),new RankDTO(rank,entry.getValue()));
                 rank++;
             }
         }

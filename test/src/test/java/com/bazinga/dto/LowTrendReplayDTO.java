@@ -29,6 +29,16 @@ public class LowTrendReplayDTO {
     @ExcelField(name = "买入价格")
     private BigDecimal buyPrice;
 
+    @ExcelField(name = "买入日成交金额")
+    private BigDecimal buyTradeAmount;
+
+    @ExcelField(name = "买入前一天成交金额")
+    private BigDecimal preBuyTradeAmount;
+
+    @ExcelField(name = "买入前5日平均成交金额")
+    private BigDecimal preDay5AvgAmount;
+
+
     @ExcelField(name = "卖出日期")
     private String sellKbarDate;
 
