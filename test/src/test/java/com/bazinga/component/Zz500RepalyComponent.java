@@ -1,6 +1,7 @@
 package com.bazinga.component;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.ReplayConstant;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
@@ -10,12 +11,14 @@ import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.PlankHighDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
+import com.bazinga.replay.model.RedisMonior;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.CirculateInfoService;
+import com.bazinga.replay.service.RedisMoniorService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.replay.util.PlankHighUtil;
@@ -53,6 +56,9 @@ public class Zz500RepalyComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
 
+    @Autowired
+    private RedisMoniorService redisMoniorService;
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
         Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1200);
         log.info("获取500涨幅成功");
@@ -63,7 +69,7 @@ public class Zz500RepalyComponent {
 
         circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
 
-        Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos,kbarDateFrom,kbarDateTo);
+        Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
 
@@ -261,33 +267,44 @@ public class Zz500RepalyComponent {
 
     }
 
-    private Map<String, RankDTO> getStockDayRank(List<CirculateInfo> circulateInfos, String kbarDateFrom , String kbarDateTo) {
-
+    private Map<String, RankDTO> getStockDayRank(List<CirculateInfo> circulateInfos) {
         Map<String,RankDTO> resultMap = new HashMap<>();
-
-        TradeDatePoolQuery query = new TradeDatePoolQuery();
-        query.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
-        query.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
-        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
-        for (TradeDatePool tradeDatePool : tradeDatePools) {
-            Map<String,BigDecimal> tempMap = new HashMap<>();
-            for (CirculateInfo circulateInfo : circulateInfos) {
-                Date tradeDate = tradeDatePool.getTradeDate();
-                String kbarDate = DateUtil.format(tradeDate,DateUtil.yyyyMMdd);
-                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), tradeDate);
-                if(CollectionUtils.isEmpty(list)|| list.size()<3) {
-                    continue;
+        String key = "zz500_open_amount_rank";
+        RedisMonior redisMonior = redisMoniorService.getByKey(key);
+        if(redisMonior !=null){
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getValue());
+            jsonObject.forEach((jsonKey,value)->{
+                resultMap.put(jsonKey,JSONObject.parseObject(value.toString(),RankDTO.class));
+            });
+        }else {
+            TradeDatePoolQuery query = new TradeDatePoolQuery();
+            query.setTradeDateFrom(DateUtil.parseDate("20180101",DateUtil.yyyyMMdd));
+            query.setTradeDateTo(DateUtil.parseDate("20220228",DateUtil.yyyyMMdd));
+            List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+            for (TradeDatePool tradeDatePool : tradeDatePools) {
+                Map<String,BigDecimal> tempMap = new HashMap<>();
+                for (CirculateInfo circulateInfo : circulateInfos) {
+                    Date tradeDate = tradeDatePool.getTradeDate();
+                    String kbarDate = DateUtil.format(tradeDate,DateUtil.yyyyMMdd);
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), tradeDate);
+                    if(CollectionUtils.isEmpty(list)|| list.size()<3) {
+                        continue;
+                    }
+                    ThirdSecondTransactionDataDTO open = list.get(0);
+                    tempMap.put(circulateInfo.getStockCode() + SymbolConstants.UNDERLINE + kbarDate,open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity().toString())));
                 }
-                ThirdSecondTransactionDataDTO open = list.get(0);
-                tempMap.put(circulateInfo.getStockCode() + SymbolConstants.UNDERLINE + kbarDate,open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity().toString())));
-            }
-            Map<String, BigDecimal> sortedMap = SortUtil.sortByValue(tempMap);
+                Map<String, BigDecimal> sortedMap = SortUtil.sortByValue(tempMap);
 
-            int rank= 1;
-            for (Map.Entry<String, BigDecimal> entry : sortedMap.entrySet()) {
-                resultMap.put(entry.getKey(),new RankDTO(rank,entry.getValue()));
-                rank++;
+                int rank= 1;
+                for (Map.Entry<String, BigDecimal> entry : sortedMap.entrySet()) {
+                    resultMap.put(entry.getKey(),new RankDTO(rank,entry.getValue()));
+                    rank++;
+                }
             }
+            RedisMonior monior = new RedisMonior();
+            monior.setKey(key);
+            monior.setValue(JSONObject.toJSONString(resultMap));
+            redisMoniorService.save(monior);
         }
         return resultMap;
     }

@@ -1,15 +1,19 @@
 package com.bazinga.component;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.Index500NDayDTO;
 import com.bazinga.dto.IndexRate500DTO;
 import com.bazinga.dto.IndexRateDTO;
+import com.bazinga.dto.RankDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.convert.StockKbarConvert;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.RedisMonior;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.RedisMoniorService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
@@ -39,73 +43,87 @@ public class Index500Component {
     @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
+    @Autowired
+    private RedisMoniorService redisMoniorService;
+
     public  Map<String, IndexRate500DTO> getIndex500RateMap(){
-
         Map<String, IndexRate500DTO> resultMap = new HashMap<>();
-        String[] headList = getHeadList();
-        TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
-        tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20171101", DateUtil.yyyyMMdd));
-        tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220228", DateUtil.yyyyMMdd));
-        tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
-        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
-        BigDecimal closePrice = BigDecimal.ZERO;
-        for (TradeDatePool tradeDatePool : tradeDatePools) {
 
-            String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
-            List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getIndexData("000905", kbarDate);
-            if(CollectionUtils.isEmpty(list)){
-                log.info("");
-            }
-            if(closePrice.compareTo(BigDecimal.ZERO)==0){
+        String key = "zz_500_index_rate";
+        RedisMonior redisMonior = redisMoniorService.getByKey(key);
+        if(redisMonior !=null){
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getValue());
+            jsonObject.forEach((jsonKey,value)->{
+                resultMap.put(jsonKey,JSONObject.parseObject(value.toString(), IndexRate500DTO.class));
+            });
+        }else {
+            String[] headList = getHeadList();
+            TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
+            tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20171101", DateUtil.yyyyMMdd));
+            tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220228", DateUtil.yyyyMMdd));
+            tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+            List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
+            BigDecimal closePrice = BigDecimal.ZERO;
+            for (TradeDatePool tradeDatePool : tradeDatePools) {
+
+                String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getIndexData("000905", kbarDate);
+                if(CollectionUtils.isEmpty(list)){
+                    log.info("");
+                }
+                if(closePrice.compareTo(BigDecimal.ZERO)==0){
+                    closePrice = list.get(list.size()-1).getTradePrice();
+                    continue;
+                }
+                BigDecimal openPrice = list.get(0).getTradePrice();
+                BigDecimal openRate = PriceUtil.getPricePercentRate(openPrice.subtract(closePrice),closePrice);
+                BigDecimal lowPrice = new BigDecimal("1000000");
+                BigDecimal highPrice = new BigDecimal("-10");
+
+                Map<String, IndexRate500DTO> tempMap = new HashMap<>();
+                Integer overOpenCount = 0;
+                BigDecimal min5TradeAmount = BigDecimal.ZERO;
+                List<ThirdSecondTransactionDataDTO> list0935 = historyTransactionDataComponent.getFixTimeData(list, "09:35");
+                List<ThirdSecondTransactionDataDTO> list0940 = historyTransactionDataComponent.getFixTimeData(list, "09:40");
+                ThirdSecondTransactionDataDTO open = list.get(0);
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list0935) {
+                    min5TradeAmount = min5TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
+                    if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
+                        overOpenCount++;
+                    }
+                }
+
+                Integer overOpen10 = 0;
+                BigDecimal min10TradeAmount = BigDecimal.ZERO;
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list0940) {
+                    min10TradeAmount = min10TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
+                    if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
+                        overOpen10++;
+                    }
+                }
+
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
+                    if(highPrice.compareTo(transactionDataDTO.getTradePrice())<0){
+                        highPrice = transactionDataDTO.getTradePrice();
+                    }
+                    if(lowPrice.compareTo(transactionDataDTO.getTradePrice())>0){
+                        lowPrice = transactionDataDTO.getTradePrice();
+                    }
+                    BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(closePrice),closePrice);
+                    BigDecimal highRate = PriceUtil.getPricePercentRate(highPrice.subtract(closePrice),closePrice);
+                    BigDecimal buyRate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(closePrice),closePrice);
+                    tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount,overOpen10,min5TradeAmount,min10TradeAmount));
+                }
+                for (int i = 0; i < headList.length-1; i++) {
+                    IndexRate500DTO indexRate500DTO = tempMap.get(headList[i]);
+                    resultMap.put(kbarDate + headList[i+1],indexRate500DTO);
+
+                }
                 closePrice = list.get(list.size()-1).getTradePrice();
-                continue;
             }
-            BigDecimal openPrice = list.get(0).getTradePrice();
-            BigDecimal openRate = PriceUtil.getPricePercentRate(openPrice.subtract(closePrice),closePrice);
-            BigDecimal lowPrice = new BigDecimal("1000000");
-            BigDecimal highPrice = new BigDecimal("-10");
-
-            Map<String, IndexRate500DTO> tempMap = new HashMap<>();
-            Integer overOpenCount = 0;
-            BigDecimal min5TradeAmount = BigDecimal.ZERO;
-            List<ThirdSecondTransactionDataDTO> list0935 = historyTransactionDataComponent.getFixTimeData(list, "09:35");
-            List<ThirdSecondTransactionDataDTO> list0940 = historyTransactionDataComponent.getFixTimeData(list, "09:40");
-            ThirdSecondTransactionDataDTO open = list.get(0);
-            for (ThirdSecondTransactionDataDTO transactionDataDTO : list0935) {
-                min5TradeAmount = min5TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
-                if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
-                    overOpenCount++;
-                }
-            }
-
-            Integer overOpen10 = 0;
-            BigDecimal min10TradeAmount = BigDecimal.ZERO;
-            for (ThirdSecondTransactionDataDTO transactionDataDTO : list0940) {
-                min10TradeAmount = min10TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
-                if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
-                    overOpen10++;
-                }
-            }
-
-            for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
-                if(highPrice.compareTo(transactionDataDTO.getTradePrice())<0){
-                    highPrice = transactionDataDTO.getTradePrice();
-                }
-                if(lowPrice.compareTo(transactionDataDTO.getTradePrice())>0){
-                    lowPrice = transactionDataDTO.getTradePrice();
-                }
-                BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(closePrice),closePrice);
-                BigDecimal highRate = PriceUtil.getPricePercentRate(highPrice.subtract(closePrice),closePrice);
-                BigDecimal buyRate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(closePrice),closePrice);
-                tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount,overOpen10,min5TradeAmount,min10TradeAmount));
-            }
-            for (int i = 0; i < headList.length-1; i++) {
-                IndexRate500DTO indexRate500DTO = tempMap.get(headList[i]);
-                resultMap.put(kbarDate + headList[i+1],indexRate500DTO);
-
-            }
-            closePrice = list.get(list.size()-1).getTradePrice();
         }
+
+
         return resultMap;
 
     }
