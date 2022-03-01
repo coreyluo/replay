@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.RedisMoniorDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.RedisMonior">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="key" jdbcType="VARCHAR" property="key"/>
+        <result column="value" jdbcType="VARCHAR" property="value"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            key,
+            value,
+            create_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from redis_monior
+        where id = #{id}
+    </select>
+
+
+    <select id="selectByKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from redis_monior
+        where key = #{key} limit 1
+    </select>
+
+    <update id="updateByKey" parameterType="com.bazinga.replay.model.RedisMonior">
+        update redis_monior
+        <set>
+        <if test="value != null">
+            value = #{value, jdbcType=VARCHAR},
+        </if>
+        <if test="createTime != null">
+            create_time = #{createTime, jdbcType=TIMESTAMP},
+        </if>
+        </set>
+        where key = #{key} limit 1
+    </update>
+    <insert id="insert" parameterType="com.bazinga.replay.model.RedisMonior" useGeneratedKeys="true" keyProperty="id">
+        insert into redis_monior (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{key, jdbcType=VARCHAR},
+            #{value, jdbcType=VARCHAR},
+            #{createTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.RedisMonior">
+        update redis_monior
+        <set>
+            <if test="key != null">
+                key = #{key, jdbcType=VARCHAR},
+            </if>
+            <if test="value != null">
+                value = #{value, jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="key != null">
+            and key = #{key, jdbcType=VARCHAR}
+        </if>
+        <if test="value != null">
+            and value = #{value, jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.RedisMoniorQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from redis_monior
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.RedisMoniorQuery" resultType="java.lang.Integer">
+        select count(1)
+        from redis_monior
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>
