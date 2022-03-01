@@ -99,6 +99,9 @@ public class UpperShadowComponent {
             list.add(dto.isHaveBestSell());
             list.add(dto.getTwoPointFiveProfit());
             list.add(dto.getPlankTimes());
+            list.add(dto.getOpenExchangeMoneyLevel());
+            list.add(dto.getOpenExchangeMoneyRateLevel());
+            list.add(dto.getPreDateEndPlanks());
 
             list.add(dto.getBuyPercent());
             list.add(dto.getProfit());
@@ -111,7 +114,7 @@ public class UpperShadowComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
                 "5日涨幅","10日涨幅","15日涨幅","上引线日成交金额","买入日开盘成交额","买入日买入前成交额","买入日开盘涨幅","买入时候涨幅",
                 "上影线前10日平均成交额","买入时相对5日均线距离","上引线前30天平均成交量","上引线日收盘相对前30日最高点涨幅","上引线长度",
-                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","买入相对单笔比例","单笔盈利","买入比例盈利","买入两跳不降低盈利"};
+                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","开盘成交额排名","开盘成交额除以前一天成交额比例排名","前一天封板数量","买入相对单笔比例","单笔盈利","买入比例盈利","买入两跳不降低盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
@@ -169,6 +172,18 @@ public class UpperShadowComponent {
             shadowKbarDTO.setBuySize(list.size());
             shadowKbarDTO.setLevel(i);
             calProfit(shadowKbarDTO);
+        }
+        ShadowKbarDTO.buyDayOpenDealMoneySort(list);
+        int j =0;
+        for (ShadowKbarDTO shadowKbarDTO:list){
+            j++;
+            shadowKbarDTO.setOpenExchangeMoneyLevel(j);
+        }
+        ShadowKbarDTO.openExchangeMoneyRateSort(list);
+        int k =0;
+        for (ShadowKbarDTO shadowKbarDTO:list){
+            k++;
+            shadowKbarDTO.setOpenExchangeMoneyRateLevel(k);
         }
     }
 
@@ -438,12 +453,15 @@ public class UpperShadowComponent {
         BigDecimal chuQuanTradePrice = chuQuanAvgPrice(tradePrice, shadow.getStockKbar());
         shadow.setBuyPrice(chuQuanTradePrice);
         shadow.setBuyDayOpenDealMoney(gatherMoney);
+        if(gatherMoney!=null&&shadow.getPreStockKbar().getTradeAmount()!=null){
+            BigDecimal openExchangeMoneyRate = gatherMoney.divide(shadow.getPreStockKbar().getTradeAmount(), 6, BigDecimal.ROUND_HALF_UP);
+            shadow.setOpenExchangeMoneyRate(openExchangeMoneyRate);
+        }
         shadow.setBuyBeforeDealMoney(beforeBuyMoney);
         BigDecimal openRate = PriceUtil.getPricePercentRate(shadow.getStockKbar().getAdjOpenPrice().subtract(shadow.getPreStockKbar().getAdjClosePrice()), shadow.getPreStockKbar().getAdjClosePrice());
         shadow.setBuyDayOPenRate(openRate);
         BigDecimal buyTimeRate = PriceUtil.getPricePercentRate(chuQuanTradePrice.subtract(shadow.getPreStockKbar().getAdjClosePrice()), shadow.getPreStockKbar().getAdjClosePrice());
         shadow.setBuyTimeRate(buyTimeRate);
-
         shadow.setShadowDayDealMoney(shadow.getPreStockKbar().getTradeAmount());
     }
 
@@ -515,6 +533,16 @@ public class UpperShadowComponent {
                 prePreTradeDateMap.put(stockKbar.getStockCode(),stockKbar);
             }
         }
+        int planks  = 0;
+        for (StockKbar preStockKbar:preStockKbars){
+            StockKbar prePreStockKbar = prePreTradeDateMap.get(preStockKbar.getStockCode());
+            if(prePreStockKbar!=null){
+                boolean isUpper = PriceUtil.isHistoryUpperPrice(preStockKbar.getStockCode(), preStockKbar.getClosePrice(), prePreStockKbar.getClosePrice(), preStockKbar.getKbarDate());
+                if(isUpper){
+                    planks++;
+                }
+            }
+        }
         for(CirculateInfo circulateInfo:circulateInfos){
             Date date = map.get(circulateInfo.getStockCode());
             if(date==null||DateUtil.parseDate(dateStr,DateUtil.yyyyMMdd).before(date)){
@@ -533,6 +561,7 @@ public class UpperShadowComponent {
                 shadowKbarDTO.setPrePreStockKbar(prePreStockKbar);
                 BigDecimal marketMoney = new BigDecimal(circulateInfo.getCirculate()).multiply(shadowKbarDTO.getPreStockKbar().getClosePrice()).setScale(2, BigDecimal.ROUND_HALF_UP);
                 shadowKbarDTO.setMarketMoney(marketMoney);
+                shadowKbarDTO.setPreDateEndPlanks(planks);
                 list.add(shadowKbarDTO);
             }
         }
