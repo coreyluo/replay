@@ -12,12 +12,10 @@ import com.bazinga.replay.dto.PlankTypeDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.CirculateInfoAllQuery;
+import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.StockPlankDailyQuery;
-import com.bazinga.replay.service.CirculateInfoAllService;
-import com.bazinga.replay.service.StockKbarService;
-import com.bazinga.replay.service.StockPlankDailyService;
-import com.bazinga.replay.service.StockRehabilitationService;
+import com.bazinga.replay.service.*;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.MarketUtil;
@@ -27,16 +25,14 @@ import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -62,6 +58,8 @@ public class StockPlankDailyComponent {
     private HistoryTransactionDataComponent historyTransactionDataComponent;
     @Autowired
     private CurrentDayTransactionDataComponent currentDayTransactionDataComponent;
+    @Autowired
+    private CirculateInfoService circulateInfoService;
 
 
     public void stockPlankDailyStatistic(Date date){
@@ -72,20 +70,19 @@ public class StockPlankDailyComponent {
         date = DateTimeUtils.getDate000000(date);
         List<CirculateInfo> circulateInfos = circulateInfoComponent.getMainAndGrowth();
         for (CirculateInfo circulateInfo:circulateInfos){
+            if(!circulateInfo.getStockCode().equals("603056")){
+                continue;
+            }
             String stockCode = circulateInfo.getStockCode();
             String stockName = circulateInfo.getStockName();
             try {
                 /*if (!stockCode.equals("603787")) {
                     continue;
                 }*/
-                List<KBarDTO> stockKBars = getStockKBars(circulateInfo);
+                List<KBarDTO> stockKBars = getStockKBars(circulateInfo.getStockCode());
                 log.info("复盘数据 k线数据 stockCode:{} stockName:{} kbars:{}", stockCode, stockName, JSONObject.toJSONString(stockKBars));
                 if (CollectionUtils.isEmpty(stockKBars)) {
                     log.info("复盘数据 没有获取到k线数据 stockCode:{} stockName:{}", stockCode, stockName);
-                    continue;
-                }
-                if(!stockKBars.get(stockKBars.size()-1).getDateStr().equals(DateUtil.format(date,DateUtil.yyyy_MM_dd))){
-                    log.info("复盘数据 没有获取到当日k线数据 stockCode:{} stockName:{}", stockCode, stockName);
                     continue;
                 }
                 PlankTypeDTO plankTypeDTO = continuePlankTypeDto(stockKBars, circulateInfo);
@@ -103,7 +100,58 @@ public class StockPlankDailyComponent {
         }
     }
 
+
+    public void handleStopTradeStock(Date date){
+        boolean isTradeDate = commonComponent.isTradeDate(date);
+        if(!isTradeDate){
+            return;
+        }
+        date = DateTimeUtils.getDate000000(date);
+        List<CirculateInfo> circulateInfos = circulateInfoComponent.getMainAndGrowth();
+        for (CirculateInfo circulateInfo:circulateInfos){
+            /*if(!circulateInfo.getStockCode().equals("603056")){
+                continue;
+            }*/
+            String stockCode = circulateInfo.getStockCode();
+            String stockName = circulateInfo.getStockName();
+            try {
+                List<KBarDTO> stockKBars = getStockKBars(circulateInfo.getStockCode());
+                log.info("复盘数据 k线数据 stockCode:{} stockName:{} kbars:{}", stockCode, stockName, JSONObject.toJSONString(stockKBars));
+                if (CollectionUtils.isEmpty(stockKBars)) {
+                    log.info("复盘数据 没有获取到k线数据 stockCode:{} stockName:{}", stockCode, stockName);
+                    continue;
+                }
+                KBarDTO kBarDTO = stockKBars.get(stockKBars.size() - 1);
+                KBarDTO preKbarDTO = stockKBars.get(stockKBars.size() - 2);
+                if(kBarDTO.getDateStr().equals(DateUtil.format(date,DateUtil.yyyy_MM_dd))&&(kBarDTO.getTotalExchange()==null||kBarDTO.getTotalExchange()<1)){
+                    StockPlankDailyQuery query = new StockPlankDailyQuery();
+                    query.setUniqueKey(stockCode+"_"+DateUtil.format(preKbarDTO.getDate(),DateUtil.yyyyMMdd));
+                    List<StockPlankDaily> dailies = stockPlankDailyService.listByCondition(query);
+                    if(!CollectionUtils.isEmpty(dailies)){
+                        StockPlankDaily stockPlankDaily = new StockPlankDaily();
+                        BeanUtils.copyProperties(stockPlankDaily,dailies.get(0));
+                        stockPlankDaily.setId(null);
+                        stockPlankDaily.setTradeDate(DateTimeUtils.getDate000000(date));
+                        stockPlankDaily.setUniqueKey(stockCode+"_"+DateUtil.format(date,DateUtil.yyyyMMdd));
+                        stockPlankDaily.setCreateTime(new Date());
+                        stockPlankDailyService.save(stockPlankDaily);
+                    }
+                }
+            }catch (Exception e){
+                log.info("复盘数据 异常 stockCode:{} stockName:{} e：{}", stockCode, stockName,e);
+            }
+
+        }
+    }
+
     public void saveStockPlankDaily(String stockCode,String stockName,Date date,PlankTypeDTO plankTypeDTO,PlankTypeEnum plankTypeEnum){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setUniqueKey(stockCode+"_"+DateUtil.format(date,DateUtil.yyyyMMdd));
+        List<StockPlankDaily> dailies = stockPlankDailyService.listByCondition(query);
+        if(!CollectionUtils.isEmpty(dailies)){
+            log.info("stockPlankDaily复盘已经存在stockCode:{}",stockCode);
+            return;
+        }
         StockPlankDaily daily = new StockPlankDaily();
         daily.setStockCode(stockCode);
         daily.setStockName(stockName);
@@ -294,11 +342,11 @@ public class StockPlankDailyComponent {
     }
 
 
-    public List<KBarDTO> getStockKBars(CirculateInfo circulateInfo){
+    public List<KBarDTO> getStockKBars(String stockCode){
         try {
-            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, circulateInfo.getStockCode(), 0, 50);
+            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY,stockCode, 0, 50);
             List<KBarDTO> kbars = KBarDTOConvert.convertKBar(dataTable);
-            List<KBarDTO> list = deleteNewStockTimes(kbars, 50, circulateInfo.getStockCode());
+            List<KBarDTO> list = deleteNewStockTimes(kbars, 50, stockCode);
             return list;
         }catch (Exception e){
             return null;
@@ -519,6 +567,129 @@ public class StockPlankDailyComponent {
             }
         }
     }
+
+
+    public void realPlanks(Date date){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(date));
+        query.setTradeDateTo(DateTimeUtils.getDate235959(date));
+        List<StockPlankDaily> stockPlankDailies = stockPlankDailyService.listByCondition(query);
+        String dateStr = DateUtil.format(date, DateUtil.yyyy_MM_dd);
+        for (StockPlankDaily stockPlankDaily:stockPlankDailies){
+            try {
+                String stockCode = stockPlankDaily.getStockCode();
+                List<KBarDTO> stockKBars = getStockKBars(stockPlankDaily.getStockCode());
+                log.info("复盘数据 k线数据 stockCode:{} stockName:{} kbars:{}", stockCode, stockPlankDaily.getStockName(), JSONObject.toJSONString(stockKBars));
+                if (CollectionUtils.isEmpty(stockKBars)) {
+                    log.info("复盘数据 没有获取到k线数据 stockCode:{} stockName:{}", stockCode, stockPlankDaily.getStockName());
+                    continue;
+                }
+                CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+                circulateInfoQuery.setStockCode(stockCode);
+                List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+                if(CollectionUtils.isEmpty(circulateInfos)){
+                    return;
+                }
+                CirculateInfo circulateInfo = circulateInfos.get(0);
+                PlankTypeDTO plankTypeDTO = continuePlankTypeDto(stockKBars, circulateInfo);
+                stockPlankDaily.setRealPlanks(plankTypeDTO.getPlanks());
+                stockPlankDailyService.updateById(stockPlankDaily);
+
+            }catch (Exception e){
+                log.error(e.getMessage(),e);
+            }
+        }
+    }
+    public void middlePlanks(Date date){
+        StockPlankDailyQuery query = new StockPlankDailyQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate000000(date));
+        query.setTradeDateTo(DateTimeUtils.getDate235959(date));
+        List<StockPlankDaily> stockPlankDailies = stockPlankDailyService.listByCondition(query);
+        for (StockPlankDaily stockPlankDaily:stockPlankDailies){
+            try {
+                String stockCode = stockPlankDaily.getStockCode();
+                StockKbarQuery kbarQuery = new StockKbarQuery();
+                kbarQuery.setStockCode(stockCode);
+                kbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+                List<StockKbar> stockKBars = stockKbarService.listByCondition(kbarQuery);
+                if (CollectionUtils.isEmpty(stockKBars) || stockKBars.size()<7) {
+                    log.info("复盘数据 没有获取到k线数据 stockCode:{} stockName:{}", stockCode, stockPlankDaily.getStockName());
+                    continue;
+                }
+                if(!stockKBars.get(0).getKbarDate().equals(DateUtil.format(date,DateUtil.yyyyMMdd))){
+                    log.info("复盘数据 没有获取到当日k线数据 stockCode:{} stockName:{}", stockCode, stockPlankDaily.getStockName());
+                    continue;
+                }
+
+                Integer middlePlanks = calTodayPlank(stockKBars);
+                stockPlankDaily.setMiddlePlanks(middlePlanks);
+                stockPlankDailyService.updateById(stockPlankDaily);
+
+            }catch (Exception e){
+                log.error(e.getMessage(),e);
+            }
+        }
+    }
+
+
+    public static Integer calTodayPlank(List<StockKbar> stockKbarList) {
+        if(stockKbarList.size()<2){
+            return 1;
+        }
+        stockKbarList = Lists.reverse(stockKbarList);
+        int planks = 1;
+        int unPlanks = 0;
+        boolean prePlank = true;
+        for (int i = stockKbarList.size() - 2; i > 0; i--) {
+            StockKbar stockKbar = stockKbarList.get(i);
+            StockKbar preStockKbar = stockKbarList.get(i - 1);
+            if (PriceUtil.isUpperPrice(stockKbar.getClosePrice(), preStockKbar.getClosePrice())) {
+                planks++;
+                prePlank = true;
+            } else {
+                unPlanks++;
+                if(unPlanks>=2){
+                    if(prePlank){
+                        return planks;
+                    }else {
+                        return planks;
+                    }
+                }
+                prePlank = false;
+
+            }
+
+        }
+        return planks;
+    }
+
+    public Integer calMiddlePlanks(List<StockKbar> stockKbars){
+        StockKbar  nextKbar = null;
+        int planks = 0;
+        int unPlanks = 0;
+        for (StockKbar stockKbar:stockKbars){
+            if(stockKbar.getTradeQuantity()==null||stockKbar.getTradeQuantity()==0){
+                continue;
+            }
+            if(nextKbar!=null){
+                boolean upperPrice = PriceUtil.isUpperPrice(nextKbar.getClosePrice(), stockKbar.getClosePrice());
+                if(!upperPrice){
+                    upperPrice = PriceUtil.isUpperPrice(nextKbar.getAdjClosePrice(), stockKbar.getAdjClosePrice());
+                }
+                if(upperPrice){
+                    planks++;
+                }else{
+                    unPlanks++;
+                }
+                if(unPlanks>=2){
+                    break;
+                }
+            }
+            nextKbar = stockKbar;
+        }
+        return planks;
+    }
+
 
     public void superFactor(Date date){
         Date date000000 = DateTimeUtils.getDate000000(date);

@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.PlanksInfoDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.PlanksInfo">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="trade_date" jdbcType="VARCHAR" property="tradeDate"/>
+        <result column="total_planks" jdbcType="BIGINT" property="totalPlanks"/>
+        <result column="total_breaks" jdbcType="BIGINT" property="totalBreaks"/>
+        <result column="total_rate" jdbcType="DECIMAL" property="totalRate"/>
+        <result column="one_planks" jdbcType="BIGINT" property="onePlanks"/>
+        <result column="one_breaks" jdbcType="BIGINT" property="oneBreaks"/>
+        <result column="one_rate" jdbcType="DECIMAL" property="oneRate"/>
+        <result column="two_planks" jdbcType="BIGINT" property="twoPlanks"/>
+        <result column="two_breaks" jdbcType="BIGINT" property="twoBreaks"/>
+        <result column="two_rate" jdbcType="DECIMAL" property="twoRate"/>
+        <result column="three_planks" jdbcType="BIGINT" property="threePlanks"/>
+        <result column="three_breaks" jdbcType="BIGINT" property="threeBreaks"/>
+        <result column="three_rate" jdbcType="DECIMAL" property="threeRate"/>
+        <result column="high_planks" jdbcType="BIGINT" property="highPlanks"/>
+        <result column="high_breaks" jdbcType="BIGINT" property="highBreaks"/>
+        <result column="high_rate" jdbcType="DECIMAL" property="highRate"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            trade_date,
+            total_planks,
+            total_breaks,
+            total_rate,
+            one_planks,
+            one_breaks,
+            one_rate,
+            two_planks,
+            two_breaks,
+            two_rate,
+            three_planks,
+            three_breaks,
+            three_rate,
+            high_planks,
+            high_breaks,
+            high_rate,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from planks_info
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.PlanksInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into planks_info (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{tradeDate, jdbcType=VARCHAR},
+            #{totalPlanks, jdbcType=BIGINT},
+            #{totalBreaks, jdbcType=BIGINT},
+            #{totalRate, jdbcType=DECIMAL},
+            #{onePlanks, jdbcType=BIGINT},
+            #{oneBreaks, jdbcType=BIGINT},
+            #{oneRate, jdbcType=DECIMAL},
+            #{twoPlanks, jdbcType=BIGINT},
+            #{twoBreaks, jdbcType=BIGINT},
+            #{twoRate, jdbcType=DECIMAL},
+            #{threePlanks, jdbcType=BIGINT},
+            #{threeBreaks, jdbcType=BIGINT},
+            #{threeRate, jdbcType=DECIMAL},
+            #{highPlanks, jdbcType=BIGINT},
+            #{highBreaks, jdbcType=BIGINT},
+            #{highRate, jdbcType=DECIMAL},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.PlanksInfo">
+        update planks_info
+        <set>
+            <if test="tradeDate != null">
+                trade_date = #{tradeDate, jdbcType=VARCHAR},
+            </if>
+            <if test="totalPlanks != null">
+                total_planks = #{totalPlanks, jdbcType=BIGINT},
+            </if>
+            <if test="totalBreaks != null">
+                total_breaks = #{totalBreaks, jdbcType=BIGINT},
+            </if>
+            <if test="totalRate != null">
+                total_rate = #{totalRate, jdbcType=DECIMAL},
+            </if>
+            <if test="onePlanks != null">
+                one_planks = #{onePlanks, jdbcType=BIGINT},
+            </if>
+            <if test="oneBreaks != null">
+                one_breaks = #{oneBreaks, jdbcType=BIGINT},
+            </if>
+            <if test="oneRate != null">
+                one_rate = #{oneRate, jdbcType=DECIMAL},
+            </if>
+            <if test="twoPlanks != null">
+                two_planks = #{twoPlanks, jdbcType=BIGINT},
+            </if>
+            <if test="twoBreaks != null">
+                two_breaks = #{twoBreaks, jdbcType=BIGINT},
+            </if>
+            <if test="twoRate != null">
+                two_rate = #{twoRate, jdbcType=DECIMAL},
+            </if>
+            <if test="threePlanks != null">
+                three_planks = #{threePlanks, jdbcType=BIGINT},
+            </if>
+            <if test="threeBreaks != null">
+                three_breaks = #{threeBreaks, jdbcType=BIGINT},
+            </if>
+            <if test="threeRate != null">
+                three_rate = #{threeRate, jdbcType=DECIMAL},
+            </if>
+            <if test="highPlanks != null">
+                high_planks = #{highPlanks, jdbcType=BIGINT},
+            </if>
+            <if test="highBreaks != null">
+                high_breaks = #{highBreaks, jdbcType=BIGINT},
+            </if>
+            <if test="highRate != null">
+                high_rate = #{highRate, jdbcType=DECIMAL},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="tradeDate != null">
+            and trade_date = #{tradeDate, jdbcType=VARCHAR}
+        </if>
+        <if test="totalPlanks != null">
+            and total_planks = #{totalPlanks, jdbcType=BIGINT}
+        </if>
+        <if test="totalBreaks != null">
+            and total_breaks = #{totalBreaks, jdbcType=BIGINT}
+        </if>
+        <if test="totalRate != null">
+            and total_rate = #{totalRate, jdbcType=DECIMAL}
+        </if>
+        <if test="onePlanks != null">
+            and one_planks = #{onePlanks, jdbcType=BIGINT}
+        </if>
+        <if test="oneBreaks != null">
+            and one_breaks = #{oneBreaks, jdbcType=BIGINT}
+        </if>
+        <if test="oneRate != null">
+            and one_rate = #{oneRate, jdbcType=DECIMAL}
+        </if>
+        <if test="twoPlanks != null">
+            and two_planks = #{twoPlanks, jdbcType=BIGINT}
+        </if>
+        <if test="twoBreaks != null">
+            and two_breaks = #{twoBreaks, jdbcType=BIGINT}
+        </if>
+        <if test="twoRate != null">
+            and two_rate = #{twoRate, jdbcType=DECIMAL}
+        </if>
+        <if test="threePlanks != null">
+            and three_planks = #{threePlanks, jdbcType=BIGINT}
+        </if>
+        <if test="threeBreaks != null">
+            and three_breaks = #{threeBreaks, jdbcType=BIGINT}
+        </if>
+        <if test="threeRate != null">
+            and three_rate = #{threeRate, jdbcType=DECIMAL}
+        </if>
+        <if test="highPlanks != null">
+            and high_planks = #{highPlanks, jdbcType=BIGINT}
+        </if>
+        <if test="highBreaks != null">
+            and high_breaks = #{highBreaks, jdbcType=BIGINT}
+        </if>
+        <if test="highRate != null">
+            and high_rate = #{highRate, jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.PlanksInfoQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from planks_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.PlanksInfoQuery" resultType="java.lang.Integer">
+        select count(1)
+        from planks_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

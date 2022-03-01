@@ -180,7 +180,7 @@ public class StockCommonReplayComponent {
         List<StockCommonReplay> stockCommonReplays = stockCommonReplayService.listByCondition(stockCommonReplayQuery);
         for (StockCommonReplay replay:stockCommonReplays) {
             try {
-                List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNew(replay.getStockCode(), 50, 11);
+                List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNewDays(replay.getStockCode(), 50, 11);
                 List<StockKbar> stockKbars = Lists.reverse(kbars);
                 BigDecimal preEndPrice = null;
                 BigDecimal currentDayEndPrice = null;

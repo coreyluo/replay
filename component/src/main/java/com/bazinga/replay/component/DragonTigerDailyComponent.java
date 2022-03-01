@@ -64,6 +64,7 @@ public class DragonTigerDailyComponent {
         String kbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
         try {
             String token = JoinQuantUtil.getToken();
+            log.info("token{}",token);
             for (CirculateInfo circulateInfo : circulateInfos) {
               /*  if(!"300264".equals(circulateInfo.getStockCode())){
                     continue;
@@ -121,7 +122,11 @@ public class DragonTigerDailyComponent {
                         dragonTiger.setRank(Integer.valueOf(objArr[3]));
                         dragonTiger.setAbnormalCode(objArr[4]);
                         dragonTiger.setReason(objArr[5]);
+                        if(objArr.length<7){
+                            continue;
+                        }
                         dragonTiger.setChair(objArr[6]);
+
                         if("招商证券交易单元(353800)".equals(dragonTiger.getChair())){
                             if("106015".equals(dragonTiger.getAbnormalCode()) ){
                                 StockKbar preStockKbar = stockKbarService.getByUniqueKey(circulateInfo.getStockCode() + SymbolConstants.UNDERLINE + kbarDate);
