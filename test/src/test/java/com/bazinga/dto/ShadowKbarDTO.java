@@ -13,12 +13,47 @@ import java.util.List;
 public class ShadowKbarDTO {
     private String stockCode;
     private String stockName;
-    private Long circulateZ;
+    private BigDecimal circulateZ;
     private  BigDecimal marketMoney;
     private StockKbar stockKbar;
     private StockKbar preStockKbar;
     private StockKbar prePreStockKbar;
+    private StockKbar nextStockKbar;
+    private BigDecimal rateThanAvg5;
 
+    private BigDecimal rateDay5;
+    private BigDecimal rateDay10;
+    private BigDecimal rateDay15;
+
+
+    private BigDecimal shadowDayDealMoney;
+    private BigDecimal shadowBefore10DealMoney;
+
+
+    private Long shadowBefore30AvgQuantity;
+    private BigDecimal buyRateThanHigh;
+    private BigDecimal shadowLength;
+    private Integer buySize;
+    private Integer level;
+
+    private BigDecimal buyPrice;
+    private BigDecimal afterBuyPrice;
+    private BigDecimal buyDayOpenDealMoney;
+    private BigDecimal buyBeforeDealMoney;
+    private BigDecimal buyDayOPenRate;
+    private BigDecimal buyTimeRate;
+    private BigDecimal buyPercent;
+
+    private Integer plankTimes;
+
+    private boolean haveHighSell = false;
+    private boolean haveBestSell  = false;
+    private BigDecimal twoPointFiveProfit;
+    private BigDecimal profit;
+    private BigDecimal moneyProfit;
+
+
+    private BigDecimal afterProfit;
 
     public static List<ShadowKbarDTO> marketMoneySort(List<ShadowKbarDTO> list){
         Collections.sort(list,new MarketMoneyComparator());
@@ -36,6 +71,26 @@ public class ShadowKbarDTO {
                 return -1;
             }
             int i = p2.getMarketMoney().compareTo(p1.getMarketMoney());
+            return i;
+        }
+    }
+
+    public static List<ShadowKbarDTO> RateThanAvgSort(List<ShadowKbarDTO> list){
+        Collections.sort(list,new RateThanAvgComparator());
+        return list;
+    }
+
+    static class RateThanAvgComparator implements Comparator<Object> {
+        public int compare(Object object1,Object object2){
+            ShadowKbarDTO p1 = (ShadowKbarDTO)object1;
+            ShadowKbarDTO p2 = (ShadowKbarDTO)object2;
+            if(p1.getRateThanAvg5()==null){
+                return 1;
+            }
+            if(p2.getRateThanAvg5()==null){
+                return -1;
+            }
+            int i = p2.getRateThanAvg5().compareTo(p1.getRateThanAvg5());
             return i;
         }
     }
