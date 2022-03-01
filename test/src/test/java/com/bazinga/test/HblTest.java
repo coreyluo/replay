@@ -167,7 +167,7 @@ public class HblTest extends BaseTestCase {
         //raiseDropComponent.raiseDrop();
        // List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
 
-            for (int i=1250;i>=0;i--) {
+            for (int i=2000;i>=0;i--) {
                 DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
                 KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
                 TradeDatePool tradeDatePool = new TradeDatePool();
