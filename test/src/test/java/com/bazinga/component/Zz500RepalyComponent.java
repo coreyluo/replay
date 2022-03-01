@@ -54,7 +54,7 @@ public class Zz500RepalyComponent {
     private TradeDatePoolService tradeDatePoolService;
 
     public void replay(String kbarDateFrom ,String kbarDateTo){
-        Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1000);
+        Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1200);
         log.info("获取500涨幅成功");
         Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
         log.info("获取500分时map成功");
@@ -196,7 +196,13 @@ public class Zz500RepalyComponent {
                             log.info("dto为空 tradeTime{}",realBuyDTO.getTradeTime());
                             continue;
                         }
-                        exportDTO.setPreDay500Amount(ndayRateMap.get(firstPlankKbar.getKbarDate()).getTradeAmount());
+                        Index500NDayDTO index500NDayDTO = ndayRateMap.get(firstPlankKbar.getKbarDate());
+                        if(index500NDayDTO!=null){
+                            exportDTO.setPreDay500Amount(index500NDayDTO.getTradeAmount());
+                            exportDTO.setDay5Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay5Rate());
+                            exportDTO.setDay10Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay10Rate());
+                            exportDTO.setDay15Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay15Rate());
+                        }
                         exportDTO.setOverOpenCount10(indexRate500DTO.getOverOpenCount10());
                         exportDTO.setMin5TradeAmount(indexRate500DTO.getMin5TradeAmount());
                         exportDTO.setMin10TradeAmount(indexRate500DTO.getMin10TradeAmount());
@@ -209,9 +215,7 @@ public class Zz500RepalyComponent {
                         exportDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),5));
                         exportDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),10));
                         exportDTO.setDay15Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),15));
-                        exportDTO.setDay5Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay5Rate());
-                        exportDTO.setDay10Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay10Rate());
-                        exportDTO.setDay15Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay15Rate());
+
                         exportDTO.setOverOpenCountMin5(indexRate500DTO.getOverOpenCount());
 
                         exportDTO.setDay10HighPrice(day10HighPrice);
