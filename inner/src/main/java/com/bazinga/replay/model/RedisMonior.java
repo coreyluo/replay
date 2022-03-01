@@ -33,7 +33,7 @@ public class RedisMonior implements Serializable {
      * @是否索引   YES
      * @唯一索引   uk_key
      */
-    private String key;
+    private String redisKey;
 
     /**
      * value
@@ -42,7 +42,7 @@ public class RedisMonior implements Serializable {
      * @允许为空   NO
      * @是否索引   NO
      */
-    private String value;
+    private String redisValue;
 
     /**
      * 创建时间

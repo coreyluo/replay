@@ -23,12 +23,12 @@ public class RedisMoniorQuery extends PagingQuery implements Serializable {
     /**
      * key
      */
-    private String key;
+    private String redisKey;
 
     /**
      * value
      */
-    private String value;
+    private String redisValue;
 
     /**
      * 创建时间 开始

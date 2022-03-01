@@ -50,17 +50,17 @@ public interface RedisMoniorDAO {
     Integer countByCondition(RedisMoniorQuery query);
 
     /**
-     * 唯一键key 查询
+     * 唯一键redisKey 查询
      *
-     * @param key 查询参数
+     * @param redisKey 查询参数
      */
-    RedisMonior selectByKey(String key);
+    RedisMonior selectByRedisKey(String redisKey);
 
     /**
-     * 唯一键key 更新
+     * 唯一键redisKey 更新
      *
      * @param record 更新参数
      */
-    int updateByKey(RedisMonior record);
+    int updateByRedisKey(RedisMonior record);
 
 }

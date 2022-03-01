@@ -58,14 +58,14 @@ public class RedisMoniorServiceImpl implements RedisMoniorService {
     }
 
     @Override
-    public RedisMonior getByKey(String key) {
-        Assert.notNull(key, "唯一键不能为空");
-        return redisMoniorDAO.selectByKey(key);
+    public RedisMonior getByRedisKey(String redisKey) {
+        Assert.notNull(redisKey, "唯一键不能为空");
+        return redisMoniorDAO.selectByRedisKey(redisKey);
     }
 
     @Override
-    public int updateByKey(RedisMonior record) {
+    public int updateByRedisKey(RedisMonior record) {
         Assert.notNull(record, "待更新记录不能为空");
-        return redisMoniorDAO.updateByKey(record);
+        return redisMoniorDAO.updateByRedisKey(record);
     }
 }

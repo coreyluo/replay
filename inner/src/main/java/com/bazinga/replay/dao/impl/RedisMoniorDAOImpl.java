@@ -59,12 +59,12 @@ public class RedisMoniorDAOImpl extends SqlSessionDaoSupport implements RedisMon
     }
 
     @Override
-    public RedisMonior selectByKey(String key) {
-        return this.getSqlSession().selectOne( MAPPER_NAME + ".selectByKey", key);
+    public RedisMonior selectByRedisKey(String redisKey) {
+        return this.getSqlSession().selectOne( MAPPER_NAME + ".selectByRedisKey", redisKey);
     }
 
     @Override
-    public int updateByKey(RedisMonior record) {
-        return this.getSqlSession().update( MAPPER_NAME + ".updateByKey", record);
+    public int updateByRedisKey(RedisMonior record) {
+        return this.getSqlSession().update( MAPPER_NAME + ".updateByRedisKey", record);
     }
 }
