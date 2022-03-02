@@ -17,12 +17,12 @@ public class JoinQuantUtil {
         Map<String,String> paramMap = new HashMap<>();
         paramMap.put("method","get_token");
         // 获取当前token
-        paramMap.put("mob","13661608985");
+     /*   paramMap.put("mob","13661608985");
         // 标的类型
-        paramMap.put("pwd","Cw123456cw");
-      /*  paramMap.put("mob","13588205347");
+        paramMap.put("pwd","Cw123456cw");*/
+        paramMap.put("mob","13588205347");
         // 标的类型
-        paramMap.put("pwd","Lily5200!");*/
+        paramMap.put("pwd","Lily5200!");
 
         String result = Jsoup.connect("https://dataapi.joinquant.com/apis").ignoreContentType(true)
                 .header("Content-Type", "application/json")

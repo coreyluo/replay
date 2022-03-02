@@ -65,7 +65,7 @@ public class NewStockComponent {
             }
             List<CirculateInfoDTO> list = CiculateInfoDTOConvert.convert(dataTable);
             for (CirculateInfoDTO dto:list){
-                if(dto.getStock().startsWith("300")||dto.getStock().startsWith("00")){
+                if(dto.getStock().startsWith("30")||dto.getStock().startsWith("00")){
                     isShengZhenNewStock(dto.getStock(),dto.getStockName());
                 }
             }
@@ -125,7 +125,7 @@ public class NewStockComponent {
             if(kBarDTOS.get(0).getTotalExchange()==null||kBarDTOS.get(0).getTotalExchange()==0){
                 isNew = false;
             }
-            if(!stockCode.startsWith("300")){
+            if(!stockCode.startsWith("30")){
                 int i = 0;
                 BigDecimal preEndPrice = null;
                 for (KBarDTO dto:kBarDTOS){
@@ -148,9 +148,12 @@ public class NewStockComponent {
                 }
             }
 
-            if(stockCode.startsWith("300")){
-                if(kBarDTOS.size()>5){
+            if(stockCode.startsWith("30")){
+                if(kBarDTOS.size()<5){
                     isNew = false;
+                }
+                if(kBarDTOS.size()>=5&&kBarDTOS.size()<50){
+                    isNew = true;
                 }
             }
         }else{
@@ -164,28 +167,33 @@ public class NewStockComponent {
     }
 
     public void saveKbarDto(String stockCode,String stockName,Date marketDate){
-        NewStock newStock = new NewStock();
-        newStock.setStockCode(stockCode);
-        newStock.setStockName(stockName);
-        newStock.setMarketDate(marketDate);
-        newStock.setCreateTime(new Date());
-        newStockService.save(newStock);
-        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
-        circulateInfoQuery.setStockCode(stockCode);
-        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
-        if(CollectionUtils.isEmpty(circulateInfos)&& MarketUtil.isMain(stockCode)){
-            CirculateInfo circulateInfo = new CirculateInfo();
-            circulateInfo.setStockCode(stockCode);
-            circulateInfo.setStockName(stockName);
-            circulateInfo.setCirculate(100000000l);
-            circulateInfo.setCirculateZ(100000000l);
-            circulateInfo.setCreateTime(new Date());
-            circulateInfo.setMarketType(MarketTypeEnum.GENERAL.getCode());
-            circulateInfo.setStockType(1);
-            circulateInfoService.save(circulateInfo);
-            log.info("添加新股数据stockCode：{}",stockCode);
+        if(!MarketUtil.isKeChuang(stockCode)) {
+            try {
+                NewStock newStock = new NewStock();
+                newStock.setStockCode(stockCode);
+                newStock.setStockName(stockName);
+                newStock.setMarketDate(marketDate);
+                newStock.setCreateTime(new Date());
+                newStockService.save(newStock);
+                CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+                circulateInfoQuery.setStockCode(stockCode);
+                List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+                if (CollectionUtils.isEmpty(circulateInfos)) {
+                    CirculateInfo circulateInfo = new CirculateInfo();
+                    circulateInfo.setStockCode(stockCode);
+                    circulateInfo.setStockName(stockName);
+                    circulateInfo.setCirculate(100000000l);
+                    circulateInfo.setCirculateZ(100000000l);
+                    circulateInfo.setCreateTime(new Date());
+                    circulateInfo.setMarketType(MarketTypeEnum.GENERAL.getCode());
+                    circulateInfo.setStockType(1);
+                    circulateInfoService.save(circulateInfo);
+                    log.info("添加新股数据stockCode：{}", stockCode);
+                }
+            } catch (Exception e) {
+                log.info(e.getMessage(), e);
+            }
         }
-
     }
 
 }

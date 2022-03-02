@@ -61,34 +61,50 @@ public class BaseTestCase {
     private BlockKbarSelfComponent blockKbarSelfComponent;
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+    @Autowired
+    private PlanksInfoComponent planksInfoComponent;
+    @Autowired
+    private StockAttributeReplayComponent stockAttributeReplayComponent;
+
     @Test
     public void test1() {
         //无敌数据
-        plankChenJiaoEComponent.exportData();
-        stockReplayDailyComponent.stockReplayDaily(new Date());
-        stockReplayDailyComponent.calPreDateAvgPrice(new Date());
-        stockPlankDailyComponent.stockPlankDailyStatistic(new Date());
+        Date date = new Date();
         newStockComponent.catchNewStock();
-        plankExchangeDailyComponent.plankExchangeDaily(new Date());
+        //plankChenJiaoEComponent.exportData();
+        stockReplayDailyComponent.stockReplayDaily(date);
+        stockReplayDailyComponent.calPreDateAvgPrice(date);
+        stockPlankDailyComponent.stockPlankDailyStatistic(date);
+        stockPlankDailyComponent.stockPlankDailyStatistic(date);
+        stockPlankDailyComponent.stockPlankDailyStatistic(date);
+        plankExchangeDailyComponent.plankExchangeDaily(date);
         stockKbarComponent.batchUpdateDaily();
-        stockPlankDailyComponent.calMax100DaysPriceForTwoPlank(new Date());
-        stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(new Date());
+        stockPlankDailyComponent.calMax100DaysPriceForTwoPlank(date);
+        stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(date);
         //stockPlankDaily添加次新标签
-        stockPlankDailyComponent.calSubNewStock(new Date());
+        stockPlankDailyComponent.calSubNewStock(date);
         //stockPlankDaily添加insertTime
-        stockPlankDailyComponent.insertTime(new Date());
+        stockPlankDailyComponent.insertTime(date);
+        //stockPlankDaily添加实际连板数
+        stockPlankDailyComponent.realPlanks(date);
+        stockPlankDailyComponent.middlePlanks(date);
+
 
         //新版复盘
-        stockCommonReplayComponent.saveCommonReplay(new Date());
-        stockCommonReplayComponent.firstPlankNoBuyInfo(new Date());
-        stockCommonReplayComponent.highRaiseStockInfo(new Date());
-        stockCommonReplayComponent.forTwoPlankWuDi(new Date());
+        stockCommonReplayComponent.saveCommonReplay(date);
+        stockCommonReplayComponent.firstPlankNoBuyInfo(date);
+        stockCommonReplayComponent.highRaiseStockInfo(date);
+        stockCommonReplayComponent.forTwoPlankWuDi(date);
         stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
         stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
-        badPlankComponent.badPlankJudge(new Date());
-        stockPlankDailyComponent.superFactor(new Date());
-        blockKbarComponent.thsBlockKbar(DateTimeUtils.getDate000000(new Date()));
-        hotBlockDropInfoComponent.thsBlockKbar(DateTimeUtils.getDate000000(new Date()));
+        stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);
+        badPlankComponent.badPlankJudge(date);
+        stockPlankDailyComponent.superFactor(date);
+        stockAttributeReplayComponent.saveStockAttributeReplay(date);
+        stockPlankDailyComponent.handleStopTradeStock(date);
+
+        /*blockKbarComponent.thsBlockKbar(DateTimeUtils.getDate000000(date));
+        hotBlockDropInfoComponent.thsBlockKbar(DateTimeUtils.getDate000000(date));*/
     }
 
     @Test
@@ -102,13 +118,42 @@ public class BaseTestCase {
     }
 
     @Test
+    public void test8() {
+        synInfoComponent.synMarketInfoZz500();
+    }
+
+    @Test
     public void test5() {
         synInfoComponent.synTbondInfo();
+    }
+
+    @Test
+    public void test6() {
+        synInfoComponent.synTbondInfo();
+    }
+
+    @Test
+    public void test7() {
+        Date date = new Date();
+        stockPlankDailyComponent.handleStopTradeStock(date);
+        //stockAttributeReplayComponent.saveStockAttributeReplay(DateUtil.parseDate("2022-02-18 15:30:30",DateUtil.DEFAULT_FORMAT));
+
+        //stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);
+        //synInfoComponent.synZiDingYiInfo();
+        //stockCommonReplayComponent.highRaiseStockInfo(new Date());
+        //List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNewDays("601068", 50, 11);
     }
 
 
     @Test
     public void test3() {
+        /*DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, "000001", 0, 800);
+        stockPlankDailyComponent.middlePlanks(new Date());*/
+       /* stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);*/
+        //stockKbarComponent.batchKbarDataInit();
+        //newStockComponent.catchNewStock();
         //stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
         //stockPlankDailyComponent.calMin15DaysPriceForTwoPlank(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
        //stockPlankDailyComponent.superFactor(DateUtil.parseDate("20210910",DateUtil.yyyyMMdd));
@@ -133,7 +178,9 @@ public class BaseTestCase {
             System.out.println(tradeDatePool);
             //blockKbarComponent.thsBlockKbar(tradeDatePool.getTradeDate());
         }*/
-        blockKbarComponent.thsBlockKbarGatherQuantity();
+        //blockKbarComponent.thsBlockKbarGatherQuantity();
+        //planksInfoComponent.planksInfo(DateUtil.parseDate("20211206",DateUtil.yyyyMMdd));
+        //stockPlankDailyComponent.realPlanks(new Date());
 
     }
 
