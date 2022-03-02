@@ -33,6 +33,9 @@ public class IndexRate500DTO {
         this.overOpenCount = overOpenCount;
     }
 
+    public IndexRate500DTO() {
+    }
+
     public IndexRate500DTO(BigDecimal openRate, BigDecimal lowRate, BigDecimal highRate, BigDecimal buyRate, Integer overOpenCount, Integer overOpenCount10, BigDecimal min5TradeAmount, BigDecimal min10TradeAmount) {
         this.openRate = openRate;
         this.lowRate = lowRate;

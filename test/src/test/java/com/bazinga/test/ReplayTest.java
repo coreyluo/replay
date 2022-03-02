@@ -171,7 +171,7 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
-        for (int i = 18; i < 19; i++) {
+        for (int i = 18; i < 23; i++) {
             final String from = "" + i;
             int toInt = i+1;
             final String to = "" + toInt;

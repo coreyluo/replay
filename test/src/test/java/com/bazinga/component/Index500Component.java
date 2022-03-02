@@ -50,9 +50,9 @@ public class Index500Component {
         Map<String, IndexRate500DTO> resultMap = new HashMap<>();
 
         String key = "zz_500_index_rate";
-        RedisMonior redisMonior = redisMoniorService.getByKey(key);
+        RedisMonior redisMonior = redisMoniorService.getByRedisKey(key);
         if(redisMonior !=null){
-            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getValue());
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getRedisValue());
             jsonObject.forEach((jsonKey,value)->{
                 resultMap.put(jsonKey,JSONObject.parseObject(value.toString(), IndexRate500DTO.class));
             });
@@ -121,6 +121,11 @@ public class Index500Component {
                 }
                 closePrice = list.get(list.size()-1).getTradePrice();
             }
+            RedisMonior monior = new RedisMonior();
+            monior.setRedisKey(key);
+            monior.setRedisValue(JSONObject.toJSONString(resultMap));
+            redisMoniorService.save(monior);
+
         }
 
 
