@@ -428,21 +428,13 @@ public class UpperShadowComponent {
                 break;
             }
         }
-        int afterTimes = 0;
-        boolean afterFlag = true;
         BigDecimal afterBuyPrice = null;
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue = new LimitQueue<>(3);
         for (ThirdSecondTransactionDataDTO data:datas){
-            Date date = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
-            if(date.after(buyTime)){
-                afterTimes++;
-            }
-            if(afterTimes>0 && data.getTradePrice().compareTo(tradePrice)==-1){
-                afterFlag = false;
-            }
-            if(afterTimes==2){
-                if(afterFlag){
-                    afterBuyPrice = data.getTradePrice();
-                }
+            limitQueue.offer(data);
+            boolean noDropFlag = noDrop(limitQueue, buyTime);
+            if(noDropFlag){
+                afterBuyPrice = data.getTradePrice();
                 break;
             }
         }
@@ -463,6 +455,28 @@ public class UpperShadowComponent {
         BigDecimal buyTimeRate = PriceUtil.getPricePercentRate(chuQuanTradePrice.subtract(shadow.getPreStockKbar().getAdjClosePrice()), shadow.getPreStockKbar().getAdjClosePrice());
         shadow.setBuyTimeRate(buyTimeRate);
         shadow.setShadowDayDealMoney(shadow.getPreStockKbar().getTradeAmount());
+    }
+
+    public boolean noDrop(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,Date buyTime){
+        if(limitQueue.size()<3){
+            return false;
+        }
+        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
+        BigDecimal prePrice  = null;
+        while (iterator.hasNext()){
+            ThirdSecondTransactionDataDTO next = iterator.next();
+            Date date = DateUtil.parseDate(next.getTradeTime(), DateUtil.HH_MM);
+            if(prePrice!=null){
+                if(!date.after(buyTime)){
+                    return false;
+                }
+                if(next.getTradePrice().compareTo(prePrice)==-1){
+                    return false;
+                }
+            }
+            prePrice  = next.getTradePrice();
+        }
+        return true;
     }
 
     public Map<String, Date> kbarStartDate(List<CirculateInfo> circulateInfos){
