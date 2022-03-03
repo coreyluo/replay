@@ -59,6 +59,18 @@ public class ShadowKbarDTO {
 
     private BigDecimal afterProfit;
 
+
+
+
+
+    //用于创业板低吸
+    private boolean buyFlag = false;
+    private BigDecimal openRate;
+    private BigDecimal openAmount;
+    private BigDecimal openAmountRate;
+    private Integer openAmountRateLevel;
+    private boolean newFlag = false;
+
     public static List<ShadowKbarDTO> marketMoneySort(List<ShadowKbarDTO> list){
         Collections.sort(list,new MarketMoneyComparator());
         return list;
@@ -137,6 +149,29 @@ public class ShadowKbarDTO {
                 return -1;
             }
             int i = p2.getOpenExchangeMoneyRate().compareTo(p1.getOpenExchangeMoneyRate());
+            return i;
+        }
+    }
+
+    public static List<ShadowKbarDTO> openAmountRateSort(List<ShadowKbarDTO> list){
+        Collections.sort(list,new OpenAmountRateComparator());
+        return list;
+    }
+
+    static class OpenAmountRateComparator implements Comparator<Object> {
+        public int compare(Object object1,Object object2){
+            ShadowKbarDTO p1 = (ShadowKbarDTO)object1;
+            ShadowKbarDTO p2 = (ShadowKbarDTO)object2;
+            if(p1.getOpenAmountRate()==null){
+                return 1;
+            }
+            if(p2.getOpenAmountRate()==null){
+                return -1;
+            }
+            if(p1.getOpenAmountRate()==null&&p2.getOpenAmountRate()==null){
+                return 0;
+            }
+            int i = p2.getOpenAmountRate().compareTo(p1.getOpenAmountRate());
             return i;
         }
     }
