@@ -100,6 +100,8 @@ public class HblTest extends BaseTestCase {
     private HighAvgComponent highAvgComponent;
     @Autowired
     private UpperShadowComponent upperShadowComponent;
+    @Autowired
+    private PlankEndRateComponent plankEndRateComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -127,7 +129,8 @@ public class HblTest extends BaseTestCase {
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
-        upperShadowComponent.upperShadowBuy();
+        //upperShadowComponent.upperShadowBuy();
+        plankEndRateComponent.plankRates();
 
     }
     @Test
