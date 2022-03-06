@@ -78,17 +78,17 @@ public class ChungYeBugComponent {
             list.add(dto.getOpenRate());
             list.add(dto.getOpenAmount());
             list.add(dto.getOpenAmountRate());
-            list.add(dto.getOpenAmountRateLevel());
+            //list.add(dto.getOpenAmountRateLevel());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
-                "5日涨幅","10日涨幅","15日涨幅","开盘涨幅","开盘涨幅","开盘成交额相对昨天比例","开盘成交额相比昨天比例排名","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
+                "5日涨幅","10日涨幅","15日涨幅","开盘涨幅","开盘涨幅","开盘成交额相对昨天比例","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("创业板价格笼子",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
+            poiExcelUtil.exportExcelUseExcelTitle("创业板价格笼子");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -98,7 +98,7 @@ public class ChungYeBugComponent {
         List<ShadowKbarDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20220201",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
         TradeDatePool preTradeDatePool = null;
@@ -202,8 +202,10 @@ public class ChungYeBugComponent {
         if(totalCount>0){
             BigDecimal avgPrice = totalMoney.divide(new BigDecimal(totalCount), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, buyDTO.getNextStockKbar());
-            BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(buyDTO.getBuyPrice()), buyDTO.getBuyPrice());
-            buyDTO.setProfit(profit);
+            if(buyDTO.getBuyPrice()!=null&&chuQuanAvgPrice!=null) {
+                BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(buyDTO.getBuyPrice()), buyDTO.getBuyPrice());
+                buyDTO.setProfit(profit);
+            }
         }
     }
 
@@ -293,6 +295,7 @@ public class ChungYeBugComponent {
                 BigDecimal marketMoney = new BigDecimal(circulateInfo.getCirculate()).multiply(shadowKbarDTO.getPreStockKbar().getClosePrice()).setScale(2, BigDecimal.ROUND_HALF_UP);
                 shadowKbarDTO.setMarketMoney(marketMoney);
                 BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preStockKbar.getAdjClosePrice()), preStockKbar.getAdjClosePrice());
+                shadowKbarDTO.setBuyPrice(stockKbar.getAdjOpenPrice().add(new BigDecimal("0.01")));
                 shadowKbarDTO.setOpenRate(openRate);
                 openInfo(shadowKbarDTO);
                 list.add(shadowKbarDTO);

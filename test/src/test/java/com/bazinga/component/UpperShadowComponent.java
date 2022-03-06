@@ -128,8 +128,8 @@ public class UpperShadowComponent {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Map<String, Date> startDateMap = kbarStartDate(circulateInfos);
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20200101",DateUtil.yyyyMMdd));
-        tradeDatePoolQuery.setTradeDateTo(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20190101",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateTo(DateUtil.parseDate("20200101",DateUtil.yyyyMMdd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
         TradeDatePool preTradeDatePool = null;
@@ -311,7 +311,10 @@ public class UpperShadowComponent {
             avgCount = avgCount+data.getTradeQuantity();
             BigDecimal money = data.getTradePrice().multiply(new BigDecimal(data.getTradeQuantity())).setScale(2, BigDecimal.ROUND_HALF_UP);
             avgTotal = avgTotal.add(money);
-            BigDecimal avgPrice = avgTotal.divide(new BigDecimal(avgCount),2,BigDecimal.ROUND_HALF_UP);
+            if(avgCount==0) {
+                continue;
+            }
+            BigDecimal avgPrice = avgTotal.divide(new BigDecimal(avgCount), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal chuQuanSubPrice = chuQuanAvgPrice(data.getTradePrice().subtract(avgPrice), buyDTO.getNextStockKbar());
             BigDecimal rate = PriceUtil.getPricePercentRate(chuQuanSubPrice, buyDTO.getStockKbar().getAdjClosePrice());
             if(rate.compareTo(new BigDecimal(2.5))==1){
