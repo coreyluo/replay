@@ -33,6 +33,7 @@ public class ShadowKbarDTO {
     private Long shadowBefore30AvgQuantity;
     private BigDecimal buyRateThanHigh;
     private BigDecimal shadowLength;
+    private String shadowTime;
     private Integer buySize;
     private Integer level;
 
@@ -55,6 +56,8 @@ public class ShadowKbarDTO {
     private BigDecimal twoPointFiveProfit;
     private BigDecimal profit;
     private BigDecimal moneyProfit;
+
+
 
 
     private BigDecimal afterProfit;
