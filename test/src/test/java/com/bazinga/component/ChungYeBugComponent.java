@@ -78,6 +78,9 @@ public class ChungYeBugComponent {
             list.add(dto.getOpenRate());
             list.add(dto.getOpenAmount());
             list.add(dto.getOpenAmountRate());
+            list.add(dto.isPreIsUpper());
+            list.add(dto.getContinuePlanks());
+            list.add(dto.getDay5Planks());
             //list.add(dto.getOpenAmountRateLevel());
             list.add(dto.getProfit());
             Object[] objects = list.toArray();
@@ -85,7 +88,7 @@ public class ChungYeBugComponent {
         }
 
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
-                "5日涨幅","10日涨幅","15日涨幅","开盘涨幅","开盘涨幅","开盘成交额相对昨天比例","盈利"};
+                "5日涨幅","10日涨幅","15日涨幅","开盘涨幅","开盘涨幅","开盘成交额相对昨天比例","前一天是否板","连板数","5天内板的数量","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("创业板价格笼子",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("创业板价格笼子");
@@ -98,7 +101,7 @@ public class ChungYeBugComponent {
         List<ShadowKbarDTO> list = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
         TradeDatePool preTradeDatePool = null;
@@ -158,9 +161,32 @@ public class ChungYeBugComponent {
         List<StockKbar> reverse = Lists.reverse(stockKbars);
         boolean reverseFlag = false;
         int days = 0;
+        int continueDays = 0;
+        boolean continueFlag = true;
+        int day5Planks= 0;
+        StockKbar nextStockKbar = null;
         for (StockKbar stockKbar:reverse){
             if(reverseFlag){
                 days++;
+            }
+            if(days==2&&buyDTO.getPreStockKbar()!=null){
+                boolean preIsUpper = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), buyDTO.getPreStockKbar().getClosePrice(), stockKbar.getClosePrice(), buyDTO.getPreStockKbar().getKbarDate());
+                buyDTO.setPreIsUpper(preIsUpper);
+            }
+            if(days>=2&&continueFlag){
+                boolean isUpper = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), nextStockKbar.getClosePrice(), stockKbar.getClosePrice(), nextStockKbar.getKbarDate());
+                if(isUpper){
+                    continueDays++;
+                    buyDTO.setContinuePlanks(continueDays);
+                }else{
+                    continueFlag = false;
+                }
+            }
+            if(i>=2&&i<=6){
+                boolean isUpper = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), nextStockKbar.getClosePrice(), stockKbar.getClosePrice(), nextStockKbar.getKbarDate());
+                if(isUpper){
+                    day5Planks = day5Planks+1;
+                }
             }
             if(days==6){
                 BigDecimal rate = PriceUtil.getPricePercentRate(buyDTO.getPreStockKbar().getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
@@ -177,7 +203,9 @@ public class ChungYeBugComponent {
             if(stockKbar.getKbarDate().equals(buyDTO.getStockKbar().getKbarDate())){
                 reverseFlag  = true;
             }
+            nextStockKbar = stockKbar;
         }
+        buyDTO.setDay5Planks(day5Planks);
         if(buyDTO.getNextStockKbar()==null){
             return;
         }
@@ -298,7 +326,9 @@ public class ChungYeBugComponent {
                 shadowKbarDTO.setBuyPrice(stockKbar.getAdjOpenPrice().add(new BigDecimal("0.01")));
                 shadowKbarDTO.setOpenRate(openRate);
                 openInfo(shadowKbarDTO);
-                list.add(shadowKbarDTO);
+                if(shadowKbarDTO.getOpenAmount()!=null && shadowKbarDTO.getOpenAmount().compareTo(new BigDecimal("5000000"))==1) {
+                    list.add(shadowKbarDTO);
+                }
             }
         }
         List<ShadowKbarDTO> shadows = new ArrayList<>();

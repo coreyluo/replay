@@ -73,6 +73,9 @@ public class ShadowKbarDTO {
     private BigDecimal openAmountRate;
     private Integer openAmountRateLevel;
     private boolean newFlag = false;
+    private boolean preIsUpper = false;
+    private int continuePlanks = 0;
+    private int day5Planks;
 
     public static List<ShadowKbarDTO> marketMoneySort(List<ShadowKbarDTO> list){
         Collections.sort(list,new MarketMoneyComparator());

@@ -131,9 +131,9 @@ public class HblTest extends BaseTestCase {
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
-        upperShadowComponent.upperShadowBuy();
+        //upperShadowComponent.upperShadowBuy();
         //plankEndRateComponent.plankRates();
-        //chungYeBugComponent.chuangYeBuy();
+        chungYeBugComponent.chuangYeBuy();
 
     }
     @Test
