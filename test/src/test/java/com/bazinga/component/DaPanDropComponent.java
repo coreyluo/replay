@@ -144,7 +144,7 @@ public class DaPanDropComponent {
     public List<KBarDTO> getStockKBars(String stockCode){
         List<KBarDTO> list = Lists.newArrayList();
         for (int i=2000;i>=0;i--) {
-            DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, stockCode, i, 1);
+            DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, i, 1);
             KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
             list.add(kbar);
         }
