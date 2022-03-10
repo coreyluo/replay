@@ -104,6 +104,8 @@ public class HblTest extends BaseTestCase {
     private PlankEndRateComponent plankEndRateComponent;
     @Autowired
     private ChungYeBugComponent chungYeBugComponent;
+    @Autowired
+    private DaPanDropComponent daPanDropComponent;
     @Test
     public void test(){
         //zhongWeiDiXiReplayComponent.middle();
@@ -138,15 +140,16 @@ public class HblTest extends BaseTestCase {
     }
     @Test
     public void test2(){
+        daPanDropComponent.chuangYeBuy();
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
-        hotBlockDropBuyComponent.hotDrop();
+        //hotBlockDropBuyComponent.hotDrop();
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
-        fastPlankComponent.fastPlank();
+        //fastPlankComponent.fastPlank();
         //synExcelComponent.zhuanZaiQuoteInfo();
         //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
-        synExcelComponent.zhuanZaiQuoteInfo();
+        //synExcelComponent.zhuanZaiQuoteInfo();
 
 
 
