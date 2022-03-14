@@ -57,6 +57,7 @@ public class HotBlockDropBuyScoreComponent {
     @Autowired
     private ThsBlockStockDetailService thsBlockStockDetailService;
 
+
     public static Map<String,BlockLevelDTO> levelMap = new ConcurrentHashMap<>(8192);
 
 

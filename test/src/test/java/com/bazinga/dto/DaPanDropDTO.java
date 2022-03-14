@@ -11,5 +11,8 @@ public class DaPanDropDTO {
     private BigDecimal dropRate;
     private BigDecimal percent;
     private String timeStamp;
+    private BigDecimal relativeOpenRate;
+    private String preTradeDate;
+    private String nextTradeDate;
     private Integer days;
 }
