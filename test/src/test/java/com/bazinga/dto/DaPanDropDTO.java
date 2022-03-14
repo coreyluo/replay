@@ -9,5 +9,7 @@ import java.math.BigDecimal;
 public class DaPanDropDTO {
     private String tradeDate;
     private BigDecimal dropRate;
+    private BigDecimal percent;
+    private String timeStamp;
     private Integer days;
 }
