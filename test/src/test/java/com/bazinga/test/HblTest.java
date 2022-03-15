@@ -100,8 +100,22 @@ public class HblTest extends BaseTestCase {
     private HighAvgComponent highAvgComponent;
     @Autowired
     private UpperShadowComponent upperShadowComponent;
+    @Autowired
+    private PlankEndRateComponent plankEndRateComponent;
+    @Autowired
+    private ChungYeBugComponent chungYeBugComponent;
+    @Autowired
+    private DaPanDropComponent daPanDropComponent;
+    @Autowired
+    private GuaiLilvComponent guaiLilvComponent;
+    @Autowired
+    private GuaiLilvPlankComponent guaiLilvPlankComponent;
+
     @Test
     public void test(){
+
+        guaiLilvPlankComponent.guaiLiLv();
+        //guaiLilvComponent.guaiLiLv();
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        /*synExcelComponent.otherStockBuy();
@@ -128,19 +142,22 @@ public class HblTest extends BaseTestCase {
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
         upperShadowComponent.upperShadowBuy();
+        //plankEndRateComponent.plankRates();
+       // chungYeBugComponent.chuangYeBuy();
 
     }
     @Test
     public void test2(){
+        daPanDropComponent.chuangYeBuy();
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
-        hotBlockDropBuyComponent.hotDrop();
+        //hotBlockDropBuyComponent.hotDrop();
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
-        fastPlankComponent.fastPlank();
+        //fastPlankComponent.fastPlank();
         //synExcelComponent.zhuanZaiQuoteInfo();
         //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
-        synExcelComponent.zhuanZaiQuoteInfo();
+        //synExcelComponent.zhuanZaiQuoteInfo();
 
 
 

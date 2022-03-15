@@ -102,6 +102,7 @@ public class UpperShadowComponent {
             list.add(dto.getOpenExchangeMoneyLevel());
             list.add(dto.getOpenExchangeMoneyRateLevel());
             list.add(dto.getPreDateEndPlanks());
+            list.add(dto.getShadowTime());
 
             list.add(dto.getBuyPercent());
             list.add(dto.getProfit());
@@ -114,7 +115,7 @@ public class UpperShadowComponent {
         String[] rowNames = {"index","stockCode","stockName","流通z","市值","买入日期",
                 "5日涨幅","10日涨幅","15日涨幅","上引线日成交金额","买入日开盘成交额","买入日买入前成交额","买入日开盘涨幅","买入时候涨幅",
                 "上影线前10日平均成交额","买入时相对5日均线距离","上引线前30天平均成交量","上引线日收盘相对前30日最高点涨幅","上引线长度",
-                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","开盘成交额排名","开盘成交额除以前一天成交额比例排名","前一天封板数量","买入相对单笔比例","单笔盈利","买入比例盈利","买入两跳不降低盈利"};
+                "买入数量","排名","是否存在2.5卖出","出现2.5卖出后是否新高","使用2.5卖出法盈利","10天内封板次数","开盘成交额排名","开盘成交额除以前一天成交额比例排名","前一天封板数量","上引线日最高点时间","买入相对单笔比例","单笔盈利","买入比例盈利","买入两跳不降低盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
@@ -128,7 +129,8 @@ public class UpperShadowComponent {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Map<String, Date> startDateMap = kbarStartDate(circulateInfos);
         TradeDatePoolQuery tradeDatePoolQuery = new TradeDatePoolQuery();
-        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateFrom(DateUtil.parseDate("20180101",DateUtil.yyyyMMdd));
+        tradeDatePoolQuery.setTradeDateTo(DateUtil.parseDate("20190101",DateUtil.yyyyMMdd));
         tradeDatePoolQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDatePoolQuery);
         TradeDatePool preTradeDatePool = null;
@@ -172,6 +174,7 @@ public class UpperShadowComponent {
             shadowKbarDTO.setBuySize(list.size());
             shadowKbarDTO.setLevel(i);
             calProfit(shadowKbarDTO);
+            calShadowDayHighTime(shadowKbarDTO);
         }
         ShadowKbarDTO.buyDayOpenDealMoneySort(list);
         int j =0;
@@ -197,7 +200,24 @@ public class UpperShadowComponent {
         BigDecimal rate = PriceUtil.getPricePercentRate(preStockKbar.getAdjHighPrice().subtract(twoPrice), prePreStockKbar.getAdjClosePrice());
         shadow.setShadowLength(rate);
     }
-
+    public void calShadowDayHighTime(ShadowKbarDTO buyDTO){
+        if(buyDTO.getPreStockKbar()==null){
+            return;
+        }
+        List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(buyDTO.getStockCode(), buyDTO.getPreStockKbar().getKbarDate());
+        if(CollectionUtils.isEmpty(datas)){
+            return;
+        }
+        String highTime = null;
+        BigDecimal highPrice = null;
+        for (ThirdSecondTransactionDataDTO data:datas){
+            if(highPrice==null||data.getTradePrice().compareTo(highPrice)==1){
+                highPrice = data.getTradePrice();
+                highTime = data.getTradeTime();
+            }
+        }
+        buyDTO.setShadowTime(highTime);
+    }
     public void calProfit(ShadowKbarDTO buyDTO){
         StockKbarQuery kbarQuery = new StockKbarQuery();
         kbarQuery.setStockCode(buyDTO.getStockCode());
@@ -310,7 +330,10 @@ public class UpperShadowComponent {
             avgCount = avgCount+data.getTradeQuantity();
             BigDecimal money = data.getTradePrice().multiply(new BigDecimal(data.getTradeQuantity())).setScale(2, BigDecimal.ROUND_HALF_UP);
             avgTotal = avgTotal.add(money);
-            BigDecimal avgPrice = avgTotal.divide(new BigDecimal(avgCount),2,BigDecimal.ROUND_HALF_UP);
+            if(avgCount==0) {
+                continue;
+            }
+            BigDecimal avgPrice = avgTotal.divide(new BigDecimal(avgCount), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal chuQuanSubPrice = chuQuanAvgPrice(data.getTradePrice().subtract(avgPrice), buyDTO.getNextStockKbar());
             BigDecimal rate = PriceUtil.getPricePercentRate(chuQuanSubPrice, buyDTO.getStockKbar().getAdjClosePrice());
             if(rate.compareTo(new BigDecimal(2.5))==1){
@@ -428,21 +451,13 @@ public class UpperShadowComponent {
                 break;
             }
         }
-        int afterTimes = 0;
-        boolean afterFlag = true;
         BigDecimal afterBuyPrice = null;
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueue = new LimitQueue<>(3);
         for (ThirdSecondTransactionDataDTO data:datas){
-            Date date = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
-            if(date.after(buyTime)){
-                afterTimes++;
-            }
-            if(afterTimes>0 && data.getTradePrice().compareTo(tradePrice)==-1){
-                afterFlag = false;
-            }
-            if(afterTimes==2){
-                if(afterFlag){
-                    afterBuyPrice = data.getTradePrice();
-                }
+            limitQueue.offer(data);
+            boolean noDropFlag = noDrop(limitQueue, buyTime);
+            if(noDropFlag){
+                afterBuyPrice = data.getTradePrice();
                 break;
             }
         }
@@ -463,6 +478,28 @@ public class UpperShadowComponent {
         BigDecimal buyTimeRate = PriceUtil.getPricePercentRate(chuQuanTradePrice.subtract(shadow.getPreStockKbar().getAdjClosePrice()), shadow.getPreStockKbar().getAdjClosePrice());
         shadow.setBuyTimeRate(buyTimeRate);
         shadow.setShadowDayDealMoney(shadow.getPreStockKbar().getTradeAmount());
+    }
+
+    public boolean noDrop(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,Date buyTime){
+        if(limitQueue.size()<3){
+            return false;
+        }
+        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
+        BigDecimal prePrice  = null;
+        while (iterator.hasNext()){
+            ThirdSecondTransactionDataDTO next = iterator.next();
+            Date date = DateUtil.parseDate(next.getTradeTime(), DateUtil.HH_MM);
+            if(prePrice!=null){
+                if(!date.after(buyTime)){
+                    return false;
+                }
+                if(next.getTradePrice().compareTo(prePrice)==-1){
+                    return false;
+                }
+            }
+            prePrice  = next.getTradePrice();
+        }
+        return true;
     }
 
     public Map<String, Date> kbarStartDate(List<CirculateInfo> circulateInfos){
