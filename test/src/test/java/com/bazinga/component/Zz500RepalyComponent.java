@@ -67,9 +67,11 @@ public class Zz500RepalyComponent {
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
-        circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
+        circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
 
-       // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
+
+        Map<String, List<String>> nodeList = index500Component.getNodeList();
+        // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
 
@@ -93,8 +95,12 @@ public class Zz500RepalyComponent {
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
                 StockKbar preKbar = stockKbarList.get(i - 2);
 
-
-
+                String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
+                List<String> history500List = nodeList.get(recentNode);
+                if(!history500List.contains(buyStockKbar.getStockCode())){
+                    log.info("此票不在历史500数据 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
+                    continue;
+                }
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list) || list.size()<3){
                     continue;
@@ -130,7 +136,7 @@ public class Zz500RepalyComponent {
                     if(currentDTO.getTradePrice().compareTo(avgPrice)>0){
                         overJump++;
                     }
-                    if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *40){
+                    if(totalTradeQuantity * 100 >= plankKbarTradeQuantity *60){
                         buyIndex = j;
                         break;
                     }
@@ -267,7 +273,7 @@ public class Zz500RepalyComponent {
 
         }
         log.info("输出文件500低吸");
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸"+kbarDateFrom+"-"+kbarDateTo+".xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸60"+kbarDateFrom+"-"+kbarDateTo+".xls");
 
     }
 

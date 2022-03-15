@@ -95,6 +95,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private LowTrendReplayComponent lowTrendReplayComponent;
+
+    @Autowired
+    private BackSealReplayComponent backSealReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -171,15 +174,15 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
-     /*   for (int i = 18; i < 23; i++) {
+        for (int i = 18; i < 23; i++) {
             final String from = "" + i;
             int toInt = i+1;
             final String to = "" + toInt;
             THREAD_POOL.execute(()->{
                 zz500RepalyComponent.replay("20"+from+"0101","20"+to+"0120");
             });
-        }*/
-        zz500RepalyComponent.replay("20220101","20230120");
+        }
+      //  zz500RepalyComponent.replay("20220101","20230120");
 
         try {
             TimeUnit.HOURS.sleep(24);
@@ -194,5 +197,10 @@ public class ReplayTest extends BaseTestCase {
       //  plankFirstSealReplayComponent.replay();
       //  bankerStockReplayComponent.replay();
 
+    }
+
+    @Test
+    public void test12(){
+        backSealReplayComponent.replay();
     }
 }

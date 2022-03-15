@@ -3,6 +3,8 @@ package com.bazinga.replay.util;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.replay.dto.AdjFactorDTO;
+import com.bazinga.replay.model.IndexDetail;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -11,6 +13,7 @@ import org.jsoup.Jsoup;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -20,13 +23,15 @@ public class TuShareUtil {
     private static final int  LOOP_TIMES =3;
 
 
-    public static Map<String, AdjFactorDTO> getHistoryIndexDetail(String stockCode, String kbarDateFrom) {
+    public static List<IndexDetail> getHistoryIndexDetail(String stockCode, String kbarDateFrom) {
+        List<IndexDetail> resultList = Lists.newArrayList();
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("api_name", "index_weight");
         paramMap.put("token", "f9d25f4ab3f0abe5e04fdf76c32e8c8a5cc94e384774da025098ec6e");
         Map<String, String> paramsdate = new HashMap<>();
         String tsStockCode = stockCode + ".SH";
         paramsdate.put("index_code", tsStockCode);
+        paramsdate.put("limit", "50000");
         if (StringUtils.isNotBlank(kbarDateFrom)) {
             paramsdate.put("start_date", kbarDateFrom);
         }
@@ -48,8 +53,14 @@ public class TuShareUtil {
                 for (int i = 0; i < fields.size(); i++) {
                     String resultStockCode = fields.getJSONArray(i).getString(0);
                     String tradeDate = fields.getJSONArray(i).getString(1);
+                    IndexDetail indexDetail = new IndexDetail();
+                    indexDetail.setIndexCode(stockCode);
+                    indexDetail.setBlockName("中证500");
+                    indexDetail.setStockCode(resultStockCode.substring(0,6));
+                    indexDetail.setKbarDate(tradeDate);
+                    resultList.add(indexDetail);
                 }
-                return resultMap;
+                return resultList;
             } catch (Exception e) {
                 log.error("第{}次获取复权因子异常 stockCode ={}", times,stockCode, e);
             }
@@ -61,7 +72,7 @@ public class TuShareUtil {
             }
         }
 
-        return null;
+        return resultList;
     }
 
     public static void main(String[] args) {
