@@ -79,7 +79,7 @@ public class GuaiLilvComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","日期","比例","乖离率","时间","相对开盘跌幅"};
+        String[] rowNames = {"index","日期","比例","乖离率","时间","涨跌幅"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("乖离率",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("乖离率");
@@ -102,7 +102,8 @@ public class GuaiLilvComponent {
             if(preStockKbar!=null){
                 List<DaPanDropDTO> daPanDropDTOS = getHistoryInfo(stockKbar, limitQueue,preStockKbar);
                 if(!CollectionUtils.isEmpty(daPanDropDTOS)) {
-                    list.addAll(daPanDropDTOS);
+                    //list.addAll(daPanDropDTOS);
+                    list.add(daPanDropDTOS.get(0));
                 }
             }
             limitQueue.offer(stockKbar);
@@ -123,6 +124,7 @@ public class GuaiLilvComponent {
         String buyTimeStamp = null;
         LimitQueue<ThirdSecondTransactionDataDTO> limitQueueSpeed = new LimitQueue<ThirdSecondTransactionDataDTO>(60);
         for(ThirdSecondTransactionDataDTO data:datas){
+            limitQueueSpeed.offer(data);
             if(data.getTradeTime().equals("09:25")){
                 totalGather = data.getTradeQuantity().longValue();
             }
@@ -154,16 +156,13 @@ public class GuaiLilvComponent {
             BigDecimal raiseRate = raiseSpeed(limitQueueSpeed, preStockKbar.getClosePrice());
             //if(glv.compareTo(new BigDecimal("-4.8"))==-1&&percent.compareTo(new BigDecimal("0.4"))==1/*&&relativeOpenRate.compareTo(new BigDecimal("-1.8"))==-1*/){
             if(glv.compareTo(new BigDecimal("-4.8"))==-1&&raiseRate!=null&&raiseRate.compareTo(new BigDecimal(0.75))>0){
-                if(!data.getTradeTime().equals(buyTimeStamp)) {
-                    DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
-                    daPanDropDTO.setDropRate(glv);
-                    daPanDropDTO.setPercent(percent);
-                    daPanDropDTO.setTimeStamp(data.getTradeTime());
-                    daPanDropDTO.setTradeDate(stockKbar.getKbarDate());
-                    daPanDropDTO.setRelativeOpenRate(raiseRate);
-                    list.add(daPanDropDTO);
-                    buyTimeStamp = data.getTradeTime();
-                }
+                DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
+                daPanDropDTO.setDropRate(glv);
+                daPanDropDTO.setPercent(percent);
+                daPanDropDTO.setTimeStamp(data.getTradeTime());
+                daPanDropDTO.setTradeDate(stockKbar.getKbarDate());
+                daPanDropDTO.setRelativeOpenRate(raiseRate);
+                list.add(daPanDropDTO);
             }
         }
         return list;
