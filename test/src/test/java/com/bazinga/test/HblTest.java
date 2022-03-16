@@ -114,8 +114,8 @@ public class HblTest extends BaseTestCase {
     @Test
     public void test(){
 
-        guaiLilvPlankComponent.guaiLiLv();
-        //guaiLilvComponent.guaiLiLv();
+        //guaiLilvPlankComponent.guaiLiLv();
+        guaiLilvComponent.guaiLiLv();
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        /*synExcelComponent.otherStockBuy();
