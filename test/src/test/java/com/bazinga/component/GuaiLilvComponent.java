@@ -155,7 +155,7 @@ public class GuaiLilvComponent {
             Date currentDate = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
             Date signDate = DateUtil.parseDate("09:58",DateUtil.HH_MM);
             if(currentDate.after(signDate)) {
-                if (glv.compareTo(new BigDecimal("-4.8")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.75)) > 0) {
+                if (glv.compareTo(new BigDecimal("-2.4")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.75)) > 0) {
                     DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
                     daPanDropDTO.setDropRate(glv);
                     daPanDropDTO.setPercent(percent);
@@ -165,7 +165,7 @@ public class GuaiLilvComponent {
                     list.add(daPanDropDTO);
                 }
             }else {
-                if (glv.compareTo(new BigDecimal("-4.8")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(1)) > 0) {
+                if (glv.compareTo(new BigDecimal("-2.4")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(1)) > 0) {
                     if (stockKbar.getKbarDate().equals("20200319")) {
                         System.out.println(111111111);
                     }
