@@ -205,6 +205,8 @@ public class ReplayTest extends BaseTestCase {
     @Test
     public void test12(){
         //backSealReplayComponent.replay();
-        plankQuantityDivideComponent.replay();
+      //  plankQuantityDivideComponent.replay();
+
+        zuangReplayComponent.replay20220320();
     }
 }

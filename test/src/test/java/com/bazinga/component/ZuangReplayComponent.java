@@ -2,7 +2,6 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
-import com.bazinga.dto.ZongZiExportDTO;
 import com.bazinga.dto.ZuangExportDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
@@ -41,26 +40,127 @@ public class ZuangReplayComponent {
 
 
     public void replay20220320(){
+        List<ZuangExportDTO> resultList = Lists.newArrayList();
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-        circulateInfos = circulateInfos.stream().filter(item-> !item.getStockCode().startsWith("3")).collect(Collectors.toList());
+       // circulateInfos = circulateInfos.stream().filter(item-> !item.getStockCode().startsWith("3")).collect(Collectors.toList());
 
         for (CirculateInfo circulateInfo : circulateInfos) {
 
             StockKbarQuery query = new StockKbarQuery();
-            stockKbarService.listByCondition(query);
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20210301");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+            stockKbarList = stockKbarList.stream().filter(item->item.getTradeQuantity()>0).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<11){
+                continue;
+            }
 
+            for (int i = 15; i < stockKbarList.size()-1; i++) {
+                StockKbar stockKbar = stockKbarList.get(i);
+                StockKbar preStockKbar = stockKbarList.get(i-1);
+                StockKbar sellStockKbar = stockKbarList.get(i + 1);
+
+                if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                    continue;
+                }
+
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+
+                int rotNums =0;
+                String firstPlankTime="";
+                BigDecimal totalTradeAmount = BigDecimal.ZERO;
+                for (int j = 0; j < list.size()-2; j++) {
+                    ThirdSecondTransactionDataDTO currentDto = list.get(j);
+                    ThirdSecondTransactionDataDTO afterDto = list.get(j + 1);
+                    if(j==0 &&  currentDto.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
+                        currentDto.setTradeType(1);
+                    }
+                    if(afterDto.getTradeType()==1 && afterDto.getTradePrice().compareTo(stockKbar.getHighPrice())==0){
+                        if(currentDto.getTradePrice().compareTo(stockKbar.getHighPrice())<0 || currentDto.getTradeType()==0){
+                            rotNums++;
+                        }
+                    }
+                    if(StringUtils.isEmpty(firstPlankTime) && rotNums==1){
+                        firstPlankTime = afterDto.getTradeTime();
+                        break;
+                    }
+                    totalTradeAmount = totalTradeAmount.add(currentDto.getTradePrice().multiply(CommonConstant.DECIMAL_HUNDRED)
+                            .multiply(new BigDecimal(currentDto.getTradeQuantity().toString())));
+                }
+                if(StringUtils.isEmpty(firstPlankTime)){
+                    continue;
+                }
+
+                List<StockKbar> tempList = stockKbarList.subList(i - 15, i);
+                StockKbar currentStockKbar = tempList.get(tempList.size() - 1);
+                BigDecimal lowPrice = currentStockKbar.getAdjLowPrice();
+                int low2UpperDays = 0;
+                for (int j = 1; j < 10; j++) {
+                    StockKbar tempStockKbar = tempList.get(tempList.size() - j);
+                    if(lowPrice.compareTo(tempStockKbar.getLowPrice())>0){
+                        lowPrice = tempStockKbar.getAdjLowPrice();
+                        low2UpperDays = j;
+                    }
+                }
+                StockKbar beginStockKbar  = tempList.get(tempList.size()-11);
+                BigDecimal low10Rate =  PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(lowPrice), beginStockKbar.getAdjOpenPrice());
+
+                if(low10Rate.compareTo(new BigDecimal(20))<0){
+                    continue;
+                }
+                boolean isPlank = isPlank(tempList);
+                if(isPlank){
+                    continue;
+                }
+                List<StockKbar> low2UpList = tempList.subList(tempList.size() - low2UpperDays, tempList.size());
+                BigDecimal low2UpAvgAmount = low2UpList.stream().map(StockKbar::getTradeAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .divide(new BigDecimal(low2UpList.size()), 2, BigDecimal.ROUND_HALF_UP);
+                List<StockKbar> preLowDay5List = tempList.subList(tempList.size() - low2UpperDays - 5, tempList.size() - low2UpperDays);
+                BigDecimal preDay5AvgAmount = preLowDay5List.stream().map(StockKbar::getTradeAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        .divide(new BigDecimal(preLowDay5List.size()), 2, BigDecimal.ROUND_HALF_UP);
+
+                log.info("满足条件 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                ZuangExportDTO exportDTO = new ZuangExportDTO();
+                exportDTO.setStockName(stockKbar.getStockName());
+                exportDTO.setStockCode(stockKbar.getStockCode());
+                exportDTO.setBuyKbarDate(stockKbar.getKbarDate());
+                exportDTO.setBuyPrice(stockKbar.getHighPrice());
+                exportDTO.setBuyTime(firstPlankTime);
+                exportDTO.setCirculate(circulateInfo.getCirculate());
+                exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                exportDTO.setLow2UpDays(low2UpperDays);
+                exportDTO.setLow2UpRate(low10Rate);
+                exportDTO.setPreBuyPrice(preStockKbar.getClosePrice());
+                exportDTO.setLowAvgAmount(low2UpAvgAmount);
+                exportDTO.setPreDay5LowAvgAmount(preDay5AvgAmount);
+                BigDecimal sellPrice = historyTransactionDataComponent.calAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                if(sellPrice!=null){
+                    exportDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
+                }
+                resultList.add(exportDTO);
+            }
 
 
         }
-
-
-
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\庄股分析.xls");
 
 
     }
 
+    private boolean isPlank(List<StockKbar> tempList) {
+        for (int i = 1; i < 11; i++) {
+            StockKbar tempStockKbar = tempList.get(tempList.size() - i);
+            StockKbar preTempStockKbar = tempList.get(tempList.size() - i-1);
 
+            boolean isPlank = StockKbarUtil.isUpperPrice(tempStockKbar, preTempStockKbar);
+            if(isPlank){
+                return true;
+            }
+        }
+        return false;
+    }
 
 
     public void replay(){
@@ -150,7 +250,7 @@ public class ZuangReplayComponent {
                     ZuangExportDTO exportDTO = new ZuangExportDTO();
                     exportDTO.setStockCode(stockKbar.getStockCode());
                     exportDTO.setStockName(stockKbar.getStockName());
-                    exportDTO.setBuykbarDate(stockKbar.getKbarDate());
+                    exportDTO.setBuyKbarDate(stockKbar.getKbarDate());
                     exportDTO.setBuyTime(plankTime);
                     exportDTO.setCirculateAmountZ(circulateAmountZ);
                     exportDTO.setOpenTradeAmount(openTradeAmount);
