@@ -40,6 +40,29 @@ public class ZuangReplayComponent {
     private StockKbarService stockKbarService;
 
 
+    public void replay20220320(){
+
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        circulateInfos = circulateInfos.stream().filter(item-> !item.getStockCode().startsWith("3")).collect(Collectors.toList());
+
+        for (CirculateInfo circulateInfo : circulateInfos) {
+
+            StockKbarQuery query = new StockKbarQuery();
+            stockKbarService.listByCondition(query);
+
+
+
+        }
+
+
+
+
+
+    }
+
+
+
+
     public void replay(){
 
         List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000607", "20210823");

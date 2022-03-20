@@ -49,10 +49,23 @@ public class StockKbarUtil {
     }
 
     public static BigDecimal getNDaysUpperRate(List<StockKbar> stockKbarList45, int i) {
-        StockKbar stockKbar = stockKbarList45.get(stockKbarList45.size() - i);
+        StockKbar stockKbar = stockKbarList45.get(stockKbarList45.size() - i-1);
         StockKbar currentStockKbar = stockKbarList45.get(stockKbarList45.size() - 1);
 
         return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice()), stockKbar.getAdjOpenPrice());
+    }
+
+    public static BigDecimal getNDaysLowCloseRate(List<StockKbar> stockKbarList45, int i) {
+        StockKbar currentStockKbar = stockKbarList45.get(stockKbarList45.size() - 1);
+        BigDecimal lowPrice = currentStockKbar.getAdjLowPrice();
+        for (int j = 1; j < i; j++) {
+            StockKbar stockKbar = stockKbarList45.get(stockKbarList45.size() - j);
+            if(lowPrice.compareTo(stockKbar.getLowPrice())>0){
+                lowPrice = stockKbar.getAdjLowPrice();
+            }
+        }
+        StockKbar stockKbar  = stockKbarList45.get(stockKbarList45.size()-i-1);
+        return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(lowPrice), stockKbar.getAdjOpenPrice());
     }
 
     public static BigDecimal getLowPrice(List<ThirdSecondTransactionDataDTO> preHalfOneHourList) {

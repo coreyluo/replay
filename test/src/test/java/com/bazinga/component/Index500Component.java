@@ -119,7 +119,7 @@ public class Index500Component {
             String[] headList = getHeadList();
             TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
             tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20171101", DateUtil.yyyyMMdd));
-            tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220302", DateUtil.yyyyMMdd));
+            tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220318", DateUtil.yyyyMMdd));
             tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
             List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
             BigDecimal closePrice = BigDecimal.ZERO;
