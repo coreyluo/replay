@@ -62,6 +62,7 @@ public class GuaiLilvPlankComponent {
             List<Object> list = new ArrayList<>();
             list.add(dto.getStockCode());
             list.add(dto.getStockCode());
+            list.add(dto.getStockName());
             list.add(dto.getTradeDate());
             list.add(dto.getBuyTime());
             list.add(dto.getProfit());
@@ -71,9 +72,9 @@ public class GuaiLilvPlankComponent {
         }
 
         String[] rowNames = {"index","股票代码","股票名称","交易日期","买入时间","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("乖离率",rowNames,datas);
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("乖离率低点板买入30",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("乖离率");
+            poiExcelUtil.exportExcelUseExcelTitle("乖离率低点板买入30");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -117,7 +118,7 @@ public class GuaiLilvPlankComponent {
             }
         }
         Date startTime = DateUtil.parseDate(dto.getTimeStamp(), DateUtil.HH_MM);
-        Date endTime = DateUtil.addMinutes(startTime, 10);
+        Date endTime = DateUtil.addMinutes(startTime, 30);
         List<DaPanDropPlankDTO> list = Lists.newArrayList();
         for (String stockCode:tradeDateMap.keySet()){
             StockKbar stockKbar = tradeDateMap.get(stockCode);
@@ -239,7 +240,7 @@ public class GuaiLilvPlankComponent {
             BigDecimal percent = new BigDecimal(totalCurrent).divide(new BigDecimal(total0930+totalGather), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal glv = (data.getTradePrice().subtract(avgPrice).divide(avgPrice,4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100))).setScale(2);
             BigDecimal relativeOpenRate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(stockKbar.getOpenPrice()), preStockKbar.getClosePrice());
-            if(glv.compareTo(new BigDecimal("-4.8"))==-1&&percent.compareTo(new BigDecimal("0.4"))==1&&relativeOpenRate.compareTo(new BigDecimal("-0.9"))==-1){
+            if(glv.compareTo(new BigDecimal("-2.0"))==-1&&percent.compareTo(new BigDecimal("0.3"))==1&&relativeOpenRate.compareTo(new BigDecimal("-0.5"))==-1){
                     DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
                     daPanDropDTO.setDropRate(glv);
                     daPanDropDTO.setPercent(percent);
@@ -269,6 +270,9 @@ public class GuaiLilvPlankComponent {
 
 
     public BigDecimal calProfit(StockKbar buyKbar,StockKbar nextStockKbar){
+        if(buyKbar==null|nextStockKbar==null){
+            return null;
+        }
         BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(nextStockKbar.getStockCode(), nextStockKbar.getKbarDate());
         if(avgPrice==null){
             return null;
@@ -277,7 +281,7 @@ public class GuaiLilvPlankComponent {
         if(!(nextStockKbar.getClosePrice().equals(nextStockKbar.getAdjClosePrice()))&&!(nextStockKbar.getOpenPrice().equals(nextStockKbar.getAdjOpenPrice()))){
             reason = nextStockKbar.getAdjOpenPrice().divide(nextStockKbar.getOpenPrice(),4,BigDecimal.ROUND_HALF_UP);
         }
-        if(reason==null){
+        if(reason!=null){
             avgPrice = avgPrice.multiply(reason).setScale(2, BigDecimal.ROUND_HALF_UP);
         }
         BigDecimal rate = PriceUtil.getPricePercentRate(avgPrice.subtract(buyKbar.getAdjHighPrice()), buyKbar.getAdjHighPrice());

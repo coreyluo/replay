@@ -27,10 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -79,7 +76,7 @@ public class GuaiLilvComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","日期","比例","乖离率","时间","相对开盘跌幅"};
+        String[] rowNames = {"index","日期","比例","乖离率","时间","涨跌幅"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("乖离率",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("乖离率");
@@ -102,7 +99,8 @@ public class GuaiLilvComponent {
             if(preStockKbar!=null){
                 List<DaPanDropDTO> daPanDropDTOS = getHistoryInfo(stockKbar, limitQueue,preStockKbar);
                 if(!CollectionUtils.isEmpty(daPanDropDTOS)) {
-                    list.addAll(daPanDropDTOS);
+                    //list.addAll(daPanDropDTOS);
+                    list.add(daPanDropDTOS.get(0));
                 }
             }
             limitQueue.offer(stockKbar);
@@ -121,7 +119,9 @@ public class GuaiLilvComponent {
         Long totalCurrent = 0L;
         String preTimeStamp = "09:30";
         String buyTimeStamp = null;
+        LimitQueue<ThirdSecondTransactionDataDTO> limitQueueSpeed = new LimitQueue<ThirdSecondTransactionDataDTO>(36);
         for(ThirdSecondTransactionDataDTO data:datas){
+            limitQueueSpeed.offer(data);
             if(data.getTradeTime().equals("09:25")){
                 totalGather = data.getTradeQuantity().longValue();
             }
@@ -150,20 +150,52 @@ public class GuaiLilvComponent {
             BigDecimal percent = new BigDecimal(totalCurrent).divide(new BigDecimal(total0930+totalGather), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal glv = (data.getTradePrice().subtract(avgPrice).divide(avgPrice,4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100))).setScale(2);
             BigDecimal relativeOpenRate = PriceUtil.getPricePercentRate(data.getTradePrice().subtract(stockKbar.getOpenPrice()), preStockKbar.getClosePrice());
-            if(glv.compareTo(new BigDecimal("-4.8"))==-1&&percent.compareTo(new BigDecimal("0.4"))==1/*&&relativeOpenRate.compareTo(new BigDecimal("-1.8"))==-1*/){
-                if(!data.getTradeTime().equals(buyTimeStamp)) {
+            BigDecimal raiseRate = raiseSpeed(limitQueueSpeed, preStockKbar.getClosePrice());
+            //if(glv.compareTo(new BigDecimal("-4.8"))==-1&&percent.compareTo(new BigDecimal("0.4"))==1/*&&relativeOpenRate.compareTo(new BigDecimal("-1.8"))==-1*/){
+            Date currentDate = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
+            Date signDate = DateUtil.parseDate("09:58",DateUtil.HH_MM);
+            if(currentDate.after(signDate)) {
+                if (glv.compareTo(new BigDecimal("-1")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.3)) > 0) {
                     DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
                     daPanDropDTO.setDropRate(glv);
                     daPanDropDTO.setPercent(percent);
                     daPanDropDTO.setTimeStamp(data.getTradeTime());
                     daPanDropDTO.setTradeDate(stockKbar.getKbarDate());
-                    daPanDropDTO.setRelativeOpenRate(relativeOpenRate);
+                    daPanDropDTO.setRelativeOpenRate(raiseRate);
                     list.add(daPanDropDTO);
-                    buyTimeStamp = data.getTradeTime();
+                }
+            }else {
+                if (glv.compareTo(new BigDecimal("-1")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.3)) > 0) {
+                    if (stockKbar.getKbarDate().equals("20200319")) {
+                        System.out.println(111111111);
+                    }
+                    DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
+                    daPanDropDTO.setDropRate(glv);
+                    daPanDropDTO.setPercent(percent);
+                    daPanDropDTO.setTimeStamp(data.getTradeTime());
+                    daPanDropDTO.setTradeDate(stockKbar.getKbarDate());
+                    daPanDropDTO.setRelativeOpenRate(raiseRate);
+                    list.add(daPanDropDTO);
                 }
             }
         }
         return list;
+    }
+
+    public BigDecimal raiseSpeed(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,BigDecimal preEndPrice){
+        if(limitQueue.size()<=2){
+            return null;
+        }
+        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
+        BigDecimal lowPrice = null;
+        while (iterator.hasNext()){
+            ThirdSecondTransactionDataDTO next = iterator.next();
+            if(lowPrice==null||next.getTradePrice().compareTo(lowPrice)==-1){
+                lowPrice = next.getTradePrice();
+            }
+        }
+        BigDecimal rate = PriceUtil.getPricePercentRate(limitQueue.getLast().getTradePrice().subtract(lowPrice), preEndPrice);
+        return rate;
     }
 
     public BigDecimal calAvgPrice(LimitQueue<StockKbar> limitQueue,BigDecimal currentPrice){

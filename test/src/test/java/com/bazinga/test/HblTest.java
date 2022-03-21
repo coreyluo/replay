@@ -114,8 +114,8 @@ public class HblTest extends BaseTestCase {
     @Test
     public void test(){
 
-        guaiLilvPlankComponent.guaiLiLv();
-        //guaiLilvComponent.guaiLiLv();
+        //guaiLilvPlankComponent.guaiLiLv();
+        guaiLilvComponent.guaiLiLv();
         //zhongWeiDiXiReplayComponent.middle();
         //zhongWeiDiXiReplayComponent.middleRateInfo("20210903",null);
        /*synExcelComponent.otherStockBuy();
@@ -141,7 +141,7 @@ public class HblTest extends BaseTestCase {
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("880560", DateUtil.parseDate("20220125", DateUtil.yyyyMMdd));
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
-        upperShadowComponent.upperShadowBuy();
+        //upperShadowComponent.upperShadowBuy();
         //plankEndRateComponent.plankRates();
        // chungYeBugComponent.chuangYeBuy();
 
