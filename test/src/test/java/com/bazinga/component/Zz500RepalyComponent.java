@@ -67,9 +67,14 @@ public class Zz500RepalyComponent {
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
-        circulateInfos = circulateInfos.stream().filter(item-> ReplayConstant.ZZ_500_LIST.contains(item.getStockCode())).collect(Collectors.toList());
+        circulateInfos = circulateInfos.stream()
+                .filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode()))
+                .filter(item-> "000089".equals(item.getStockCode()))
+                .collect(Collectors.toList());
 
-        Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
+
+        Map<String, List<String>> nodeList = index500Component.getNodeList();
+        // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
 
@@ -93,8 +98,12 @@ public class Zz500RepalyComponent {
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
                 StockKbar preKbar = stockKbarList.get(i - 2);
 
-
-
+                String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
+                List<String> history500List = nodeList.get(recentNode);
+                if(!history500List.contains(buyStockKbar.getStockCode())){
+                    log.info("此票不在历史500数据 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
+                    continue;
+                }
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list) || list.size()<3){
                     continue;
@@ -149,22 +158,22 @@ public class Zz500RepalyComponent {
 
                     ThirdSecondTransactionDataDTO buyDTO = list.get(buyIndex);
                     boolean isBuy = true;
-                    for (int j = buyIndex; j < buyIndex+3 && j< list.size()-1; j++) {
+                   /* for (int j = buyIndex; j < buyIndex+3 && j< list.size()-1; j++) {
                         ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
                         if(transactionDataDTO.getTradePrice().compareTo(buyDTO.getTradePrice())<0){
                             isBuy = false;
                             break;
                         }
-                    }
+                    }*/
                     if(isBuy){
                         log.info("满足买入条件stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
                         BigDecimal avgPrice = historyTransactionDataComponent.calBigDecimalAveragePrice(list.subList(0, buyIndex+1));
                         ThirdSecondTransactionDataDTO realBuyDTO = list.get(buyIndex);
 
                         BigDecimal relativeRate = PriceUtil.getPricePercentRate(realBuyDTO.getTradePrice().subtract(avgPrice), firstPlankKbar.getClosePrice());
-                        if(relativeRate.compareTo(new BigDecimal("-1.5"))<=0 || relativeRate.compareTo(new BigDecimal("1.5")) >= 0){
+                     /*   if(relativeRate.compareTo(new BigDecimal("-1.5"))<=0 || relativeRate.compareTo(new BigDecimal("1.5")) >= 0){
                             continue;
-                        }
+                        }*/
                         BigDecimal avgHighLowRate = getAvgHighLowRate(stockKbarList.subList(i-11,i));
                         BigDecimal moonRate = getMoonRate(stockKbarList.subList(i-11,i));
                         BigDecimal day10HighPrice = stockKbarList.subList(i - 13, i - 3).stream().map(StockKbar::getHighPrice).max(BigDecimal::compareTo).get();
@@ -182,6 +191,7 @@ public class Zz500RepalyComponent {
                         BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
                         BigDecimal avgRate = PriceUtil.getPricePercentRate(avgPrice.subtract(firstPlankKbar.getClosePrice()), firstPlankKbar.getClosePrice());
 
+                        exportDTO.setBuyRelativeAvgRate(relativeRate);
                         exportDTO.setTotalJump(buyIndex);
                         exportDTO.setOverJump(overJump);
                         exportDTO.setBuyTime(realBuyDTO.getTradeTime());
@@ -190,13 +200,14 @@ public class Zz500RepalyComponent {
                         exportDTO.setBuykbarDate(buyStockKbar.getKbarDate());
                         exportDTO.setBuyPrice(realBuyDTO.getTradePrice());
                         exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
-                        RankDTO rankDTO = rankMap.get(buyStockKbar.getStockCode() + SymbolConstants.UNDERLINE + buyStockKbar.getKbarDate());
+                     /*   RankDTO rankDTO = rankMap.get(buyStockKbar.getStockCode() + SymbolConstants.UNDERLINE + buyStockKbar.getKbarDate());
                         if(rankDTO!=null){
                             exportDTO.setRank(rankDTO.getRank());
                             exportDTO.setOpenTradeAmount(rankDTO.getTradeAmount());
-                        }
+                        }*/
 
                         IndexRate500DTO indexRate500DTO = index500RateMap.get(buyStockKbar.getKbarDate() + realBuyDTO.getTradeTime());
+                        IndexRate500DTO preIndexRate500DTO = index500RateMap.get(firstPlankKbar.getKbarDate() + realBuyDTO.getTradeTime());
                         IndexRate500DTO index0935DTO = index500RateMap.get(buyStockKbar.getKbarDate() + "09:34");
                         if(indexRate500DTO ==null){
                             log.info("dto为空 tradeTime{}",realBuyDTO.getTradeTime());
@@ -211,7 +222,9 @@ public class Zz500RepalyComponent {
                         }
                         exportDTO.setOverOpenCount10(indexRate500DTO.getOverOpenCount10());
                         exportDTO.setMin5TradeAmount(indexRate500DTO.getMin5TradeAmount());
+                        exportDTO.setPreMin5TradeAmount(preIndexRate500DTO.getMin5TradeAmount());
                         exportDTO.setMin10TradeAmount(indexRate500DTO.getMin10TradeAmount());
+                        exportDTO.setPreMin10TradeAmount(preIndexRate500DTO.getMin10TradeAmount());
                         exportDTO.setOpenRate500(indexRate500DTO.getOpenRate());
                         exportDTO.setHighRate500(indexRate500DTO.getHighRate());
                         exportDTO.setLowRate500(indexRate500DTO.getLowRate());
@@ -263,16 +276,16 @@ public class Zz500RepalyComponent {
 
         }
         log.info("输出文件500低吸");
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸"+kbarDateFrom+"-"+kbarDateTo+".xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\500低吸40"+kbarDateFrom+"-"+kbarDateTo+".xls");
 
     }
 
     private Map<String, RankDTO> getStockDayRank(List<CirculateInfo> circulateInfos) {
         Map<String,RankDTO> resultMap = new HashMap<>();
         String key = "zz500_open_amount_rank";
-        RedisMonior redisMonior = redisMoniorService.getByKey(key);
+        RedisMonior redisMonior = redisMoniorService.getByRedisKey(key);
         if(redisMonior !=null){
-            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getValue());
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getRedisValue());
             jsonObject.forEach((jsonKey,value)->{
                 resultMap.put(jsonKey,JSONObject.parseObject(value.toString(),RankDTO.class));
             });
@@ -302,8 +315,8 @@ public class Zz500RepalyComponent {
                 }
             }
             RedisMonior monior = new RedisMonior();
-            monior.setKey(key);
-            monior.setValue(JSONObject.toJSONString(resultMap));
+            monior.setRedisKey(key);
+            monior.setRedisValue(JSONObject.toJSONString(resultMap));
             redisMoniorService.save(monior);
         }
         return resultMap;

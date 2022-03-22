@@ -8,27 +8,42 @@ import java.util.Date;
 import java.io.Serializable;
 
 /**
- * 〈RedisMonior 查询参数〉<p>
+ * 〈IndexDetail 查询参数〉<p>
  *
  * @author
- * @date 2022-03-01
+ * @date 2022-03-03
  */
 @lombok.Data
 @lombok.EqualsAndHashCode(callSuper = true)
 @lombok.ToString(callSuper = true)
-public class RedisMoniorQuery extends PagingQuery implements Serializable {
+public class IndexDetailQuery extends PagingQuery implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * key
+     * 指数代码
      */
-    private String redisKey;
+    private String indexCode;
 
     /**
-     * value
+     * 指数名称
      */
-    private String redisValue;
+    private String blockName;
+
+    /**
+     * 股票代码
+     */
+    private String stockCode;
+
+    /**
+     * 股票名称
+     */
+    private String stockName;
+
+    /**
+     * 日期
+     */
+    private String kbarDate;
 
     /**
      * 创建时间 开始

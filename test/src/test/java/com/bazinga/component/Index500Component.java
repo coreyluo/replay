@@ -4,15 +4,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.Index500NDayDTO;
 import com.bazinga.dto.IndexRate500DTO;
-import com.bazinga.dto.IndexRateDTO;
-import com.bazinga.dto.RankDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.convert.StockKbarConvert;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.IndexDetail;
 import com.bazinga.replay.model.RedisMonior;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.IndexDetailQuery;
 import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.IndexDetailService;
 import com.bazinga.replay.service.RedisMoniorService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.replay.util.StockKbarUtil;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -46,13 +48,70 @@ public class Index500Component {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
+    @Autowired
+    private IndexDetailService indexDetailService;
+
+    private List<String> kbarNodes = Lists.newArrayList(
+            "20171031" ,
+            "20171130" ,
+            "20171229" ,
+            "20180131" ,
+            "20180228" ,
+            "20180330" ,
+            "20180427" ,
+            "20180531" ,
+            "20180629" ,
+            "20180731" ,
+            "20180831" ,
+            "20180928" ,
+            "20181031" ,
+            "20181130" ,
+            "20181228" ,
+            "20190131" ,
+            "20190228" ,
+            "20190329" ,
+            "20190430" ,
+            "20190531" ,
+            "20190628" ,
+            "20190731" ,
+            "20190830" ,
+            "20190930" ,
+            "20191031" ,
+            "20191129" ,
+            "20191231" ,
+            "20200123" ,
+            "20200228" ,
+            "20200331" ,
+            "20200430" ,
+            "20200529" ,
+            "20200630" ,
+            "20200731" ,
+            "20200831" ,
+            "20200930" ,
+            "20201030" ,
+            "20201130" ,
+            "20201231" ,
+            "20210129" ,
+            "20210226" ,
+            "20210331" ,
+            "20210430" ,
+            "20210531" ,
+            "20210630" ,
+            "20210730" ,
+            "20210930" ,
+            "20211029" ,
+            "20211130" ,
+            "20211231" ,
+            "20220128" ,
+            "20220228");
+
     public  Map<String, IndexRate500DTO> getIndex500RateMap(){
         Map<String, IndexRate500DTO> resultMap = new HashMap<>();
 
         String key = "zz_500_index_rate";
-        RedisMonior redisMonior = redisMoniorService.getByKey(key);
+        RedisMonior redisMonior = redisMoniorService.getByRedisKey(key);
         if(redisMonior !=null){
-            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getValue());
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getRedisValue());
             jsonObject.forEach((jsonKey,value)->{
                 resultMap.put(jsonKey,JSONObject.parseObject(value.toString(), IndexRate500DTO.class));
             });
@@ -60,7 +119,7 @@ public class Index500Component {
             String[] headList = getHeadList();
             TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
             tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20171101", DateUtil.yyyyMMdd));
-            tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220228", DateUtil.yyyyMMdd));
+            tradeDateQuery.setTradeDateTo(DateUtil.parseDate("20220318", DateUtil.yyyyMMdd));
             tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
             List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
             BigDecimal closePrice = BigDecimal.ZERO;
@@ -121,6 +180,11 @@ public class Index500Component {
                 }
                 closePrice = list.get(list.size()-1).getTradePrice();
             }
+            RedisMonior monior = new RedisMonior();
+            monior.setRedisKey(key);
+            monior.setRedisValue(JSONObject.toJSONString(resultMap));
+            redisMoniorService.save(monior);
+
         }
 
 
@@ -180,5 +244,28 @@ public class Index500Component {
         }
 
         return resultMap;
+    }
+
+    public Map<String,List<String>> getNodeList(){
+        Map<String,List<String>> resultMap = new HashMap<>();
+        for (String kbarNode : kbarNodes) {
+            IndexDetailQuery query= new IndexDetailQuery();
+            query.setKbarDate(kbarNode);
+            List<IndexDetail> indexDetails = indexDetailService.listByCondition(query);
+            resultMap.put(kbarNode,indexDetails.stream().map(IndexDetail::getStockCode).collect(Collectors.toList()));
+        }
+        return resultMap;
+    }
+
+    public String getRecentNode(String kbarDate){
+        for (int i = 0; i < kbarNodes.size()-1; i++) {
+            String node = kbarNodes.get(i);
+            String afterNode = kbarNodes.get(i+1);
+            if(Integer.parseInt(kbarDate) >=Integer.parseInt(node) && Integer.parseInt(kbarDate) <Integer.parseInt(afterNode)){
+                return node;
+            }
+
+        }
+        return kbarNodes.get(kbarNodes.size()-1);
     }
 }

@@ -46,9 +46,12 @@ public class Sell300ExportDTO {
 
     private Integer overOpen;
 
-    @ExcelElement("盈亏比")
+    private BigDecimal circulateAmount;
+    private BigDecimal circulateZAmount;
+
+/*    @ExcelElement("盈亏比")
     private BigDecimal premiumRate;
 
     @ExcelField(name = "上午均价收益")
-    private BigDecimal monitorSellRate;
+    private BigDecimal monitorSellRate;*/
 }

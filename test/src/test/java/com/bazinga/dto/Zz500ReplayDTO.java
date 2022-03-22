@@ -24,6 +24,8 @@ public class Zz500ReplayDTO {
     @ExcelField(name = "买入价格")
     private BigDecimal buyPrice;
 
+    @ExcelField(name = "买入时相对均价涨幅")
+    private BigDecimal buyRelativeAvgRate;
 
     @ExcelField(name = "买入均价")
     private BigDecimal buyAvgPrice;
@@ -60,6 +62,12 @@ public class Zz500ReplayDTO {
 
     @ExcelField(name = "500前5分钟成交额")
     private BigDecimal min5TradeAmount;
+
+    @ExcelField(name = "500前一天前5分钟成交额")
+    private BigDecimal preMin5TradeAmount;
+
+    @ExcelField(name = "500前一天前10分钟成交额")
+    private BigDecimal preMin10TradeAmount;
 
     @ExcelField(name = "500前10分钟成交额")
     private BigDecimal min10TradeAmount;

@@ -35,6 +35,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,7 +63,7 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-        //currentTradeDate = DateUtil.parseDate("20220211",DateUtil.yyyyMMdd);
+        currentTradeDate = DateUtil.parseDate("20220318",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -79,6 +81,11 @@ public class AccountPositionCalComponent {
                 String objectString = orderList.get(i);
                 String[] objArr = objectString.split(SymbolConstants.COMMA);
                 String stockCode =  objArr[1];
+                Pattern pattern = Pattern.compile("\\d+");
+                Matcher matcher = pattern.matcher(stockCode);
+                while (matcher.find()) {
+                    stockCode =  matcher.group(0);
+                }
                 String direction = objArr[3];
                 String tradeTime = objArr[14];
                 if("-".equals(tradeTime)){
@@ -192,7 +199,13 @@ public class AccountPositionCalComponent {
                     PositionCalDTO positionCalDTO = new PositionCalDTO();
                     positionCalDTO.setTradeDate(DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd));
                     positionCalDTO.setOrderTime(objArr[0]);
-                    positionCalDTO.setStockCode(objArr[1]);
+                    String stockCode = objArr[1];
+                    Pattern pattern = Pattern.compile("\\d+");
+                    Matcher matcher = pattern.matcher(stockCode);
+                    while (matcher.find()) {
+                        stockCode =  matcher.group(0);
+                    }
+                    positionCalDTO.setStockCode(stockCode);
                     if(positionCalDTO.getStockCode().startsWith("1")){
                         continue;
                     }
@@ -276,7 +289,7 @@ public class AccountPositionCalComponent {
             ExcelExportUtil.exportToFile(resultList, "E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+kbarDate+".xls");
 
         } catch (Exception e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage()+ preName,e);
         }
 
 

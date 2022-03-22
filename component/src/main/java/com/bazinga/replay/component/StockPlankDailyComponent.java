@@ -70,9 +70,9 @@ public class StockPlankDailyComponent {
         date = DateTimeUtils.getDate000000(date);
         List<CirculateInfo> circulateInfos = circulateInfoComponent.getMainAndGrowth();
         for (CirculateInfo circulateInfo:circulateInfos){
-            if(!circulateInfo.getStockCode().equals("603056")){
+            /*if(!circulateInfo.getStockCode().equals("603056")){
                 continue;
-            }
+            }*/
             String stockCode = circulateInfo.getStockCode();
             String stockName = circulateInfo.getStockName();
             try {

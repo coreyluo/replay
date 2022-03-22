@@ -60,7 +60,13 @@ public class SellReplayComponent {
     public void replay300(){
 
         List<Sell300ExportDTO> resultList = Lists.newArrayList();
-        File file = new File("E:/excelExport/威20220228.xlsx");
+        File file = new File("E:/excelExport/威20220317.xlsx");
+
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        Map<String,CirculateInfo> circulateMap = new HashMap<>();
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            circulateMap.put(circulateInfo.getStockCode(),circulateInfo);
+        }
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
 
@@ -94,16 +100,18 @@ public class SellReplayComponent {
 //                exportDTO.setPremiumRate(importDTO.getPremiumRate().multiply(CommonConstant.DECIMAL_HUNDRED).setScale(2,BigDecimal.ROUND_HALF_UP));
 
 
-                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(importDTO.getStockCode(), sellDate);
+              /*  List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(importDTO.getStockCode(), sellDate);
                 if(!CollectionUtils.isEmpty(list)){
                     BigDecimal sellPrice = historyTransactionDataComponent
                             .calMorningAvgPrice(importDTO.getStockCode(), DateUtil.format(sellDate, DateUtil.yyyyMMdd));
                     exportDTO.setMonitorSellRate(PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice()));
-                }
+                }*/
+              exportDTO.setCirculateAmount(stockKbar.getHighPrice().multiply(new BigDecimal(circulateMap.get(exportDTO.getStockCode()).getCirculate().toString())));
+              exportDTO.setCirculateZAmount(stockKbar.getHighPrice().multiply(new BigDecimal(circulateMap.get(exportDTO.getStockCode()).getCirculateZ().toString())));
                 resultList.add(exportDTO);
             }
 
-            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\封住主板卖出回测.xls");
+            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓市值字段增加.xls");
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
