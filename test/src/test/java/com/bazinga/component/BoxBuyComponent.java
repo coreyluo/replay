@@ -101,7 +101,7 @@ public class BoxBuyComponent {
             LimitQueue<StockKbar> limitQueue = new LimitQueue<>(11);
             StockKbar preStockKbar = null;
             for (StockKbar stockKbar:stockKbars){
-                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))){
+                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd))){
                     continue;
                 }
                 limitQueue.offer(stockKbar);
@@ -197,6 +197,7 @@ public class BoxBuyComponent {
             BigDecimal avgExchangeMoneyDay11 = totalExchangeMoney.divide(new BigDecimal(10), 2, BigDecimal.ROUND_HALF_UP);
             if(boxRate.compareTo(new BigDecimal("8"))<0 && stockKbar.getAdjClosePrice().compareTo(highPrice)==1 && stockKbar.getAdjClosePrice().compareTo(preStockKbar.getAdjClosePrice())==1){
                 BigDecimal closeRate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(preStockKbar.getAdjClosePrice()), preStockKbar.getAdjClosePrice());
+                boolean historyUpperPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
                 BoxBuyDTO boxBuyDTO = new BoxBuyDTO();
                 boxBuyDTO.setBoxRate(boxRate);
                 boxBuyDTO.setStockCode(stockKbar.getStockCode());
@@ -209,7 +210,9 @@ public class BoxBuyComponent {
                 BigDecimal totalBoxPercent = boxPercent(highPrice, lowPrice, list);
                 boxBuyDTO.setBoxPercent(totalBoxPercent);
                 boxBuyDTO.setBuyDayCloseRate(closeRate);
-                return boxBuyDTO;
+                if(!historyUpperPrice) {
+                    return boxBuyDTO;
+                }
             }
         }
         return null;
