@@ -16,6 +16,7 @@ import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.*;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
+import com.bazinga.util.ThreadPoolUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 
 /**
@@ -54,6 +56,7 @@ public class BoxOneStockComponent {
     private StockAverageLineService stockAverageLineService;
 
     public static Map<String,Map<String,BlockLevelDTO>> levelMap = new ConcurrentHashMap<>(8192);
+    private static final ExecutorService BOX_ONE_STOCK_POOL = ThreadPoolUtils.create(8, 16, 512, "quoteCancelOrderPool");
 
 
     public void oneStockBox(){
