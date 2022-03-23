@@ -112,10 +112,13 @@ public class HblTest extends BaseTestCase {
     private GuaiLilvPlankComponent guaiLilvPlankComponent;
     @Autowired
     private BoxBuyComponent boxBuyComponent;
+    @Autowired
+    private BoxOneStockComponent boxOneStockComponent;
 
     @Test
     public void test(){
-        boxBuyComponent.xiangTi();
+        boxOneStockComponent.oneStockBox();
+        //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
         //guaiLilvComponent.guaiLiLv();
         //zhongWeiDiXiReplayComponent.middle();
