@@ -4,6 +4,7 @@ import com.bazinga.base.Sort;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.dto.BoxBuyDTO;
 import com.bazinga.dto.BoxStockBuyDTO;
+import com.bazinga.dto.MonthDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -60,81 +61,109 @@ public class BoxOneStockComponent {
 
 
     public void oneStockBox(){
-        List<BoxStockBuyDTO> dailys = getStockUpperShowInfo();
+        /*List<MonthDTO> months = Lists.newArrayList();
+        MonthDTO monthDTO1 = new MonthDTO();
+        monthDTO1.setStartMonth("20210101");
+        monthDTO1.setStartMonth("20210301");
+        MonthDTO monthDTO2 = new MonthDTO();
+        monthDTO2.setStartMonth("20210301");
+        monthDTO2.setStartMonth("20210601");
+        MonthDTO monthDTO3 = new MonthDTO();
+        monthDTO3.setStartMonth("20210601");
+        monthDTO3.setStartMonth("20210901");
+        MonthDTO monthDTO4 = new MonthDTO();
+        monthDTO4.setStartMonth("20210901");
+        monthDTO4.setStartMonth("20220101");
+        months.add(monthDTO1);
+        months.add(monthDTO2);
+        months.add(monthDTO3);
+        months.add(monthDTO4);*/
+
+
+        List<BoxStockBuyDTO> results = getStockUpperShowInfo();
+        List<BoxStockBuyDTO> dailys = Lists.newArrayList();
+        dailys.addAll(results);
         List<Object[]> datas = Lists.newArrayList();
-        for(BoxStockBuyDTO dto:dailys){
-            List<Object> list = new ArrayList<>();
-            list.add(dto.getStockCode());
-            list.add(dto.getStockCode());
-            list.add(dto.getStockName());
-            list.add(dto.getCirculateZ());
-            list.add(dto.getTotalCirculateZ());
-            list.add(dto.getTradeDate());
-            list.add(dto.getBuyTime());
-            list.add(dto.getBuyPrice());
-            list.add(dto.getOpenRate());
-            list.add(dto.getBuyTimeTradeAmount());
-            list.add(dto.getFirstHighRate());
-            list.add(dto.getFirstHighTime());
-            list.add(dto.getPreTradeAmount());
-            list.add(dto.getPrePlanks());
-            list.add(dto.getBeforeHighLowRate());
-            list.add(dto.getAfterHighLowRate());
-            list.add(dto.getRateDay3());
-            list.add(dto.getRateDay5());
-            list.add(dto.getRateDay10());
-            list.add(dto.getBetweenTime());
-            list.add(dto.getProfit());
+            for (BoxStockBuyDTO dto : dailys) {
+                List<Object> list = new ArrayList<>();
+                list.add(dto.getStockCode());
+                list.add(dto.getStockCode());
+                list.add(dto.getStockName());
+                list.add(dto.getCirculateZ());
+                list.add(dto.getTotalCirculateZ());
+                list.add(dto.getTradeDate());
+                list.add(dto.getBuyTime());
+                list.add(dto.getBuyPrice());
+                list.add(dto.getOpenRate());
+                list.add(dto.getBuyTimeTradeAmount());
+                list.add(dto.getFirstHighRate());
+                list.add(dto.getFirstHighTime());
+                list.add(dto.getPreTradeAmount());
+                list.add(dto.getPrePlanks());
+                list.add(dto.getBeforeHighLowRate());
+                list.add(dto.getAfterHighLowRate());
+                list.add(dto.getRateDay3());
+                list.add(dto.getRateDay5());
+                list.add(dto.getRateDay10());
+                list.add(dto.getBetweenTime());
+                list.add(dto.getProfit());
 
-            Object[] objects = list.toArray();
-            datas.add(objects);
-        }
+                Object[] objects = list.toArray();
+                datas.add(objects);
+            }
 
-        String[] rowNames = {"index","stockCode","stockName","流通z","总股本","tradeDate","买入时间","买入价格","开盘涨幅","买入时候成交额","第一次高点涨幅","第一次高点时间","前一日成交额","前一日几连板","买入前低点涨幅","中间低点幅度","3日涨幅","5日涨幅","10日涨幅","买入相对第一次高点时间","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("个股箱体",rowNames,datas);
-        try {
-            poiExcelUtil.exportExcelUseExcelTitle("个股箱体");
-        }catch (Exception e){
-            log.info(e.getMessage());
-        }
+            String[] rowNames = {"index", "stockCode", "stockName", "流通z", "总股本", "tradeDate", "买入时间", "买入价格", "开盘涨幅", "买入时候成交额", "第一次高点涨幅", "第一次高点时间", "前一日成交额", "前一日几连板", "买入前低点涨幅", "中间低点幅度", "3日涨幅", "5日涨幅", "10日涨幅", "买入相对第一次高点时间", "盈利"};
+            PoiExcelUtil poiExcelUtil = new PoiExcelUtil("个股箱体", rowNames, datas);
+            try {
+                poiExcelUtil.exportExcelUseExcelTitle("个股箱体");
+            } catch (Exception e) {
+                log.info(e.getMessage());
+            }
     }
 
-    public List<BoxStockBuyDTO> getStockUpperShowInfo(){
+    public List<BoxStockBuyDTO> getStockUpperShowInfo()  {
         List<BoxStockBuyDTO> results = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         int count = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
             count++;
-            System.out.println(circulateInfo.getStockCode()+count);
+            System.out.println(circulateInfo.getStockCode() + count);
             /*if(!circulateInfo.getStockCode().equals("000665")){
                 continue;
             }*/
-            StockKbarQuery query = new StockKbarQuery();
-            query.setStockCode(circulateInfo.getStockCode());
-            query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-            StockKbar preStockKbar = null;
-            for (StockKbar stockKbar:stockKbars){
-                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd))){
-                    continue;
-                }
-                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101",DateUtil.yyyyMMdd))){
-                    continue;
-                }
+            BOX_ONE_STOCK_POOL.execute(() -> {
+                StockKbarQuery query = new StockKbarQuery();
+                query.setStockCode(circulateInfo.getStockCode());
+                query.addOrderBy("kbar_date", Sort.SortType.ASC);
+                List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+                StockKbar preStockKbar = null;
+                for (StockKbar stockKbar : stockKbars) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20211001", DateUtil.yyyyMMdd))) {
+                        continue;
+                    }
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
+                        continue;
+                    }
                 /*if(stockKbar.getKbarDate().equals("20220322")){
                     System.out.println(1111);
                 }*/
 
-                if(preStockKbar!=null) {
-                    BoxStockBuyDTO buyDTO = calBoxBuy(stockKbar,circulateInfo, preStockKbar);
-                    if(buyDTO!=null){
-                        calProfit(stockKbars,stockKbar,buyDTO);
-                        calBeforeRate(stockKbars,stockKbar,buyDTO);
-                        results.add(buyDTO);
+                    if (preStockKbar != null) {
+                        BoxStockBuyDTO buyDTO = calBoxBuy(stockKbar, circulateInfo, preStockKbar);
+                        if (buyDTO != null) {
+                            calProfit(stockKbars, stockKbar, buyDTO);
+                            calBeforeRate(stockKbars, stockKbar, buyDTO);
+                            results.add(buyDTO);
+                        }
                     }
+                    preStockKbar = stockKbar;
                 }
-                preStockKbar = stockKbar;
-            }
+            });
+        }
+        try {
+            Thread.sleep(600000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return results;
     }
