@@ -16,7 +16,9 @@ public class BoxBuyDTO {
     private StockKbar buyKbar;
     private BigDecimal boxPercent;
     private BigDecimal boxMaxExchangeMoney;
-    private BigDecimal avgExchangeMoneyDay11;
+    private BigDecimal avgExchangeMoneyDay10;
+    private BigDecimal buyDayExchangeMoney;
+    private BigDecimal buyDayCloseRate;
     private String sellDate;
     private int handleDays;
     private BigDecimal profit;

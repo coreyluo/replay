@@ -57,50 +57,117 @@ public class BoxBuyComponent {
     public static Map<String,Map<String,BlockLevelDTO>> levelMap = new ConcurrentHashMap<>(8192);
 
 
-    public void guaiLiLv(){
-        List<DaPanDropDTO> dailys = getStockUpperShowInfo();
+    public void xiangTi(){
+        List<BoxBuyDTO> dailys = getStockUpperShowInfo();
         List<Object[]> datas = Lists.newArrayList();
-        for(DaPanDropDTO dto:dailys){
+        for(BoxBuyDTO dto:dailys){
             List<Object> list = new ArrayList<>();
+            list.add(dto.getStockCode());
+            list.add(dto.getStockCode());
+            list.add(dto.getStockName());
             list.add(dto.getTradeDate());
-            list.add(dto.getTradeDate());
-            list.add(dto.getPercent());
-            list.add(dto.getDropRate());
-            list.add(dto.getTimeStamp());
-            list.add(dto.getRelativeOpenRate());
+            list.add(dto.getBoxRate());
+            list.add(dto.getBoxPercent());
+            list.add(dto.getBoxMaxExchangeMoney());
+            list.add(dto.getAvgExchangeMoneyDay10());
+            list.add(dto.getBuyDayExchangeMoney());
+            list.add(dto.getBuyDayCloseRate());
+            list.add(dto.getSellDate());
+            list.add(dto.getHandleDays());
+            list.add(dto.getProfit());
 
             Object[] objects = list.toArray();
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","日期","比例","乖离率","时间","涨跌幅"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("乖离率",rowNames,datas);
+        String[] rowNames = {"index","stockCode","stockName","tradeDate","箱体振幅","箱体中间段比例","箱体内最大成交额","箱体10天平均成交额","买入日成交额","买入日收盘涨幅","卖出日期","距离卖出天数","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("箱体",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("乖离率");
+            poiExcelUtil.exportExcelUseExcelTitle("箱体");
         }catch (Exception e){
             log.info(e.getMessage());
         }
     }
 
-    public List<DaPanDropDTO> getStockUpperShowInfo(){
+    public List<BoxBuyDTO> getStockUpperShowInfo(){
+        List<BoxBuyDTO> results = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         for (CirculateInfo circulateInfo:circulateInfos){
+            System.out.println(circulateInfo.getStockCode());
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
             LimitQueue<StockKbar> limitQueue = new LimitQueue<>(11);
+            StockKbar preStockKbar = null;
             for (StockKbar stockKbar:stockKbars){
+                if(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210101",DateUtil.yyyyMMdd))){
+                    continue;
+                }
                 limitQueue.offer(stockKbar);
+                if(preStockKbar!=null) {
+                    BoxBuyDTO boxBuyDTO = calBoxBuy(stockKbar, preStockKbar, limitQueue);
+                    if(boxBuyDTO!=null){
+                        calProfit(stockKbars,stockKbar,boxBuyDTO);
+                        results.add(boxBuyDTO);
+                    }
+                }
+                preStockKbar = stockKbar;
             }
         }
-        List<DaPanDropDTO> list = Lists.newArrayList();
-        return list;
+        return results;
     }
+
+    public void calProfit(List<StockKbar> stockKbars,StockKbar buyKbar,BoxBuyDTO boxBuyDTO){
+        StockKbar preStockKbar = null;
+        boolean flag = false;
+        int i = 0;
+        int totalGreen = 0;
+        int continueGreen = 0;
+        for (StockKbar stockKbar:stockKbars){
+            if(flag){
+                i++;
+            }
+            if(i>0){
+                if(stockKbar.getAdjClosePrice().compareTo(preStockKbar.getAdjClosePrice())==-1){
+                    totalGreen++;
+                    continueGreen++;
+                }else{
+                    continueGreen = 0;
+                }
+                BigDecimal rate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(buyKbar.getAdjClosePrice()), buyKbar.getAdjClosePrice());
+                if(rate.compareTo(new BigDecimal(-6))<=0){
+                    boxBuyDTO.setHandleDays(i);
+                    boxBuyDTO.setProfit(rate);
+                    boxBuyDTO.setSellDate(stockKbar.getKbarDate());
+                    return;
+                }
+                if(totalGreen==3){
+                    boxBuyDTO.setHandleDays(i);
+                    boxBuyDTO.setProfit(rate);
+                    boxBuyDTO.setSellDate(stockKbar.getKbarDate());
+                    return;
+                }
+                if(continueGreen==2){
+                    boxBuyDTO.setHandleDays(i);
+                    boxBuyDTO.setProfit(rate);
+                    boxBuyDTO.setSellDate(stockKbar.getKbarDate());
+                    return;
+                }
+
+            }
+            if(stockKbar.getKbarDate().equals(buyKbar.getKbarDate())){
+                flag = true;
+            }
+            preStockKbar = stockKbar;
+        }
+    }
+
     public BoxBuyDTO calBoxBuy(StockKbar stockKbar,StockKbar preStockKbar, LimitQueue<StockKbar> limitQueue){
         if(limitQueue==null||limitQueue.size()<11){
             return null;
         }
+        List<StockKbar> list = Lists.newArrayList();
         Iterator<StockKbar> iterator = limitQueue.iterator();
         int i = 0;
         BigDecimal highPrice = null;
@@ -120,69 +187,78 @@ public class BoxBuyComponent {
                 if(maxExchangeMoney==null||kbar.getTradeAmount().compareTo(maxExchangeMoney)==1){
                     maxExchangeMoney = kbar.getTradeAmount();
                 }
+                totalExchangeMoney = totalExchangeMoney.add(kbar.getTradeAmount());
+                list.add(kbar);
             }
-            totalExchangeMoney = totalExchangeMoney.add(kbar.getTradeAmount());
+
         }
         if(highPrice!=null&&lowPrice!=null){
-
             BigDecimal boxRate = PriceUtil.getPricePercentRate(highPrice.subtract(lowPrice), lowPrice);
-            BigDecimal avgExchangeMoneyDay11 = totalExchangeMoney.divide(new BigDecimal(11), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal avgExchangeMoneyDay11 = totalExchangeMoney.divide(new BigDecimal(10), 2, BigDecimal.ROUND_HALF_UP);
             if(boxRate.compareTo(new BigDecimal("8"))<0 && stockKbar.getAdjClosePrice().compareTo(highPrice)==1 && stockKbar.getAdjClosePrice().compareTo(preStockKbar.getAdjClosePrice())==1){
+                BigDecimal closeRate = PriceUtil.getPricePercentRate(stockKbar.getAdjClosePrice().subtract(preStockKbar.getAdjClosePrice()), preStockKbar.getAdjClosePrice());
+                boolean historyUpperPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
                 BoxBuyDTO boxBuyDTO = new BoxBuyDTO();
                 boxBuyDTO.setBoxRate(boxRate);
                 boxBuyDTO.setStockCode(stockKbar.getStockCode());
                 boxBuyDTO.setStockName(stockKbar.getStockName());
                 boxBuyDTO.setBuyKbar(stockKbar);
+                boxBuyDTO.setTradeDate(stockKbar.getKbarDate());
                 boxBuyDTO.setBoxMaxExchangeMoney(maxExchangeMoney);
-                boxBuyDTO.setAvgExchangeMoneyDay11(avgExchangeMoneyDay11);
-
+                boxBuyDTO.setAvgExchangeMoneyDay10(avgExchangeMoneyDay11);
+                boxBuyDTO.setBuyDayExchangeMoney(stockKbar.getTradeAmount());
+                BigDecimal totalBoxPercent = boxPercent(highPrice, lowPrice, list);
+                boxBuyDTO.setBoxPercent(totalBoxPercent);
+                boxBuyDTO.setBuyDayCloseRate(closeRate);
+                if(!historyUpperPrice) {
+                    return boxBuyDTO;
+                }
             }
         }
         return null;
     }
 
-    private BigDecimal boxPercent(BigDecimal highPrice,BigDecimal lowPrice,StockKbar stockKbar){
+    public BigDecimal boxPercent(BigDecimal highPrice,BigDecimal lowPrice,List<StockKbar> list){
         BigDecimal subPrice = (highPrice.subtract(lowPrice)).multiply(new BigDecimal(0.25)).setScale(2, BigDecimal.ROUND_HALF_UP);
         BigDecimal halfPrice = (highPrice.add(lowPrice)).divide(new BigDecimal(2), 2, BigDecimal.ROUND_HALF_UP);
         BigDecimal upperPrice = halfPrice.add(subPrice).setScale(2,BigDecimal.ROUND_HALF_UP);
-        BigDecimal downPrice = halfPrice.divide(subPrice).setScale(2,BigDecimal.ROUND_HALF_UP);
-        return null;
-
-    }
-
-    public BigDecimal raiseSpeed(LimitQueue<ThirdSecondTransactionDataDTO> limitQueue,BigDecimal preEndPrice){
-        if(limitQueue.size()<=2){
+        BigDecimal downPrice = halfPrice.subtract(subPrice).setScale(2,BigDecimal.ROUND_HALF_UP);
+        if(upperPrice.compareTo(downPrice)==0){
             return null;
         }
-        Iterator<ThirdSecondTransactionDataDTO> iterator = limitQueue.iterator();
-        BigDecimal lowPrice = null;
-        while (iterator.hasNext()){
-            ThirdSecondTransactionDataDTO next = iterator.next();
-            if(lowPrice==null||next.getTradePrice().compareTo(lowPrice)==-1){
-                lowPrice = next.getTradePrice();
+        BigDecimal total = BigDecimal.ZERO;
+        for (StockKbar stockKbar:list){
+            BigDecimal adjHighPrice = stockKbar.getAdjHighPrice();
+            BigDecimal adjLowPrice = stockKbar.getAdjLowPrice();
+            if(adjHighPrice.compareTo(downPrice)<=0){
+                continue;
+            }
+            if(adjHighPrice.compareTo(downPrice)==1&&adjHighPrice.compareTo(upperPrice)<=0){
+                if(adjLowPrice.compareTo(downPrice)<=0){
+                    BigDecimal percent = (adjHighPrice.subtract(downPrice)).divide(upperPrice.subtract(downPrice), 4, BigDecimal.ROUND_HALF_UP);
+                    total = total.add(percent);
+                    continue;
+                }else {
+                    BigDecimal percent = (adjHighPrice.subtract(adjLowPrice)).divide(upperPrice.subtract(downPrice), 4, BigDecimal.ROUND_HALF_UP);
+                    total = total.add(percent);
+                    continue;
+                }
+            }
+            if(adjHighPrice.compareTo(upperPrice)>=0){
+                if(adjLowPrice.compareTo(downPrice)<=0){
+                    BigDecimal percent = new BigDecimal(1);
+                    total = total.add(percent);
+                    continue;
+                }else if(adjLowPrice.compareTo(downPrice)>0&&adjLowPrice.compareTo(upperPrice)<=0){
+                    BigDecimal percent = (upperPrice.subtract(adjLowPrice)).divide(upperPrice.subtract(downPrice), 4, BigDecimal.ROUND_HALF_UP);
+                    total = total.add(percent);
+                    continue;
+                }else{
+                    continue;
+                }
             }
         }
-        BigDecimal rate = PriceUtil.getPricePercentRate(limitQueue.getLast().getTradePrice().subtract(lowPrice), preEndPrice);
-        return rate;
-    }
-
-    public BigDecimal calAvgPrice(LimitQueue<StockKbar> limitQueue,BigDecimal currentPrice){
-        if(limitQueue.size()<23){
-            return null;
-        }
-        BigDecimal totalPrice = currentPrice;
-        Iterator<StockKbar> iterator = limitQueue.iterator();
-        while(iterator.hasNext()){
-            StockKbar next = iterator.next();
-            totalPrice = totalPrice.add(next.getClosePrice());
-        }
-        BigDecimal rate = totalPrice.divide(new BigDecimal(24), 4, BigDecimal.ROUND_HALF_UP);
-        return rate;
-    }
-
-
-    public static void main(String[] args) {
-
+        return total;
     }
 
 

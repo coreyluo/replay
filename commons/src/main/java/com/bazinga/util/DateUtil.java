@@ -3,6 +3,7 @@ package com.bazinga.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -173,6 +174,39 @@ public class DateUtil {
 	 */
 	public static Date addMinutes(Date date, long minutes) {
 		return addSeconds(date, minutes * 60);
+	}
+
+
+	public static Date addStockMarketMinutes(Date date, long minutes) {
+		String format = DateUtil.format(date, DateUtil.yyyy_MM_dd);
+		Date date1130 = DateUtil.parseDate(format + " 11:30:00", DateUtil.DEFAULT_FORMAT);
+		Date date1300 = DateUtil.parseDate(format + " 13:00:00", DateUtil.DEFAULT_FORMAT);
+		Date startDate = date;
+		for (int i=0;i<minutes;i++){
+			startDate = addMinutes(startDate,1);
+			if((!startDate.before(date1130))&&startDate.before(date1300)){
+				startDate = date1300;
+			}
+		}
+		return startDate;
+	}
+
+	public static Integer calBetweenStockMinute(String timeStart,String timeEnd){
+		Date date1130 = DateUtil.parseDate("11:30", DateUtil.HH_MM);
+		Date date1300 = DateUtil.parseDate("13:00", DateUtil.HH_MM);
+		Date dateStart = DateUtil.parseDate(timeStart, DateUtil.HH_MM);
+		Date dateEnd = DateUtil.parseDate(timeEnd, DateUtil.HH_MM);
+		for (int i=1;i<=10000;i++){
+			dateStart = addMinutes(dateStart,1);
+			if((!dateStart.before(date1130))&&dateStart.before(date1300)){
+				dateStart = date1300;
+			}
+			String format = DateUtil.format(dateStart, DateUtil.HH_MM);
+			if(format.equals(timeEnd)){
+				return i;
+			}
+		}
+		return null;
 	}
 
 	/**
