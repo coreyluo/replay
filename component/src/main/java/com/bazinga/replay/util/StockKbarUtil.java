@@ -118,5 +118,17 @@ public class StockKbarUtil {
         return serialsDays<3?0:serialsDays;
     }
 
+    public static boolean isPlank(List<StockKbar> tempList) {
+        for (int i = 1; i < tempList.size()-1; i++) {
+            StockKbar tempStockKbar = tempList.get(tempList.size() - i);
+            StockKbar preTempStockKbar = tempList.get(tempList.size() - i-1);
+
+            boolean isPlank = StockKbarUtil.isUpperPrice(tempStockKbar, preTempStockKbar);
+            if(isPlank){
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

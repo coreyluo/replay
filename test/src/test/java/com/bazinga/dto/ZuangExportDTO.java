@@ -38,6 +38,12 @@ public class ZuangExportDTO {
     @ExcelField(name = "买入前一天价格")
     private BigDecimal preBuyPrice;
 
+    @ExcelField(name = "10日内触板天数")
+    private Integer plankDays;
+
+    @ExcelField(name = "封住1 未封住0")
+    private Integer sealType;
+
     @ExcelField(name = "流通z")
     private Long circulateZ;
 

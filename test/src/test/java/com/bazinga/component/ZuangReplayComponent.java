@@ -57,7 +57,7 @@ public class ZuangReplayComponent {
                 continue;
             }
 
-            for (int i = 15; i < stockKbarList.size()-1; i++) {
+            for (int i = 20; i < stockKbarList.size()-1; i++) {
                 StockKbar stockKbar = stockKbarList.get(i);
                 StockKbar preStockKbar = stockKbarList.get(i-1);
                 StockKbar sellStockKbar = stockKbarList.get(i + 1);
@@ -93,18 +93,18 @@ public class ZuangReplayComponent {
                     continue;
                 }
 
-                List<StockKbar> tempList = stockKbarList.subList(i - 15, i);
+                List<StockKbar> tempList = stockKbarList.subList(i - 11, i);
                 StockKbar currentStockKbar = tempList.get(tempList.size() - 1);
                 BigDecimal lowPrice = currentStockKbar.getAdjLowPrice();
                 int low2UpperDays = 0;
-                for (int j = 1; j < 10; j++) {
+                for (int j = 1; j < 7; j++) {
                     StockKbar tempStockKbar = tempList.get(tempList.size() - j);
                     if(lowPrice.compareTo(tempStockKbar.getLowPrice())>0){
                         lowPrice = tempStockKbar.getAdjLowPrice();
                         low2UpperDays = j;
                     }
                 }
-                StockKbar beginStockKbar  = tempList.get(tempList.size()-11);
+                StockKbar beginStockKbar  = tempList.get(tempList.size()-7);
                 BigDecimal low10Rate =  PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(lowPrice), beginStockKbar.getAdjOpenPrice());
 
                 if(low10Rate.compareTo(new BigDecimal(20))<0){
@@ -114,6 +114,8 @@ public class ZuangReplayComponent {
                 if(isPlank){
                     continue;
                 }
+
+                int planks = plankDays(tempList);
                 List<StockKbar> low2UpList = tempList.subList(tempList.size() - low2UpperDays, tempList.size());
                 BigDecimal low2UpAvgAmount = low2UpList.stream().map(StockKbar::getTradeAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
                         .divide(new BigDecimal(low2UpList.size()), 2, BigDecimal.ROUND_HALF_UP);
@@ -135,6 +137,9 @@ public class ZuangReplayComponent {
                 exportDTO.setPreBuyPrice(preStockKbar.getClosePrice());
                 exportDTO.setLowAvgAmount(low2UpAvgAmount);
                 exportDTO.setPreDay5LowAvgAmount(preDay5AvgAmount);
+                exportDTO.setPlankDays(planks);
+                boolean closeUpperFlag = stockKbar.getClosePrice().compareTo(stockKbar.getHighPrice())==0;
+                exportDTO.setSealType(closeUpperFlag?1:0);
                 BigDecimal sellPrice = historyTransactionDataComponent.calAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                 if(sellPrice!=null){
                     exportDTO.setPremium(PriceUtil.getPricePercentRate(sellPrice.subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
@@ -144,13 +149,13 @@ public class ZuangReplayComponent {
 
 
         }
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\庄股分析.xls");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\庄股6日分析.xls");
 
 
     }
 
     private boolean isPlank(List<StockKbar> tempList) {
-        for (int i = 1; i < 11; i++) {
+        for (int i = 1; i < 7; i++) {
             StockKbar tempStockKbar = tempList.get(tempList.size() - i);
             StockKbar preTempStockKbar = tempList.get(tempList.size() - i-1);
 
@@ -160,6 +165,20 @@ public class ZuangReplayComponent {
             }
         }
         return false;
+    }
+
+    private int plankDays(List<StockKbar> tempList) {
+        int plank=0;
+        for (int i = 1; i < 7; i++) {
+            StockKbar tempStockKbar = tempList.get(tempList.size() - i);
+            StockKbar preTempStockKbar = tempList.get(tempList.size() - i-1);
+
+            boolean isPlank = StockKbarUtil.isHighUpperPrice(tempStockKbar, preTempStockKbar);
+            if(isPlank){
+               plank++;
+            }
+        }
+        return plank;
     }
 
 

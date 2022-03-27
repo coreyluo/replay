@@ -144,6 +144,7 @@ public class Index500Component {
                 BigDecimal min5TradeAmount = BigDecimal.ZERO;
                 List<ThirdSecondTransactionDataDTO> list0935 = historyTransactionDataComponent.getFixTimeData(list, "09:35");
                 List<ThirdSecondTransactionDataDTO> list0940 = historyTransactionDataComponent.getFixTimeData(list, "09:40");
+                List<ThirdSecondTransactionDataDTO> list0950 = historyTransactionDataComponent.getFixTimeData(list, "09:50");
                 ThirdSecondTransactionDataDTO open = list.get(0);
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list0935) {
                     min5TradeAmount = min5TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
@@ -161,6 +162,15 @@ public class Index500Component {
                     }
                 }
 
+                Integer overOpen20 = 0;
+                BigDecimal min20TradeAmount = BigDecimal.ZERO;
+                for (ThirdSecondTransactionDataDTO transactionDataDTO : list0950) {
+                    min20TradeAmount = min20TradeAmount.add(new BigDecimal(transactionDataDTO.getTradeQuantity().toString()));
+                    if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
+                        overOpen20++;
+                    }
+                }
+
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     if(highPrice.compareTo(transactionDataDTO.getTradePrice())<0){
                         highPrice = transactionDataDTO.getTradePrice();
@@ -171,7 +181,7 @@ public class Index500Component {
                     BigDecimal lowRate = PriceUtil.getPricePercentRate(lowPrice.subtract(closePrice),closePrice);
                     BigDecimal highRate = PriceUtil.getPricePercentRate(highPrice.subtract(closePrice),closePrice);
                     BigDecimal buyRate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(closePrice),closePrice);
-                    tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount,overOpen10,min5TradeAmount,min10TradeAmount));
+                    tempMap.put(transactionDataDTO.getTradeTime(),new IndexRate500DTO(openRate,lowRate,highRate,buyRate,overOpenCount,overOpen10,overOpen20,min5TradeAmount,min10TradeAmount));
                 }
                 for (int i = 0; i < headList.length-1; i++) {
                     IndexRate500DTO indexRate500DTO = tempMap.get(headList[i]);

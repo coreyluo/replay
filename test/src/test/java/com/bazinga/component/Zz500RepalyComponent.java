@@ -69,7 +69,7 @@ public class Zz500RepalyComponent {
 
         circulateInfos = circulateInfos.stream()
                 .filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode()))
-                .filter(item-> "000089".equals(item.getStockCode()))
+             //   .filter(item-> "000089".equals(item.getStockCode()))
                 .collect(Collectors.toList());
 
 
@@ -221,6 +221,7 @@ public class Zz500RepalyComponent {
                             exportDTO.setDay15Rate500(ndayRateMap.get(buyStockKbar.getKbarDate()).getDay15Rate());
                         }
                         exportDTO.setOverOpenCount10(indexRate500DTO.getOverOpenCount10());
+                        exportDTO.setOverOpenCount20(indexRate500DTO.getOverOpenCount20());
                         exportDTO.setMin5TradeAmount(indexRate500DTO.getMin5TradeAmount());
                         exportDTO.setPreMin5TradeAmount(preIndexRate500DTO.getMin5TradeAmount());
                         exportDTO.setMin10TradeAmount(indexRate500DTO.getMin10TradeAmount());
