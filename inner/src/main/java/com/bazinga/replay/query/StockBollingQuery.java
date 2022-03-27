@@ -4,36 +4,38 @@ package com.bazinga.replay.query;
 import com.bazinga.base.PagingQuery;
 
 import java.math.BigDecimal;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈StockAttributeReplay 查询参数〉<p>
+ * 〈StockBolling 查询参数〉<p>
  *
  * @author
- * @date 2022-02-19
+ * @date 2022-03-27
  */
 @lombok.Data
 @lombok.EqualsAndHashCode(callSuper = true)
 @lombok.ToString(callSuper = true)
-public class StockAttributeReplayQuery extends PagingQuery implements Serializable {
+public class StockBollingQuery extends PagingQuery implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 
+     * 股票代码
      */
     private String stockCode;
 
     /**
-     * 
+     * 股票名称
      */
     private String stockName;
 
     /**
-     * 时间
+     * 交易时间
      */
     private String kbarDate;
 
@@ -43,52 +45,42 @@ public class StockAttributeReplayQuery extends PagingQuery implements Serializab
     private String uniqueKey;
 
     /**
-     * 10日内平均振幅
+     * 几日
      */
-    private BigDecimal avgRangeDay10;
-    /**
-     * 5日涨幅
-     *
-     * @允许为空   YES
-     * @是否索引   NO
-     */
-    private BigDecimal rateDay5;
+    private Integer dayType;
 
     /**
-     * 是不是新股 180天k线
+     * 上轨价
      */
-    private Integer marketNew;
-    /**
-     * 市值
-     */
-    private BigDecimal marketValue;
-    /**
-     * 10日内涨停数量
-     */
-    private Integer planksDay10;
-
-    private BigDecimal highRate;
-    private BigDecimal upperShadowRate;
-    private BigDecimal avgRate5;
-    private String highTime;
+    private BigDecimal upPrice;
 
     /**
-     *  开始
+     * 中轨价
+     */
+    private BigDecimal middlePrice;
+
+    /**
+     * 下轨价
+     */
+    private BigDecimal lowPrice;
+
+    /**
+     * 创建时间 开始
      */
     private Date createTimeFrom;
 
     /**
-     *  结束
+     * 创建时间 结束
      */
     private Date createTimeTo;
 
     /**
-     *  开始
+     * 更新时间 开始
      */
     private Date updateTimeFrom;
 
     /**
-     *  结束
+     * 更新时间 结束
      */
     private Date updateTimeTo;
 

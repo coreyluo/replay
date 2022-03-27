@@ -1,20 +1,22 @@
 package com.bazinga.replay.model;
 
 import java.math.BigDecimal;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Date;
 
 import java.io.Serializable;
 
 /**
- * 〈StockAttributeReplay〉<p>
+ * 〈StockBolling〉<p>
  *
  * @author
- * @date 2022-02-19
+ * @date 2022-03-27
  */
 @lombok.Data
 @lombok.ToString
-public class StockAttributeReplay implements Serializable {
+public class StockBolling implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -28,7 +30,7 @@ public class StockAttributeReplay implements Serializable {
     private Long id;
 
     /**
-     * 
+     * 股票代码
      *
      * @最大长度   10
      * @允许为空   NO
@@ -37,20 +39,20 @@ public class StockAttributeReplay implements Serializable {
     private String stockCode;
 
     /**
-     * 
+     * 股票名称
      *
-     * @最大长度   20
+     * @最大长度   60
      * @允许为空   NO
      * @是否索引   NO
      */
     private String stockName;
 
     /**
-     * 时间
+     * 交易时间
      *
      * @最大长度   10
      * @允许为空   NO
-     * @是否索引   NO
+     * @是否索引   YES
      */
     private String kbarDate;
 
@@ -65,41 +67,39 @@ public class StockAttributeReplay implements Serializable {
     private String uniqueKey;
 
     /**
-     * 10日内平均振幅
+     * 几日
      *
-     * @允许为空   YES
+     * @允许为空   NO
      * @是否索引   NO
      */
-    private BigDecimal avgRangeDay10;
+    private Integer dayType;
 
     /**
-     * 5日涨幅
+     * 上轨价
      *
-     * @允许为空   YES
+     * @允许为空   NO
      * @是否索引   NO
      */
-    private BigDecimal rateDay5;
+    private BigDecimal upPrice;
 
     /**
-     * 是不是新股 180天k线
+     * 中轨价
+     *
+     * @允许为空   NO
+     * @是否索引   NO
      */
-    private Integer marketNew;
-    /**
-     * 市值
-     */
-    private BigDecimal marketValue;
-    /**
-     * 10日内涨停数量
-     */
-    private Integer planksDay10;
-
-    private BigDecimal highRate;
-    private BigDecimal upperShadowRate;
-    private BigDecimal avgRate5;
-    private String highTime;
+    private BigDecimal middlePrice;
 
     /**
-     * 
+     * 下轨价
+     *
+     * @允许为空   NO
+     * @是否索引   NO
+     */
+    private BigDecimal lowPrice;
+
+    /**
+     * 创建时间
      *
      * @允许为空   NO
      * @是否索引   NO
@@ -107,7 +107,7 @@ public class StockAttributeReplay implements Serializable {
     private Date createTime;
 
     /**
-     * 
+     * 更新时间
      *
      * @允许为空   YES
      * @是否索引   NO
