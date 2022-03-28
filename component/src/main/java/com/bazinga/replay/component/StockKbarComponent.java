@@ -336,6 +336,23 @@ public class StockKbarComponent {
         }
     }
 
+    public void calCurrentDayAvgLine(Date date) {
+        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+        int index = 0;
+        for (CirculateInfo item:circulateInfos) {
+            index = index + 1;
+            System.out.println(index + "=======================");
+            AVGLINE_POOL.execute(() -> {
+                StockAverageLine avgLine = stockAverageLineService.getByUniqueKey(item.getStockCode() + "" + DateUtil.format(date, DateUtil.yyyyMMdd)+ "" + 5);
+                if (avgLine == null) {
+                    calOneDayAvgLine(item.getStockCode(), item.getStockName(), 5,date);
+                }
+                System.out.println(item.getStockCode()+"结束");
+            });
+        }
+    }
+
     public static void main(String[] args) {
         int i = 15/20;
         System.out.println(i);
