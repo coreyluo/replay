@@ -18,14 +18,19 @@ public class BoxStockBuyDTO {
     private BigDecimal afterHighLowRate;
     private BigDecimal buyPrice;
     private String buyTime;
+    private BigDecimal buyTimeRaiseRate;
     private BigDecimal openRate;
     private String firstHighTime;
+    private BigDecimal firstHighRaiseRate;
     private Integer betweenTime;
     private BigDecimal buyTimeTradeAmount;
     private BigDecimal preTradeAmount;
     private Integer prePlanks;
+    private Integer preEndPlanks;
     private BigDecimal rateDay3;
     private BigDecimal rateDay5;
     private BigDecimal rateDay10;
+    private BigDecimal rateDay30;
+    private BigDecimal avgAmountDay5;
     private BigDecimal profit;
 }
