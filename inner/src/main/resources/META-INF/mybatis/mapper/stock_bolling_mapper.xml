@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.bazinga.replay.dao.StockAttributeReplayDAO">
+<mapper namespace="com.bazinga.replay.dao.StockBollingDAO">
 
-    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.StockAttributeReplay">
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.StockBolling">
         <id column="id" jdbcType="BIGINT"  property="id" />
         <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
         <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
         <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
         <result column="unique_key" jdbcType="VARCHAR" property="uniqueKey"/>
-        <result column="avg_range_day10" jdbcType="DECIMAL" property="avgRangeDay10"/>
-        <result column="rate_day5" jdbcType="DECIMAL" property="rateDay5"/>
-        <result column="market_new" jdbcType="TINYINT" property="marketNew"/>
-        <result column="market_value" jdbcType="DECIMAL" property="marketValue"/>
-        <result column="planks_day10" jdbcType="TINYINT" property="planksDay10"/>
-        <result column="high_rate" jdbcType="DECIMAL" property="highRate"/>
-        <result column="upper_shadow_rate" jdbcType="DECIMAL" property="upperShadowRate"/>
-        <result column="avg_rate5" jdbcType="DECIMAL" property="avgRate5"/>
-        <result column="high_time" jdbcType="VARCHAR" property="highTime"/>
+        <result column="day_type" jdbcType="INTEGER" property="dayType"/>
+        <result column="up_price" jdbcType="DECIMAL" property="upPrice"/>
+        <result column="middle_price" jdbcType="DECIMAL" property="middlePrice"/>
+        <result column="low_price" jdbcType="DECIMAL" property="lowPrice"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
@@ -28,15 +23,10 @@
             stock_name,
             kbar_date,
             unique_key,
-            avg_range_day10,
-            rate_day5,
-            market_new,
-            market_value,
-            planks_day10,
-            high_rate,
-            upper_shadow_rate,
-            avg_rate5,
-            high_time,
+            day_type,
+            up_price,
+            middle_price,
+            low_price,
             create_time,
             update_time
         </sql>
@@ -45,7 +35,7 @@
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
-        from stock_attribute_replay
+        from stock_bolling
         where id = #{id}
     </select>
 
@@ -53,12 +43,12 @@
     <select id="selectByUniqueKey" parameterType="java.lang.String" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
-        from stock_attribute_replay
+        from stock_bolling
         where unique_key = #{uniqueKey} limit 1
     </select>
 
-    <update id="updateByUniqueKey" parameterType="com.bazinga.replay.model.StockAttributeReplay">
-        update stock_attribute_replay
+    <update id="updateByUniqueKey" parameterType="com.bazinga.replay.model.StockBolling">
+        update stock_bolling
         <set>
         <if test="stockCode != null">
             stock_code = #{stockCode, jdbcType=VARCHAR},
@@ -69,33 +59,18 @@
         <if test="kbarDate != null">
             kbar_date = #{kbarDate, jdbcType=VARCHAR},
         </if>
-        <if test="avgRangeDay10 != null">
-            avg_range_day10 = #{avgRangeDay10, jdbcType=DECIMAL},
+        <if test="dayType != null">
+            day_type = #{dayType, jdbcType=INTEGER},
         </if>
-            <if test="rateDay5 != null">
-                rate_day5 = #{rateDay5, jdbcType=DECIMAL},
-            </if>
-            <if test="marketNew != null">
-                market_new = #{marketNew, jdbcType=TINYINT},
-            </if>
-            <if test="marketValue != null">
-                market_value = #{marketValue, jdbcType=DECIMAL},
-            </if>
-            <if test="planksDay10 != null">
-                planks_day10 = #{planksDay10, jdbcType=TINYINT},
-            </if>
-            <if test="highRate != null">
-                high_rate = #{highRate, jdbcType=DECIMAL},
-            </if>
-            <if test="upperShadowRate != null">
-                upper_shadow_rate = #{upperShadowRate, jdbcType=DECIMAL},
-            </if>
-            <if test="avgRate5 != null">
-                avg_rate5 = #{avgRate5, jdbcType=DECIMAL},
-            </if>
-            <if test="highTime != null">
-                high_time = #{highTime, jdbcType=VARCHAR},
-            </if>
+        <if test="upPrice != null">
+            up_price = #{upPrice, jdbcType=DECIMAL},
+        </if>
+        <if test="middlePrice != null">
+            middle_price = #{middlePrice, jdbcType=DECIMAL},
+        </if>
+        <if test="lowPrice != null">
+            low_price = #{lowPrice, jdbcType=DECIMAL},
+        </if>
         <if test="createTime != null">
             create_time = #{createTime, jdbcType=TIMESTAMP},
         </if>
@@ -105,30 +80,25 @@
         </set>
         where unique_key = #{uniqueKey} limit 1
     </update>
-    <insert id="insert" parameterType="com.bazinga.replay.model.StockAttributeReplay" useGeneratedKeys="true" keyProperty="id">
-        insert into stock_attribute_replay (<include refid="Base_Column_List" />)
+    <insert id="insert" parameterType="com.bazinga.replay.model.StockBolling" useGeneratedKeys="true" keyProperty="id">
+        insert into stock_bolling (<include refid="Base_Column_List" />)
         values(
         #{id, jdbcType=BIGINT},
             #{stockCode, jdbcType=VARCHAR},
             #{stockName, jdbcType=VARCHAR},
             #{kbarDate, jdbcType=VARCHAR},
             #{uniqueKey, jdbcType=VARCHAR},
-            #{avgRangeDay10, jdbcType=DECIMAL},
-        #{rateDay5, jdbcType=DECIMAL},
-        #{marketNew, jdbcType=TINYINT},
-        #{marketValue, jdbcType=DECIMAL},
-        #{planksDay10, jdbcType=TINYINT},
-        #{highRate, jdbcType=DECIMAL},
-        #{upperShadowRate, jdbcType=DECIMAL},
-        #{avgRate5, jdbcType=DECIMAL},
-        #{highTime, jdbcType=VARCHAR},
+            #{dayType, jdbcType=INTEGER},
+            #{upPrice, jdbcType=DECIMAL},
+            #{middlePrice, jdbcType=DECIMAL},
+            #{lowPrice, jdbcType=DECIMAL},
             #{createTime, jdbcType=TIMESTAMP},
             #{updateTime, jdbcType=TIMESTAMP}
             )
     </insert>
 
-    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.StockAttributeReplay">
-        update stock_attribute_replay
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.StockBolling">
+        update stock_bolling
         <set>
             <if test="stockCode != null">
                 stock_code = #{stockCode, jdbcType=VARCHAR},
@@ -142,33 +112,18 @@
             <if test="uniqueKey != null">
                 unique_key = #{uniqueKey, jdbcType=VARCHAR},
             </if>
-            <if test="avgRangeDay10 != null">
-                avg_range_day10 = #{avgRangeDay10, jdbcType=DECIMAL},
+            <if test="dayType != null">
+                day_type = #{dayType, jdbcType=INTEGER},
             </if>
-                <if test="rateDay5 != null">
-                    rate_day5 = #{rateDay5, jdbcType=DECIMAL},
-                </if>
-                <if test="marketNew != null">
-                    market_new = #{marketNew, jdbcType=TINYINT},
-                </if>
-                <if test="marketValue != null">
-                    market_value = #{marketValue, jdbcType=DECIMAL},
-                </if>
-                <if test="plankDay10 != null">
-                    plank_day10 = #{plankDay10, jdbcType=TINYINT},
-                </if>
-                <if test="highRate != null">
-                    high_rate = #{highRate, jdbcType=DECIMAL},
-                </if>
-                <if test="upperShadowRate != null">
-                    upper_shadow_rate = #{upperShadowRate, jdbcType=DECIMAL},
-                </if>
-                <if test="avgRate5 != null">
-                    avg_rate5 = #{avgRate5, jdbcType=DECIMAL},
-                </if>
-                <if test="highTime != null">
-                    high_time = #{highTime, jdbcType=VARCHAR},
-                </if>
+            <if test="upPrice != null">
+                up_price = #{upPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="middlePrice != null">
+                middle_price = #{middlePrice, jdbcType=DECIMAL},
+            </if>
+            <if test="lowPrice != null">
+                low_price = #{lowPrice, jdbcType=DECIMAL},
+            </if>
             <if test="createTime != null">
                 create_time = #{createTime, jdbcType=TIMESTAMP},
             </if>
@@ -192,8 +147,17 @@
         <if test="uniqueKey != null">
             and unique_key = #{uniqueKey, jdbcType=VARCHAR}
         </if>
-        <if test="avgRangeDay10 != null">
-            and avg_range_day10 = #{avgRangeDay10, jdbcType=DECIMAL}
+        <if test="dayType != null">
+            and day_type = #{dayType, jdbcType=INTEGER}
+        </if>
+        <if test="upPrice != null">
+            and up_price = #{upPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="middlePrice != null">
+            and middle_price = #{middlePrice, jdbcType=DECIMAL}
+        </if>
+        <if test="lowPrice != null">
+            and low_price = #{lowPrice, jdbcType=DECIMAL}
         </if>
     </sql>
 
@@ -235,10 +199,10 @@
         </if>
     </sql>
 
-    <select id="selectByCondition" parameterType="com.bazinga.replay.query.StockAttributeReplayQuery" resultMap="BaseResultMap">
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.StockBollingQuery" resultMap="BaseResultMap">
         select
             <include refid="Base_Column_List"/>
-        from stock_attribute_replay
+        from stock_bolling
         <where>
             <include refid="Equal_Where_List"/>
             <include refid="Range_Where_List"/>
@@ -250,9 +214,9 @@
         </if>
     </select>
 
-    <select id="countByCondition" parameterType="com.bazinga.replay.query.StockAttributeReplayQuery" resultType="java.lang.Integer">
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.StockBollingQuery" resultType="java.lang.Integer">
         select count(1)
-        from stock_attribute_replay
+        from stock_bolling
         <where>
             <include refid="Equal_Where_List"/>
             <include refid="Range_Where_List"/>

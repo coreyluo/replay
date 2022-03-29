@@ -101,6 +101,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private PlankQuantityDivideComponent plankQuantityDivideComponent;
+
+    @Autowired
+    private ManyCannonReplayComponent manyCannonReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -185,7 +188,7 @@ public class ReplayTest extends BaseTestCase {
                 zz500RepalyComponent.replay("20"+from+"0101","20"+to+"0120");
             });
         }*/
-        zz500RepalyComponent.replay("20220201","20230120");
+        zz500RepalyComponent.replay("20210201","20220120");
 
       /*  try {
             TimeUnit.HOURS.sleep(24);
@@ -207,6 +210,7 @@ public class ReplayTest extends BaseTestCase {
         //backSealReplayComponent.replay();
       //  plankQuantityDivideComponent.replay();
 
-        zuangReplayComponent.replay20220320();
+       // zuangReplayComponent.replay20220320();
+        manyCannonReplayComponent.replay();
     }
 }

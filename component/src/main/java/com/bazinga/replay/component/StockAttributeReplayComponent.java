@@ -5,17 +5,12 @@ import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.model.StockAttributeReplay;
-import com.bazinga.replay.model.StockCommonReplay;
-import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.CirculateInfoQuery;
+import com.bazinga.replay.query.StockAverageLineQuery;
 import com.bazinga.replay.query.StockCommonReplayQuery;
 import com.bazinga.replay.query.StockKbarQuery;
-import com.bazinga.replay.service.CirculateInfoService;
-import com.bazinga.replay.service.StockAttributeReplayService;
-import com.bazinga.replay.service.StockCommonReplayService;
-import com.bazinga.replay.service.StockKbarService;
+import com.bazinga.replay.service.*;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
@@ -47,6 +42,10 @@ public class StockAttributeReplayComponent {
 
     @Autowired
     private StockKbarService stockKbarService;
+    @Autowired
+    private StockAverageLineService stockAverageLineService;
+    @Autowired
+    private CurrentDayTransactionDataComponent currentDayTransactionDataComponent;
 
 
     public void saveStockAttributeReplay(Date date){
@@ -61,13 +60,34 @@ public class StockAttributeReplayComponent {
             try {
                 List<StockKbar> stockKBars = getStockKBars(circulateInfo.getStockCode());
                 BigDecimal avgRangeDay10 = calAvgRangeDay10(stockKBars);
+                BigDecimal rateDay5 = calRateDay5(stockKBars);
+                boolean marketNewFlag = isMarketNew(circulateInfo.getStockCode());
+                Integer markerNew  = 0;
+                if(marketNewFlag){
+                    markerNew = 1;
+                }
+                BigDecimal marketValue = calMarketValue(stockKBars, circulateInfo);
+                Integer planksDay10 = calPlanksDay10(stockKBars, circulateInfo.getStockCode());
+                BigDecimal highRate = calHighRate(stockKBars);
+                BigDecimal upperShadowRate = calUpperShadowRate(stockKBars);
+                BigDecimal avgRate5 = calAvgRate5(stockKBars, circulateInfo);
+                String highTime = calHighTime(circulateInfo.getStockCode());
+
                 StockAttributeReplay stockAttributeReplay = new StockAttributeReplay();
                 stockAttributeReplay.setStockCode(circulateInfo.getStockCode());
                 stockAttributeReplay.setStockName(circulateInfo.getStockName());
                 stockAttributeReplay.setKbarDate(currentKbarDate);
                 stockAttributeReplay.setUniqueKey(circulateInfo.getStockCode() + "_" + currentKbarDate);
                 stockAttributeReplay.setAvgRangeDay10(avgRangeDay10);
+                stockAttributeReplay.setRateDay5(rateDay5);
+                stockAttributeReplay.setMarketNew(markerNew);
+                stockAttributeReplay.setMarketValue(marketValue);
+                stockAttributeReplay.setPlanksDay10(planksDay10);
+                stockAttributeReplay.setHighRate(highRate);
+                stockAttributeReplay.setUpperShadowRate(upperShadowRate);
+                stockAttributeReplay.setAvgRate5(avgRate5);
                 stockAttributeReplay.setCreateTime(new Date());
+                stockAttributeReplay.setHighTime(highTime);
                 stockAttributeReplayService.save(stockAttributeReplay);
             }catch (Exception e){
                 log.error(e.getMessage(),e);
@@ -101,6 +121,113 @@ public class StockAttributeReplayComponent {
         totalRange = totalRange.subtract(maxRange).subtract(minRange);
         BigDecimal avgRange = totalRange.divide(new BigDecimal(10), 2, BigDecimal.ROUND_HALF_UP);
         return avgRange;
+    }
+
+    public BigDecimal calRateDay5(List<StockKbar> stockKbars){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<6){
+            return null;
+        }
+        int i = 0;
+        StockKbar firstKbar = null;
+        for (StockKbar stockKbar:stockKbars){
+            i++;
+            if(i==1){
+                firstKbar = stockKbar;
+            }
+            if(i==6){
+                BigDecimal rateDay5 = PriceUtil.getPricePercentRate(firstKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
+                return rateDay5;
+            }
+        }
+        return null;
+    }
+
+    public Integer calPlanksDay10(List<StockKbar> stockKbars,String stockCode){
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return null;
+        }
+        int planks = 0;
+        int i = 0;
+        StockKbar nextKbar = null;
+        for (StockKbar stockKbar:stockKbars){
+            i++;
+            if(nextKbar!=null&&i<=11){
+                boolean upperPrice = PriceUtil.isUpperPrice(stockCode, nextKbar.getHighPrice(), stockKbar.getClosePrice());
+                if(upperPrice){
+                    planks++;
+                }
+            }
+            nextKbar = stockKbar;
+        }
+        return planks;
+    }
+
+    public BigDecimal calHighRate(List<StockKbar> stockKbars){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<2){
+            return null;
+        }
+        StockKbar stockKbar = stockKbars.get(0);
+        StockKbar preStockKbar = stockKbars.get(1);
+        BigDecimal highRate = (stockKbar.getAdjHighPrice().subtract(preStockKbar.getAdjClosePrice())).divide(preStockKbar.getAdjClosePrice(), 4, BigDecimal.ROUND_HALF_UP);
+        return highRate;
+    }
+    public BigDecimal calUpperShadowRate(List<StockKbar> stockKbars){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<1){
+            return null;
+        }
+        StockKbar stockKbar = stockKbars.get(0);
+        BigDecimal highRate = (stockKbar.getAdjHighPrice().subtract(stockKbar.getAdjClosePrice())).divide(stockKbar.getAdjClosePrice(), 4, BigDecimal.ROUND_HALF_UP);
+        return highRate;
+    }
+
+    public BigDecimal calMarketValue(List<StockKbar> stockKbars,CirculateInfo circulateInfo){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<1){
+            return null;
+        }
+        StockKbar stockKbar = stockKbars.get(0);
+        BigDecimal marketValue = new BigDecimal(circulateInfo.getCirculate()).multiply(stockKbar.getClosePrice()).setScale(2, BigDecimal.ROUND_HALF_UP);
+        return marketValue;
+    }
+
+    public BigDecimal calAvgRate5(List<StockKbar> stockKbars,CirculateInfo circulateInfo){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<1){
+            return null;
+        }
+        StockKbar stockKbar = stockKbars.get(0);
+        StockAverageLine stockAverageLine = stockAverageLineService.getByUniqueKey(circulateInfo.getStockCode() + "_" + stockKbar.getKbarDate()+"_"+5);
+        if(stockAverageLine!=null){
+            return stockAverageLine.getAveragePrice();
+        }
+        return null;
+    }
+
+    public boolean isMarketNew(String stockCode){
+        try {
+            DataTable securityBars = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, 200);
+            List<KBarDTO> kBarDTOS = KBarDTOConvert.convertKBar(securityBars);
+            if (kBarDTOS.size() >= 180) {
+                return true;
+            }
+            return false;
+        }catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String calHighTime(String stockCode){
+        List<ThirdSecondTransactionDataDTO> datas = currentDayTransactionDataComponent.getData(stockCode);
+        if(CollectionUtils.isEmpty(datas)){
+            return null;
+        }
+        String highTime = null;
+        BigDecimal highPrice = null;
+        for (ThirdSecondTransactionDataDTO data:datas){
+            if(highPrice==null||data.getTradePrice().compareTo(highPrice)==1){
+                highPrice = data.getTradePrice();
+                highTime = data.getTradeTime();
+            }
+        }
+        return highTime;
     }
     public List<StockKbar> getStockKBars(String stockCode){
         StockKbarQuery stockKbarQuery = new StockKbarQuery();

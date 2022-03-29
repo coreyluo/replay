@@ -452,7 +452,7 @@ public class MiddlePlankReplayComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20200415");
+            query.setKbarDateFrom("20191115");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
 
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
@@ -468,20 +468,11 @@ public class MiddlePlankReplayComponent {
                 List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
                 List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
                 int plank = calSerialsPlank(kbarList);
-                Integer plank2Count = plankHighCountMap.get(stockKbar.getKbarDate() + SymbolConstants.UNDERLINE + 2);
-                Integer plank3Count = plankHighCountMap.get(stockKbar.getKbarDate() + SymbolConstants.UNDERLINE + 3);
-                plank2Count = plank2Count ==null ? 0:plank2Count;
-                plank3Count = plank3Count ==null ? 0:plank3Count;
-                if(plank3Count>plank2Count){
-                    log.info("3板数量大于2板kbarDate{}",stockKbar.getKbarDate());
-                    if(plank < 3){
-                        continue;
-                    }
-                }else {
-                    if(plank<2 || plank > 4 ){
-                        continue;
-                    }
+
+                if(plank<2 || plank > 4 ){
+                    continue;
                 }
+
               /*  PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
                 if(plankHighDTO.getPlankHigh()<2 || plankHighDTO.getPlankHigh() > 4 ){
                     continue;
@@ -624,7 +615,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\动态中位2-4封住去一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\中位2-4封住去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

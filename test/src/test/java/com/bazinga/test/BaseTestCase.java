@@ -5,9 +5,12 @@ import com.bazinga.enums.PlankTypeEnum;
 import com.bazinga.replay.component.*;
 import com.bazinga.replay.dto.PlankTypeDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateTimeUtils;
 import com.bazinga.util.DateUtil;
@@ -65,6 +68,8 @@ public class BaseTestCase {
     private PlanksInfoComponent planksInfoComponent;
     @Autowired
     private StockAttributeReplayComponent stockAttributeReplayComponent;
+    @Autowired
+    private CirculateInfoService circulateInfoService;
 
     @Test
     public void test1() {
@@ -100,6 +105,7 @@ public class BaseTestCase {
         stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);
         badPlankComponent.badPlankJudge(date);
         stockPlankDailyComponent.superFactor(date);
+        stockKbarComponent.calCurrentDayAvgLine(date);
         stockAttributeReplayComponent.saveStockAttributeReplay(date);
         stockPlankDailyComponent.handleStopTradeStock(date);
 
@@ -134,15 +140,28 @@ public class BaseTestCase {
 
     @Test
     public void test7() {
-        plankChenJiaoEComponent.exportData();
+        stockAttributeReplayComponent.saveStockAttributeReplay(new Date());
+        //stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",800);
+        //stockKbarComponent.calAvgLine("999999","上证指数",24);
+        //stockKbarComponent.calCurrentDayAvgLine(new Date());
+        //stockAttributeReplayComponent.saveStockAttributeReplay(new Date());
+        //plankChenJiaoEComponent.exportData();
+        //stockKbarComponent.batchKbarDataInit();
         /*Date date = new Date();
         stockPlankDailyComponent.handleStopTradeStock(date);*/
         //stockAttributeReplayComponent.saveStockAttributeReplay(DateUtil.parseDate("2022-02-18 15:30:30",DateUtil.DEFAULT_FORMAT));
-
         //stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);
         //synInfoComponent.synZiDingYiInfo();
         //stockCommonReplayComponent.highRaiseStockInfo(new Date());
         //List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNewDays("601068", 50, 11);
+        /*List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo:circulateInfos) {
+            System.out.println(circulateInfo.getStockCode());
+            stockKbarComponent.batchKbarDataInitToStock(circulateInfo.getStockCode(), circulateInfo.getStockName());
+        }
+        stockKbarComponent.initSpecialStockAndSaveKbarData("880863","昨日涨停",100);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",100);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("399905","中证500指数",100);*/
     }
 
 

@@ -65,7 +65,7 @@ public class SynInfoComponent {
             ,"创业板重组松绑","高送转","填权","共同富裕示范区","融资融券","MSCI","ST");
 
     public void synThsBlockInfo() throws IOException {
-        File file = new File("D:/circulate/block_industry.ini");
+        File file = new File("D:/circulate/block_conception.ini");
         List<String> list = FileUtils.readLines(file, "GBK");
         log.info(JSONObject.toJSONString(list));
         int blockIndex = 0;

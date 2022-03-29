@@ -60,6 +60,9 @@ public class Zz500ReplayDTO {
     @ExcelField(name = "500前10分钟高于开盘跳数")
     private Integer overOpenCount10;
 
+    @ExcelField(name = "500前20分钟高于开盘跳数")
+    private Integer overOpenCount20;
+
     @ExcelField(name = "500前5分钟成交额")
     private BigDecimal min5TradeAmount;
 
