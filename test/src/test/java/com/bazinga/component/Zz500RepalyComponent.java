@@ -59,20 +59,33 @@ public class Zz500RepalyComponent {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
+    @Autowired
+    private CommonReplayComponent commonReplayComponent;
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
         Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1200);
         log.info("获取500涨幅成功");
         Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
         log.info("获取500分时map成功");
-
+        Map<String, Integer> circulateAmountRankMap = commonReplayComponent.initAmountRankMap(kbarDateFrom, kbarDateTo);
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
 
-        circulateInfos = circulateInfos.stream()
+        /*circulateInfos = circulateInfos.stream()
                 .filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode()))
              //   .filter(item-> "000089".equals(item.getStockCode()))
-                .collect(Collectors.toList());
-
-
+                .collect(Collectors.toList());*/
+        TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
+        tradeQuery.setTradeDateTo(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
+        tradeQuery.addOrderBy("trade_date", Sort.SortType.DESC);
+        tradeQuery.setLimit(16);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
+        kbarDateFrom = DateUtil.format(tradeDatePools.get(0).getTradeDate(),DateUtil.yyyyMMdd);
+        TradeDatePoolQuery tradeToQuery = new TradeDatePoolQuery();
+        tradeToQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
+        tradeToQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        tradeToQuery.setLimit(2);
+        tradeDatePools = tradeDatePoolService.listByCondition(tradeToQuery);
+        kbarDateTo = DateUtil.format(tradeDatePools.get(1).getTradeDate(),DateUtil.yyyyMMdd);
         Map<String, List<String>> nodeList = index500Component.getNodeList();
         // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
@@ -98,12 +111,12 @@ public class Zz500RepalyComponent {
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
                 StockKbar preKbar = stockKbarList.get(i - 2);
 
-                String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
+              /*  String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
                 List<String> history500List = nodeList.get(recentNode);
                 if(!history500List.contains(buyStockKbar.getStockCode())){
                     log.info("此票不在历史500数据 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
                     continue;
-                }
+                }*/
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list) || list.size()<3){
                     continue;
@@ -235,6 +248,11 @@ public class Zz500RepalyComponent {
                         exportDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),5));
                         exportDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),10));
                         exportDTO.setDay15Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),15));
+
+                        Integer rank = circulateAmountRankMap.get(preKbar.getKbarDate() + SymbolConstants.UNDERLINE + buyStockKbar.getStockCode());
+                        if(rank!=null){
+                            exportDTO.setAmountRank(rank);
+                        }
 
                         exportDTO.setOverOpenCountMin5(indexRate500DTO.getOverOpenCount());
 

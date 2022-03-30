@@ -180,21 +180,25 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
- /*       for (int i = 18; i < 23; i++) {
+        for (int i = 21; i < 22; i++) {
             final String from = "" + i;
             int toInt = i+1;
             final String to = "" + toInt;
-            THREAD_POOL.execute(()->{
-                zz500RepalyComponent.replay("20"+from+"0101","20"+to+"0120");
-            });
-        }*/
-        zz500RepalyComponent.replay("20210201","20220120");
+            for (int j = 1; j < 8; j++) {
+                final String jString = j<10 ? "0"+j:""+j;
+                final String jAdd1String = j+1<10 ? "0"+(j+1):""+(j+1);
+                THREAD_POOL.execute(()->{
+                    zz500RepalyComponent.replay("20"+from+ jString + "01","20"+from+ jAdd1String+ "01");
+                });
+            }
+        }
+      //  zz500RepalyComponent.replay("20220201","20220420");
 
-      /*  try {
+        try {
             TimeUnit.HOURS.sleep(24);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
 //        zz500RepalyComponent.replay("20220101","20230120");
     //    lowTrendReplayComponent.replay("20171001","20230120");
 
