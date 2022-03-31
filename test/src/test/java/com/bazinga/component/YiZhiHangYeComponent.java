@@ -61,79 +61,40 @@ public class YiZhiHangYeComponent {
     private static final ExecutorService BOX_ONE_STOCK_POOL = ThreadPoolUtils.create(8, 16, 512, "quoteCancelOrderPool");
 
 
-    public void oneStockBox(){
-        /*List<MonthDTO> months = Lists.newArrayList();
-        MonthDTO monthDTO1 = new MonthDTO();
-        monthDTO1.setStartMonth("20210101");
-        monthDTO1.setStartMonth("20210301");
-        MonthDTO monthDTO2 = new MonthDTO();
-        monthDTO2.setStartMonth("20210301");
-        monthDTO2.setStartMonth("20210601");
-        MonthDTO monthDTO3 = new MonthDTO();
-        monthDTO3.setStartMonth("20210601");
-        monthDTO3.setStartMonth("20210901");
-        MonthDTO monthDTO4 = new MonthDTO();
-        monthDTO4.setStartMonth("20210901");
-        monthDTO4.setStartMonth("20220101");
-        months.add(monthDTO1);
-        months.add(monthDTO2);
-        months.add(monthDTO3);
-        months.add(monthDTO4);*/
+    public void yiZhiBanBuy(){
 
-
-        List<BoxStockBuyDTO> results = getStockUpperShowInfo();
-        List<BoxStockBuyDTO> dailys = Lists.newArrayList();
-        dailys.addAll(results);
-        List<BoxStockBuyDTO> sorts = Lists.newArrayList();
+        List<YiZhiHangYeBuyDTO> results = getStockUpperShowInfo();
         List<Object[]> datas = Lists.newArrayList();
-            for (BoxStockBuyDTO dto : sorts) {
-                List<Object> list = new ArrayList<>();
-                list.add(dto.getStockCode());
-                list.add(dto.getStockCode());
-                list.add(dto.getStockName());
-                list.add(dto.getCirculateZ());
-                list.add(dto.getTotalCirculateZ());
-                list.add(dto.getTradeDate());
-                list.add(dto.getBuyTime());
-                list.add(dto.getBuyPrice());
-                list.add(dto.getOpenRate());
-                list.add(dto.getBuyTimeTradeAmount());
-                list.add(dto.getFirstHighRate());
-                list.add(dto.getFirstHighTime());
-                list.add(dto.getPreTradeAmount());
-                list.add(dto.getPrePlanks());
-                list.add(dto.getPreEndPlanks());
-                list.add(dto.getBeforeHighLowRate());
-                list.add(dto.getAfterHighLowRate());
-                list.add(dto.getRateDay3());
-                list.add(dto.getRateDay5());
-                list.add(dto.getRateDay10());
-                list.add(dto.getRateDay30());
-                list.add(dto.getBetweenTime());
-                list.add(dto.getBuyTimeRaiseRate());
-                list.add(dto.getFirstHighRaiseRate());
-                list.add(dto.getAvgAmountDay5());
-                list.add(dto.getLevelBuyTime());
-                list.add(dto.getProfit());
+        for (YiZhiHangYeBuyDTO dto : results) {
+            List<Object> list = new ArrayList<>();
+            list.add(dto.getStockCode());
+            list.add(dto.getStockCode());
+            list.add(dto.getStockName());
+            list.add(dto.getCirculateZ());
+            list.add(dto.getBlockCode());
+            list.add(dto.getBlockName());
+            list.add(dto.getTradeDate());
+            list.add(dto.getBuyTime());
+            list.add(dto.getYizhiStocks());
+            list.add(dto.getPrePlanks()+1);
+            list.add(dto.getProfit());
+            Object[] objects = list.toArray();
+            datas.add(objects);
+        }
 
-                Object[] objects = list.toArray();
-                datas.add(objects);
-            }
-
-            String[] rowNames = {"index", "stockCode", "stockName", "流通z", "总股本", "tradeDate", "买入时间", "买入价格", "开盘涨幅", "买入时候成交额", "第一次高点涨幅", "第一次高点时间", "前一日成交额", "前一日几连板", "前一日封住数量", "买入前低点涨幅", "中间低点幅度", "3日涨幅", "5日涨幅", "10日涨幅", "30日涨幅", "买入相对第一次高点时间","买入时涨速","第一次高点时候涨速","5日平均成交额", "买入时间排名", "盈利"};
-            PoiExcelUtil poiExcelUtil = new PoiExcelUtil("个股箱体", rowNames, datas);
-            try {
-                poiExcelUtil.exportExcelUseExcelTitle("个股箱体");
-            } catch (Exception e) {
-                log.info(e.getMessage());
-            }
+        String[] rowNames = {"index", "stockCode", "stockName", "流通z", "板块代码", "板块名称", "交易日期", "买入时间", "一直板股票信息","连板高度","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("一字板行业买入", rowNames, datas);
+        try {
+            poiExcelUtil.exportExcelUseExcelTitle("一字板行业买入");
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
     }
 
 
 
-    public List<BoxStockBuyDTO> getStockUpperShowInfo()  {
-        Map<String, BlockInfo> blocks = getAllHangYe();
-        Map<String, List<BlockStockDetail>> details = getAllHangYeDetails();
+    public List<YiZhiHangYeBuyDTO> getStockUpperShowInfo()  {
+        Map<String, BlockStockDetail> stockToBlockMap = getStockToBlock();
         List<BoxStockBuyDTO> results = Lists.newArrayList();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Map<String,List<YiZhiHangYeBuyDTO>> yiZhiStockMap = new HashMap<>();
@@ -147,12 +108,12 @@ public class YiZhiHangYeComponent {
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
             StockKbar preStockKbar = null;
             for (StockKbar stockKbar : stockKbars) {
-                if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20190701", DateUtil.yyyyMMdd))) {
+                if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))) {
                     continue;
                 }
-                if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20191001", DateUtil.yyyyMMdd))) {
+                /*if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20191001", DateUtil.yyyyMMdd))) {
                     continue;
-                }
+                }*/
                 if (preStockKbar != null) {
                     boolean openPlank = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getOpenPrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
                     boolean highPlank = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
@@ -160,8 +121,12 @@ public class YiZhiHangYeComponent {
                     if(openPlank){
                         yiZhi = isYiZhi(stockKbar, preStockKbar);
                     }
-                    if(highPlank) {
+                    BlockStockDetail detail = stockToBlockMap.get(stockKbar.getStockCode());
+                    if(highPlank && detail!=null) {
                         String buyTime = getBuyTime(stockKbar, preStockKbar);
+                        if(buyTime!=null){
+                            System.out.println(11111);
+                        }
                         YiZhiHangYeBuyDTO buyDTO = new YiZhiHangYeBuyDTO();
                         buyDTO.setStockCode(circulateInfo.getStockCode());
                         buyDTO.setStockName(circulateInfo.getStockName());
@@ -171,15 +136,59 @@ public class YiZhiHangYeComponent {
                         buyDTO.setYiZhiFlag(yiZhi);
                         buyDTO.setBuyTime(buyTime);
                         getAllDayProfit(stockKbars, stockKbar, buyDTO);
+                        buyDTO.setBlockCode(detail.getBlockCode());
+                        buyDTO.setBlockName(detail.getBlockName());
+                        calPlanks(stockKbars,stockKbar,buyDTO);
+                        List<YiZhiHangYeBuyDTO> buys = yiZhiStockMap.get(stockKbar.getKbarDate());
+                        if(buys==null){
+                            buys = Lists.newArrayList();
+                            yiZhiStockMap.put(stockKbar.getKbarDate(),buys);
+                        }
+                        buys.add(buyDTO);
                     }
 
                 }
                 preStockKbar = stockKbar;
             }
-
         }
-        return results;
+        List<YiZhiHangYeBuyDTO> blockBuys = getBlockBuys(yiZhiStockMap);
+        return blockBuys;
     }
+    public List<YiZhiHangYeBuyDTO> getBlockBuys(Map<String,List<YiZhiHangYeBuyDTO>> yiZhiStockMap){
+        List<YiZhiHangYeBuyDTO> list = Lists.newArrayList();
+        for (String tradeDate:yiZhiStockMap.keySet()){
+            Map<String,String> blockMap = new HashMap<>();
+            List<YiZhiHangYeBuyDTO> stocks = yiZhiStockMap.get(tradeDate);
+            for (YiZhiHangYeBuyDTO stock:stocks){
+                if(stock.isYiZhiFlag()){
+                    String stockStrs = blockMap.get(stock.getBlockCode());
+                    if(stockStrs==null){
+                        stockStrs = stock.getStockCode()+"_"+stock.getStockName();
+                        blockMap.put(stock.getBlockCode(),stockStrs);
+                    }else{
+                        if(stockStrs.length()<=80) {
+                            stockStrs = stockStrs + "_" + stock.getStockCode() + "_" + stock.getStockName();
+                            blockMap.put(stock.getBlockCode(), stockStrs);
+                        }
+                    }
+                }
+            }
+            if(blockMap.size()==0){
+                continue;
+            }
+            for (String blockCode:blockMap.keySet()){
+                for (YiZhiHangYeBuyDTO stock:stocks){
+                    if(stock.getBlockCode().equals(blockCode)&&stock.getBuyTime()!=null){
+                        stock.setYizhiStocks(blockMap.get(blockCode));
+                        list.add(stock);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+
     public boolean isYiZhi(StockKbar stockKbar,StockKbar preStockKbar){
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
         if(CollectionUtils.isEmpty(datas)){
@@ -239,10 +248,12 @@ public class YiZhiHangYeComponent {
                 i++;
             }
             if(i==1){
-                BigDecimal avgPrice = kbar.getTradeAmount().divide(new BigDecimal(kbar.getTradeQuantity()*100));
-                BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
-                BigDecimal rate = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(stockKbar.getAdjHighPrice()), stockKbar.getAdjHighPrice());
-                buyDTO.setProfit(rate);
+                if(kbar.getTradeQuantity()>0) {
+                    BigDecimal avgPrice = kbar.getTradeAmount().divide(new BigDecimal(kbar.getTradeQuantity() * 100), 2, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, kbar);
+                    BigDecimal rate = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(stockKbar.getAdjHighPrice()), stockKbar.getAdjHighPrice());
+                    buyDTO.setProfit(rate);
+                }
             }
             if(kbar.getKbarDate().equals(stockKbar.getKbarDate())){
                 flag = true;
@@ -278,55 +289,46 @@ public class YiZhiHangYeComponent {
         }
         return map;
     }
+    public Map<String, BlockStockDetail> getStockToBlock(){
+        Map<String, BlockStockDetail> map = new HashMap<>();
+        List<BlockInfo> hangYes = Lists.newArrayList();
+        List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
+        for (BlockInfo blockInfo:blockInfos){
+            if(blockInfo.getBlockCode().startsWith("8803")||blockInfo.getBlockCode().startsWith("8804")){
+                hangYes.add(blockInfo);
+            }
+        }
+        for (BlockInfo blockInfo:hangYes){
+            BlockStockDetailQuery query = new BlockStockDetailQuery();
+            query.setBlockCode(blockInfo.getBlockCode());
+            List<BlockStockDetail> details = blockStockDetailService.listByCondition(query);
+            for (BlockStockDetail detail:details){
+                map.put(detail.getStockCode(),detail);
+            }
+        }
+        return map;
+    }
 
 
-    public void calBeforeRate(List<StockKbar> stockKbars,StockKbar buyKbar,BoxStockBuyDTO buyDTO){
+    public void calPlanks(List<StockKbar> stockKbars,StockKbar buyKbar,YiZhiHangYeBuyDTO buyDTO){
         List<StockKbar> reverse = Lists.reverse(stockKbars);
         boolean flag = false;
         int i = 0;
-        StockKbar lastKbar = null;
         StockKbar nextKbar = null;
         int planks = 0;
         boolean continueFlag = true;
-        BigDecimal totalAmount = BigDecimal.ZERO;
         for (StockKbar stockKbar:reverse){
             if(flag){
                 i++;
             }
             if(i>=2){
                 boolean upperFlag = PriceUtil.isHistoryUpperPrice(nextKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice(), nextKbar.getKbarDate());
-                if (upperFlag&&continueFlag){
+                if (upperFlag && continueFlag){
                     planks++;
                 }else{
                     buyDTO.setPrePlanks(planks);
-                    continueFlag = false;
+                    return;
                 }
-            }
-            if(i>=1){
-                totalAmount = totalAmount.add(stockKbar.getTradeAmount());
-                if(i==5){
-                    BigDecimal avgAmount = totalAmount.divide(new BigDecimal(5), 2, BigDecimal.ROUND_HALF_UP);
-                    buyDTO.setAvgAmountDay5(avgAmount);
-                }
-            }
-            if(i==1){
-                lastKbar = stockKbar;
-            }
-            if(i==4){
-                BigDecimal rate = PriceUtil.getPricePercentRate(lastKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
-                buyDTO.setRateDay3(rate);
-            }
-            if(i==6){
-                BigDecimal rate = PriceUtil.getPricePercentRate(lastKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
-                buyDTO.setRateDay5(rate);
-            }
-            if(i==11){
-                BigDecimal rate = PriceUtil.getPricePercentRate(lastKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
-                buyDTO.setRateDay10(rate);
-            }
-            if(i==31){
-                BigDecimal rate = PriceUtil.getPricePercentRate(lastKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
-                buyDTO.setRateDay30(rate);
             }
             if(stockKbar.getKbarDate().equals(buyKbar.getKbarDate())){
                 flag = true;

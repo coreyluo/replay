@@ -174,10 +174,10 @@ public class BoxOneStockComponent {
                 List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
                 StockKbar preStockKbar = null;
                 for (StockKbar stockKbar : stockKbars) {
-                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20190701", DateUtil.yyyyMMdd))) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20191001", DateUtil.yyyyMMdd))) {
                         continue;
                     }
-                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20191001", DateUtil.yyyyMMdd))) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20200101", DateUtil.yyyyMMdd))) {
                         continue;
                     }
                 /*if(stockKbar.getKbarDate().equals("20220322")){

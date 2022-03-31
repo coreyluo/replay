@@ -22,6 +22,8 @@ public class YiZhiHangYeBuyDTO {
     private boolean yiZhiFlag = false;
     private String buyTime;
     private StockKbar stockKbar;
+    private String yizhiStocks;
+    private int prePlanks = 0;
     private BigDecimal profit;
 
 }
