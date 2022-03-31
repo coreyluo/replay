@@ -174,12 +174,12 @@ public class BoxOneStockComponent {
                 List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
                 StockKbar preStockKbar = null;
                 for (StockKbar stockKbar : stockKbars) {
-                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20191001", DateUtil.yyyyMMdd))) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
                         continue;
                     }
-                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20200101", DateUtil.yyyyMMdd))) {
+                   /* if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
                         continue;
-                    }
+                    }*/
                 /*if(stockKbar.getKbarDate().equals("20220322")){
                     System.out.println(1111);
                 }*/
@@ -384,9 +384,10 @@ public class BoxOneStockComponent {
             if(firstHighTime!=null){
                 Date date = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
                 Date firstHighDate = DateUtil.parseDate(firstHighTime, DateUtil.HH_MM);
-                Date newHighDate = DateUtil.addStockMarketMinutes(firstHighDate, 30);
+                Date newHighDateStart = DateUtil.addStockMarketMinutes(firstHighDate, 10);
+                Date newHighDateEnd = DateUtil.addStockMarketMinutes(firstHighDate, 30);
                 if(data.getTradePrice().compareTo(firstHighPrice)>0){
-                    if(date.after(newHighDate)){
+                    if(date.after(newHighDateStart)&&date.before(newHighDateEnd)){
                         buyIndex = index;
                         BigDecimal firtHighRate = PriceUtil.getPricePercentRate(firstHighPrice.subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
                         BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preStockKbar.getAdjClosePrice()), preStockKbar.getAdjClosePrice());

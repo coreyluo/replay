@@ -116,11 +116,13 @@ public class HblTest extends BaseTestCase {
     private BoxOneStockComponent boxOneStockComponent;
     @Autowired
     private YiZhiHangYeComponent yiZhiHangYeComponent;
+    @Autowired
+    private ThsDataComponent thsDataComponent;
 
     @Test
     public void test(){
-        //boxOneStockComponent.oneStockBox();
-        yiZhiHangYeComponent.yiZhiBanBuy();
+        boxOneStockComponent.oneStockBox();
+        //yiZhiHangYeComponent.yiZhiBanBuy();
         //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
         //guaiLilvComponent.guaiLiLv();
@@ -164,7 +166,7 @@ public class HblTest extends BaseTestCase {
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
         //synExcelComponent.zhuanZaiQuoteInfo();
-        //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
+        thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
         //synExcelComponent.zhuanZaiQuoteInfo();
 
 
@@ -173,6 +175,7 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test3(){
+        thsDataComponent.zhuanZaiStocks();
         //yesterdayPlankRateComponent.yesterdayPlankRate();
         //zhongZheng500Component.zz500Buy();
         /*zhongZheng500TwoComponent.zz500BuyTwo();
@@ -192,7 +195,7 @@ public class HblTest extends BaseTestCase {
         //raiseDropComponent.raiseDrop();
        // List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
 
-            for (int i=2000;i>=0;i--) {
+            /*for (int i=2000;i>=0;i--) {
                 DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
                 KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
                 TradeDatePool tradeDatePool = new TradeDatePool();
@@ -200,7 +203,7 @@ public class HblTest extends BaseTestCase {
                 tradeDatePool.setTradeDate(DateUtil.parseDate(format+" 09:09:09",DateUtil.DEFAULT_FORMAT));
                 tradeDatePool.setCreateTime(new Date());
                 tradeDatePoolService.save(tradeDatePool);
-            }
+            }*/
 
 
 
