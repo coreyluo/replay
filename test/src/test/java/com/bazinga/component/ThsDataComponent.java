@@ -47,7 +47,7 @@ public class ThsDataComponent {
     }
 
     public void quoteInfo(){
-        String quote_str = JDIBridge.THS_HistoryQuotes("600207.SH","open,high,low,close,volume,amount,turnoverRatio","CPS:2","2021-03-31","2022-03-31");
+        String quote_str = JDIBridge.THS_Snapshot("000001.SZ","amt;vol;latest;tradeDate;tradeTime","","2022-03-30 09:15:00","2022-03-31 15:15:00");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             System.out.println(JSONObject.toJSONString(jsonObject));

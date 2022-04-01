@@ -1,6 +1,7 @@
 package com.bazinga.test;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -158,7 +159,7 @@ public class HblTest extends BaseTestCase {
     }
     @Test
     public void test2(){
-        daPanDropComponent.chuangYeBuy();
+        //daPanDropComponent.chuangYeBuy();
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
@@ -193,7 +194,8 @@ public class HblTest extends BaseTestCase {
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
         //raiseDropComponent.raiseDrop();
-       // List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
+        /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
+        System.out.println(JSONObject.toJSONString(data));*/
 
             /*for (int i=2000;i>=0;i--) {
                 DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
