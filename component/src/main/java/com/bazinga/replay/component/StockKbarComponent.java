@@ -502,30 +502,27 @@ public class StockKbarComponent {
     public void batchcalAvgLine() {
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
-        circulateInfos.forEach(item -> {
-            StockAverageLineQuery query = new StockAverageLineQuery();
-            query.setStockCode(item.getStockCode());
-            System.out.println(item.getStockCode());
-            int count = stockAverageLineService.countByCondition(query);
-            if (count == 0) {
-                //calAvgLine(item.getStock(), item.getStockName(), 60);
-              /*  for (int i = 5; i <=5 ; i++) {
-                    calAvgLine(item.getStockCode(), item.getStockName(), i);
-                }*/
-                for (int i = 1; i <= 4; i++) {
-                    if(i==3){
-                        continue;
-                    }
-                    final  int day = 5*i;
-                    THREAD_POOL.execute(()->{
-                        calAvgLine(item.getStockCode(), item.getStockName(), day);
-                    });
+        int index = 0;
+        for (CirculateInfo item:circulateInfos) {
+            index = index + 1;
+            System.out.println(index + "=======================");
+            AVGLINE_POOL.execute(() -> {
+                StockAverageLineQuery query = new StockAverageLineQuery();
+                query.setStockCode(item.getStockCode());
+                System.out.println(item.getStockCode()+"开始");
+                int count = stockAverageLineService.countByCondition(query);
+                if (count == 0) {
+                    //calAvgLine(item.getStock(), item.getStockName(), 60);
+                    /*for (int i = 5; i <=60 ; i++) {
+                        calAvgLine(item.getStockCode(), item.getStockName(), i);
+                    }*/
+                    //calAvgLine(item.getStock(), item.getStockName(), 10);
+
+                    calAvgLine(item.getStockCode(), item.getStockName(), 20);
                 }
-
-
-            }
-
-        });
+                System.out.println(item.getStockCode()+"结束");
+            });
+        }
     }
 
 

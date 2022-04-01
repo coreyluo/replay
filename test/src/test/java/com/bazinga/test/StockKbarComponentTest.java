@@ -1,5 +1,6 @@
 package com.bazinga.test;
 
+import com.bazinga.replay.component.StockBollingComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockCommonReplayComponent;
 import com.bazinga.replay.component.StockKbarComponent;
@@ -7,6 +8,8 @@ import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 
@@ -19,20 +22,32 @@ public class StockKbarComponentTest extends BaseTestCase {
     private StockCommonReplayComponent stockCommonReplayComponent;
 
     @Autowired
+    private StockBollingComponent stockBollingComponent;
+
+    @Autowired
     private HistoryTransactionDataComponent historyTransactionDataComponent;
 
     @Test
     public void test(){
 
         stockKbarComponent.batchUpdateDaily();
-        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",500);
-        //  stockKbarComponent.initSpecialStockAndSaveKbarData("000905","上证指数",1000);
-
         //stockCommonReplayComponent.saveCommonReplay(new Date());
     }
 
     @Test
     public void test2(){
         stockKbarComponent.batchcalAvgLine();
+    }
+
+    @Test
+    public void test3(){
+        stockBollingComponent.batchInitBoll();
+    }
+
+    @Test
+    public void test4(){
+
+        stockBollingComponent.initBoll("000537");
+
     }
 }
