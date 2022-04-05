@@ -56,18 +56,19 @@ public class StockBollingComponent {
             String uniqueKey = stockCode + SymbolConstants.UNDERLINE + kbarDate +SymbolConstants.UNDERLINE + 20;
             StockAverageLine byUniqueKey = stockAverageLineService.getByUniqueKey(uniqueKey);
             if(byUniqueKey!=null){
-                BigDecimal std = calStd(stockCode, kbarDate, 20);
-                if(std.compareTo(BigDecimal.ZERO) <0){
+                double std = calStd(stockCode, kbarDate, 20);
+                if(std<0){
                     continue;
                 }
-                log.info("stockCode{} std{}",stockCode,std);
+                BigDecimal stdDecimal = new BigDecimal(std).setScale(2,RoundingMode.HALF_UP);
+                log.info("stockCode{} kbarDate{} std{}",stockCode,kbarDate ,std);
                 StockBolling stockBolling = new StockBolling();
                 stockBolling.setStockCode(byUniqueKey.getStockCode());
                 stockBolling.setStockName(byUniqueKey.getStockName());
                 stockBolling.setDayType(20);
                 stockBolling.setMiddlePrice(byUniqueKey.getAveragePrice());
-                BigDecimal up = stockBolling.getMiddlePrice().add(std.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
-                BigDecimal low = stockBolling.getMiddlePrice().subtract(std.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
+                BigDecimal up = stockBolling.getMiddlePrice().add(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
+                BigDecimal low = stockBolling.getMiddlePrice().subtract(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
                 stockBolling.setUpPrice(up);
                 stockBolling.setLowPrice(low);
                 stockBolling.setKbarDate(byUniqueKey.getKbarDate());
@@ -82,7 +83,7 @@ public class StockBollingComponent {
 
     }
 
-    public  BigDecimal calStd(String stockCode, String kbarDate , int days){
+    public  double calStd(String stockCode, String kbarDate , int days){
         StockKbarQuery query = new StockKbarQuery();
         query.addOrderBy("kbar_date", Sort.SortType.DESC);
         query.setStockCode(stockCode);
@@ -90,16 +91,18 @@ public class StockBollingComponent {
         query.setLimit(days);
         List<StockKbar> stockAverageLines = stockKbarService.listByCondition(query);
         if(CollectionUtils.isEmpty(stockAverageLines) || stockAverageLines.size() <20){
-            return new BigDecimal("-1");
+            return -1d;
         }
         BigDecimal avgPrice = stockAverageLines.stream().map(StockKbar::getAdjClosePrice).reduce(BigDecimal::add).get()
-                .divide(new BigDecimal(String.valueOf(days)),4,BigDecimal.ROUND_HALF_UP);
+                .divide(new BigDecimal(String.valueOf(days)),2,BigDecimal.ROUND_HALF_UP);
 
         BigDecimal total = BigDecimal.ZERO;
         for (StockKbar stockKbar : stockAverageLines) {
             total = total.add(stockKbar.getAdjClosePrice().subtract(avgPrice).pow(2));
         }
-        return CommonUtil.sqrt(total.divide(new BigDecimal(String.valueOf(days-1)),2,BigDecimal.ROUND_HALF_UP),4);
+        log.info("stockCode{} kbarDate{} total{} days{}",stockCode,kbarDate ,total,days);
+
+        return Math.sqrt(total.divide(new BigDecimal(String.valueOf(days-1)),10,BigDecimal.ROUND_HALF_UP).doubleValue());
     }
 
 

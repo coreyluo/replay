@@ -98,7 +98,7 @@ public class StockKbarComponent {
     }
 
     public void batchInitAndSaveKbarDate(String stockCode,String stockName,int days){
-        int onceDays = 400;
+        int onceDays = 500;
         int index = (days / onceDays)+1;
         List<StockKbar> revers = Lists.newArrayList();
         for (int i=0;i<index;i++){
@@ -188,7 +188,9 @@ public class StockKbarComponent {
                     item.setAdjClosePrice(item.getClosePrice().multiply(preFactor).setScale(2, RoundingMode.HALF_UP));
                     item.setAdjHighPrice(item.getHighPrice().multiply(preFactor).setScale(2, RoundingMode.HALF_UP));
                     item.setAdjLowPrice(item.getLowPrice().multiply(preFactor).setScale(2, RoundingMode.HALF_UP));
-                    stockKbarService.save(item);
+                    if(item.getTradeQuantity()>0){
+                        stockKbarService.save(item);
+                    }
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -322,7 +324,7 @@ public class StockKbarComponent {
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 950);
+                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 499);
             }
         });
     }
@@ -453,7 +455,6 @@ public class StockKbarComponent {
         query.setLimit(days);
         query.addOrderBy("kbar_date", Sort.SortType.DESC);
         List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
-
         if (CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size() < days) {
             return null;
         }
@@ -502,14 +503,13 @@ public class StockKbarComponent {
     public void batchcalAvgLine() {
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+       // circulateInfos = circulateInfos.stream().filter(item->"000537".equals(item.getStockCode())).collect(Collectors.toList());
         int index = 0;
         for (CirculateInfo item:circulateInfos) {
             index = index + 1;
-            System.out.println(index + "=======================");
-            AVGLINE_POOL.execute(() -> {
+           // AVGLINE_POOL.execute(() -> {
                 StockAverageLineQuery query = new StockAverageLineQuery();
                 query.setStockCode(item.getStockCode());
-                System.out.println(item.getStockCode()+"开始");
                 int count = stockAverageLineService.countByCondition(query);
                 if (count == 0) {
                     //calAvgLine(item.getStock(), item.getStockName(), 60);
@@ -521,7 +521,7 @@ public class StockKbarComponent {
                     calAvgLine(item.getStockCode(), item.getStockName(), 20);
                 }
                 System.out.println(item.getStockCode()+"结束");
-            });
+           // });
         }
     }
 

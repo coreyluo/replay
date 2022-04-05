@@ -104,6 +104,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private ManyCannonReplayComponent manyCannonReplayComponent;
+
+    @Autowired
+    private BollingReplayComponent bollingReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -184,7 +187,7 @@ public class ReplayTest extends BaseTestCase {
             final String from = "" + i;
             int toInt = i+1;
             final String to = "" + toInt;
-            for (int j = 1; j < 8; j++) {
+            for (int j = 1; j < 12; j++) {
                 final String jString = j<10 ? "0"+j:""+j;
                 final String jAdd1String = j+1<10 ? "0"+(j+1):""+(j+1);
                 THREAD_POOL.execute(()->{
@@ -192,7 +195,7 @@ public class ReplayTest extends BaseTestCase {
                 });
             }
         }
-      //  zz500RepalyComponent.replay("20220201","20220420");
+        //  zz500RepalyComponent.replay("20220201","20220420");
 
         try {
             TimeUnit.HOURS.sleep(24);
@@ -215,6 +218,11 @@ public class ReplayTest extends BaseTestCase {
       //  plankQuantityDivideComponent.replay();
 
        // zuangReplayComponent.replay20220320();
-        manyCannonReplayComponent.replay();
+      //  manyCannonReplayComponent.replay();
+        try {
+            bollingReplayComponent.replay();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

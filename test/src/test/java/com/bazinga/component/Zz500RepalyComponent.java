@@ -69,24 +69,13 @@ public class Zz500RepalyComponent {
         log.info("获取500分时map成功");
         Map<String, Integer> circulateAmountRankMap = commonReplayComponent.initAmountRankMap(kbarDateFrom, kbarDateTo);
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-
+        Date fromDate = DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd);
+        Date toDate = DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd);
         /*circulateInfos = circulateInfos.stream()
                 .filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode()))
              //   .filter(item-> "000089".equals(item.getStockCode()))
                 .collect(Collectors.toList());*/
-        TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
-        tradeQuery.setTradeDateTo(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
-        tradeQuery.addOrderBy("trade_date", Sort.SortType.DESC);
-        tradeQuery.setLimit(16);
-        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
-        kbarDateFrom = DateUtil.format(tradeDatePools.get(0).getTradeDate(),DateUtil.yyyyMMdd);
-        TradeDatePoolQuery tradeToQuery = new TradeDatePoolQuery();
-        tradeToQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
-        tradeToQuery.addOrderBy("trade_date", Sort.SortType.ASC);
-        tradeToQuery.setLimit(2);
-        tradeDatePools = tradeDatePoolService.listByCondition(tradeToQuery);
-        kbarDateTo = DateUtil.format(tradeDatePools.get(1).getTradeDate(),DateUtil.yyyyMMdd);
-        Map<String, List<String>> nodeList = index500Component.getNodeList();
+//        Map<String, List<String>> nodeList = index500Component.getNodeList();
         // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
@@ -96,8 +85,8 @@ public class Zz500RepalyComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom(kbarDateFrom);
-            query.setKbarDateTo(kbarDateTo);
+            query.setKbarDateFrom("20201201");
+            query.setKbarDateTo("20220101");
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             stockKbarList = stockKbarList.stream().filter(item-> item.getTradeQuantity()!=0).collect(Collectors.toList());
 
@@ -107,6 +96,10 @@ public class Zz500RepalyComponent {
 
             for (int i = 16; i < stockKbarList.size()-1; i++) {
                 StockKbar buyStockKbar = stockKbarList.get(i);
+                Date buyDate = DateUtil.parseDate(buyStockKbar.getKbarDate(),DateUtil.yyyyMMdd);
+                if(buyDate.before(fromDate) || toDate.before(buyDate)){
+                    continue;
+                }
                 StockKbar sellStockKbar = stockKbarList.get(i+1);
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
                 StockKbar preKbar = stockKbarList.get(i - 2);

@@ -78,7 +78,7 @@ public class CommonUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(sqrt(new BigDecimal(8),3));
+        System.out.println(sqrt(new BigDecimal("0.508409500"),3));
     }
 
 
