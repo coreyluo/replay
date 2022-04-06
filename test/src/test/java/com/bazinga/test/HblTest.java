@@ -119,10 +119,13 @@ public class HblTest extends BaseTestCase {
     private YiZhiHangYeComponent yiZhiHangYeComponent;
     @Autowired
     private ThsDataComponent thsDataComponent;
+    @Autowired
+    private ThsHttpTestComponent thsHttpTestComponent;
 
     @Test
     public void test(){
-        boxOneStockComponent.oneStockBox();
+        thsHttpTestComponent.getAccessToken();
+        //boxOneStockComponent.oneStockBox();
         //yiZhiHangYeComponent.yiZhiBanBuy();
         //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
