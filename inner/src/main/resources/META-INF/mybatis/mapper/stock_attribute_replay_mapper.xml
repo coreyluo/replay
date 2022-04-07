@@ -9,6 +9,7 @@
         <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
         <result column="unique_key" jdbcType="VARCHAR" property="uniqueKey"/>
         <result column="avg_range_day10" jdbcType="DECIMAL" property="avgRangeDay10"/>
+        <result column="avg_amount_day5" jdbcType="DECIMAL" property="avgAmountDay5"/>
         <result column="rate_day5" jdbcType="DECIMAL" property="rateDay5"/>
         <result column="market_new" jdbcType="TINYINT" property="marketNew"/>
         <result column="market_value" jdbcType="DECIMAL" property="marketValue"/>
@@ -30,6 +31,7 @@
             kbar_date,
             unique_key,
             avg_range_day10,
+            avg_amount_day5,
             rate_day5,
             market_new,
             market_value,
@@ -116,6 +118,7 @@
             #{kbarDate, jdbcType=VARCHAR},
             #{uniqueKey, jdbcType=VARCHAR},
             #{avgRangeDay10, jdbcType=DECIMAL},
+            #{avgAmountDay5, jdbcType=DECIMAL},
         #{rateDay5, jdbcType=DECIMAL},
         #{marketNew, jdbcType=TINYINT},
         #{marketValue, jdbcType=DECIMAL},

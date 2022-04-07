@@ -72,6 +72,8 @@ public class StockAttributeReplay implements Serializable {
      */
     private BigDecimal avgRangeDay10;
 
+    private BigDecimal avgAmountDay5;
+
     /**
      * 5日涨幅
      *
