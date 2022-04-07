@@ -162,6 +162,26 @@ public class StockAttributeReplayComponent {
         return planks;
     }
 
+    public Integer calPlanksEndDay10(List<StockKbar> stockKbars,String stockCode){
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return null;
+        }
+        int planks = 0;
+        int i = 0;
+        StockKbar nextKbar = null;
+        for (StockKbar stockKbar:stockKbars){
+            i++;
+            if(nextKbar!=null&&i<=11){
+                boolean upperPrice = PriceUtil.isUpperPrice(stockCode, nextKbar.getClosePrice(), stockKbar.getClosePrice());
+                if(upperPrice){
+                    planks++;
+                }
+            }
+            nextKbar = stockKbar;
+        }
+        return planks;
+    }
+
     public BigDecimal calHighRate(List<StockKbar> stockKbars){
         if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<2){
             return null;

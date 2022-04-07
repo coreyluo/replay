@@ -282,7 +282,9 @@ public class StockKbarComponent {
                                         item.setAdjClosePrice(item.getClosePrice());
                                         item.setAdjHighPrice(item.getHighPrice());
                                         item.setAdjLowPrice(item.getLowPrice());
-                                        stockKbarService.save(item);
+                                        if(item.getTradeQuantity()>0){
+                                            stockKbarService.save(item);
+                                        }
                                     });
                         } catch (Exception e) {
                             e.printStackTrace();

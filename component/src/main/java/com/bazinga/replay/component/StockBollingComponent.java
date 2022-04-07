@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -41,6 +42,8 @@ public class StockBollingComponent {
     @Autowired
     private StockBollingService stockBollingService;
 
+    @Autowired
+    private CommonComponent commonComponent;
 
     public void  batchInitBoll(){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
@@ -49,14 +52,15 @@ public class StockBollingComponent {
         }
     }
 
-    public  void initBoll(String stockCode){
-        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(new TradeDatePoolQuery());
-        for (TradeDatePool tradeDatePool : tradeDatePools) {
-            String kbarDate = DateFormatUtils.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
-            String uniqueKey = stockCode + SymbolConstants.UNDERLINE + kbarDate +SymbolConstants.UNDERLINE + 20;
+    public void calCurrentDayBoll(Date date){
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            String stockCode = circulateInfo.getStockCode();
+            String kbarDate = DateFormatUtils.format(date, DateUtil.yyyyMMdd);
+            String uniqueKey = stockCode + SymbolConstants.UNDERLINE + kbarDate +SymbolConstants.UNDERLINE + 5;
             StockAverageLine byUniqueKey = stockAverageLineService.getByUniqueKey(uniqueKey);
             if(byUniqueKey!=null){
-                double std = calStd(stockCode, kbarDate, 20);
+                double std = calStd(stockCode, kbarDate, 5);
                 if(std<0){
                     continue;
                 }
@@ -65,7 +69,40 @@ public class StockBollingComponent {
                 StockBolling stockBolling = new StockBolling();
                 stockBolling.setStockCode(byUniqueKey.getStockCode());
                 stockBolling.setStockName(byUniqueKey.getStockName());
-                stockBolling.setDayType(20);
+                stockBolling.setDayType(5);
+                stockBolling.setMiddlePrice(byUniqueKey.getAveragePrice());
+                BigDecimal up = stockBolling.getMiddlePrice().add(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
+                BigDecimal low = stockBolling.getMiddlePrice().subtract(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
+                stockBolling.setUpPrice(up);
+                stockBolling.setLowPrice(low);
+                stockBolling.setKbarDate(byUniqueKey.getKbarDate());
+                stockBolling.setUniqueKey(uniqueKey);
+                stockBollingService.save(stockBolling);
+            }
+        }
+
+
+    }
+
+
+
+    public  void initBoll(String stockCode){
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(new TradeDatePoolQuery());
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+            String kbarDate = DateFormatUtils.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
+            String uniqueKey = stockCode + SymbolConstants.UNDERLINE + kbarDate +SymbolConstants.UNDERLINE + 5;
+            StockAverageLine byUniqueKey = stockAverageLineService.getByUniqueKey(uniqueKey);
+            if(byUniqueKey!=null){
+                double std = calStd(stockCode, kbarDate, 5);
+                if(std<0){
+                    continue;
+                }
+                BigDecimal stdDecimal = new BigDecimal(std).setScale(2,RoundingMode.HALF_UP);
+                log.info("stockCode{} kbarDate{} std{}",stockCode,kbarDate ,std);
+                StockBolling stockBolling = new StockBolling();
+                stockBolling.setStockCode(byUniqueKey.getStockCode());
+                stockBolling.setStockName(byUniqueKey.getStockName());
+                stockBolling.setDayType(5);
                 stockBolling.setMiddlePrice(byUniqueKey.getAveragePrice());
                 BigDecimal up = stockBolling.getMiddlePrice().add(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
                 BigDecimal low = stockBolling.getMiddlePrice().subtract(stdDecimal.multiply(new BigDecimal("2"))).setScale(2,RoundingMode.HALF_UP);
@@ -77,10 +114,6 @@ public class StockBollingComponent {
             }
 
         }
-
-
-
-
     }
 
     public  double calStd(String stockCode, String kbarDate , int days){
@@ -90,7 +123,7 @@ public class StockBollingComponent {
         query.setKbarDateTo(kbarDate);
         query.setLimit(days);
         List<StockKbar> stockAverageLines = stockKbarService.listByCondition(query);
-        if(CollectionUtils.isEmpty(stockAverageLines) || stockAverageLines.size() <20){
+        if(CollectionUtils.isEmpty(stockAverageLines) || stockAverageLines.size() <5){
             return -1d;
         }
         BigDecimal avgPrice = stockAverageLines.stream().map(StockKbar::getAdjClosePrice).reduce(BigDecimal::add).get()

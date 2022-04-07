@@ -5,6 +5,7 @@ import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockCommonReplayComponent;
 import com.bazinga.replay.component.StockKbarComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.util.DateUtil;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -30,14 +31,16 @@ public class StockKbarComponentTest extends BaseTestCase {
     @Test
     public void test(){
 
-        stockKbarComponent.batchKbarDataInit();
+        stockKbarComponent.batchUpdateDaily();
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",500);
         //stockCommonReplayComponent.saveCommonReplay(new Date());
     }
 
     @Test
     public void test2(){
-        stockKbarComponent.batchcalAvgLine();
-        stockBollingComponent.batchInitBoll();
+        stockKbarComponent.calCurrentDayAvgLine(DateUtil.parseDate("20220406",DateUtil.yyyyMMdd));
+        stockKbarComponent.calCurrentDayAvgLine(new Date());
+        //stockBollingComponent.batchInitBoll();
     }
 
     @Test
@@ -47,8 +50,9 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test4(){
-
-        stockBollingComponent.initBoll("000537");
+        Double avgPrice = stockKbarComponent.calDaysAvg("600860", "20211230", 20);
+        System.out.println(avgPrice);
+        stockBollingComponent.initBoll("600860");
 
     }
 }

@@ -28,6 +28,19 @@ public class PlankHighUtil {
         return planks;
     }
 
+    public static Integer getPlankCount(List<StockKbar> stockKbarList){
+        Integer count= 0;
+        for (int i = 1; i < stockKbarList.size(); i++) {
+            StockKbar stockKbar = stockKbarList.get(stockKbarList.size()-i);
+            StockKbar pre1StockKbar = stockKbarList.get(stockKbarList.size()-i-1);
+            if(StockKbarUtil.isUpperPrice(stockKbar,pre1StockKbar)){
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public static boolean isTodayFirstPlank(List<StockKbar> stockKbarList){
         StockKbar stockKbar = stockKbarList.get(stockKbarList.size()-2);
         StockKbar pre1StockKbar = stockKbarList.get(stockKbarList.size()-3);

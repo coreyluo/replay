@@ -93,6 +93,8 @@ public class StockAttributeReplay implements Serializable {
      */
     private Integer planksDay10;
 
+    private Integer closePlanksDay10;
+
     private BigDecimal highRate;
     private BigDecimal upperShadowRate;
     private BigDecimal avgRate5;

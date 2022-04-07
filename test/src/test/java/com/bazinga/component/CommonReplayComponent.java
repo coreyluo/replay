@@ -60,6 +60,37 @@ public class CommonReplayComponent {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
+    public Map<String, Integer> endPlanksMap(List<CirculateInfo> circulateInfos){
+        Map<String, Integer> map = new HashMap<>();
+        for (CirculateInfo circulateInfo:circulateInfos){
+            System.out.println(circulateInfo.getStockCode());
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            //query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(stockKbars)){
+                continue;
+            }
+            StockKbar preStockKbar = null;
+            for (StockKbar stockKbar:stockKbars){
+                if(preStockKbar!=null){
+                    boolean historyPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
+                    if(historyPrice){
+                        Integer counts = map.get(stockKbar.getKbarDate());
+                        if(counts==null){
+                            counts = 0;
+                        }
+                        counts = counts+1;
+                        map.put(stockKbar.getKbarDate(),counts);
+                    }
+                }
+                preStockKbar = stockKbar;
+            }
+        }
+        return map;
+    }
+
+
     public Map<String,Integer> initAmountRankMap(String kbarDateFrom ,String kbarDateTo){
         Map<String, Integer > rankMap = new HashMap<>();
 
