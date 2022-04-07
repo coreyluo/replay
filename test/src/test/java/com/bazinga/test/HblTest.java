@@ -1,6 +1,7 @@
 package com.bazinga.test;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -114,10 +115,18 @@ public class HblTest extends BaseTestCase {
     private BoxBuyComponent boxBuyComponent;
     @Autowired
     private BoxOneStockComponent boxOneStockComponent;
+    @Autowired
+    private YiZhiHangYeComponent yiZhiHangYeComponent;
+    @Autowired
+    private ThsDataComponent thsDataComponent;
+    @Autowired
+    private ThsHttpTestComponent thsHttpTestComponent;
 
     @Test
     public void test(){
+        //thsHttpTestComponent.getAccessToken();
         boxOneStockComponent.oneStockBox();
+        //yiZhiHangYeComponent.yiZhiBanBuy();
         //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
         //guaiLilvComponent.guaiLiLv();
@@ -153,7 +162,7 @@ public class HblTest extends BaseTestCase {
     }
     @Test
     public void test2(){
-        daPanDropComponent.chuangYeBuy();
+        //daPanDropComponent.chuangYeBuy();
         //realBuyOrSellComponent.test();
         //realBuyOrSellComponent.realBuyOrSell("",DateUtil.parseDate("2021-09-03",DateUtil.yyyy_MM_dd));
         //hotBlockDropBuyComponent.hotDrop();
@@ -161,7 +170,7 @@ public class HblTest extends BaseTestCase {
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
         //synExcelComponent.zhuanZaiQuoteInfo();
-        //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
+        thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
         //synExcelComponent.zhuanZaiQuoteInfo();
 
 
@@ -170,6 +179,7 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test3(){
+        thsDataComponent.zhuanZaiStocks();
         //yesterdayPlankRateComponent.yesterdayPlankRate();
         //zhongZheng500Component.zz500Buy();
         /*zhongZheng500TwoComponent.zz500BuyTwo();
@@ -187,9 +197,10 @@ public class HblTest extends BaseTestCase {
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
         //raiseDropComponent.raiseDrop();
-       // List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("123116", "20211220");
+        /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
+        System.out.println(JSONObject.toJSONString(data));*/
 
-            for (int i=2000;i>=0;i--) {
+            /*for (int i=2000;i>=0;i--) {
                 DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
                 KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
                 TradeDatePool tradeDatePool = new TradeDatePool();
@@ -197,7 +208,7 @@ public class HblTest extends BaseTestCase {
                 tradeDatePool.setTradeDate(DateUtil.parseDate(format+" 09:09:09",DateUtil.DEFAULT_FORMAT));
                 tradeDatePool.setCreateTime(new Date());
                 tradeDatePoolService.save(tradeDatePool);
-            }
+            }*/
 
 
 
