@@ -116,6 +116,8 @@ public class HblTest extends BaseTestCase {
     @Autowired
     private BoxOneStockComponent boxOneStockComponent;
     @Autowired
+    private BoxOneBetweenStockComponent boxOneBetweenStockComponent;
+    @Autowired
     private YiZhiHangYeComponent yiZhiHangYeComponent;
     @Autowired
     private ThsDataComponent thsDataComponent;
@@ -125,7 +127,8 @@ public class HblTest extends BaseTestCase {
     @Test
     public void test(){
         //thsHttpTestComponent.getAccessToken();
-        boxOneStockComponent.oneStockBox();
+        //boxOneStockComponent.oneStockBox();
+        boxOneBetweenStockComponent.oneStockBox();
         //yiZhiHangYeComponent.yiZhiBanBuy();
         //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
