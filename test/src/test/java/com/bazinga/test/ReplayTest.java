@@ -104,6 +104,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private ManyCannonReplayComponent manyCannonReplayComponent;
+
+    @Autowired
+    private BollingReplayComponent bollingReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -180,17 +183,22 @@ public class ReplayTest extends BaseTestCase {
      //   zongziReplayComponent.replay();
      //   commonReplayComponent.replay();
      //   zuangReplayComponent.replay();
- /*       for (int i = 18; i < 23; i++) {
+      /*  for (int i = 21; i < 22; i++) {
             final String from = "" + i;
             int toInt = i+1;
             final String to = "" + toInt;
-            THREAD_POOL.execute(()->{
-                zz500RepalyComponent.replay("20"+from+"0101","20"+to+"0120");
-            });
+            for (int j = 8; j < 12; j++) {
+                final String jString = j<10 ? "0"+j:""+j;
+                final String jAdd1String = j+1<10 ? "0"+(j+1):""+(j+1);
+                THREAD_POOL.execute(()->{
+                    zz500RepalyComponent.replay("20"+from+ jString + "01","20"+from+ jAdd1String+ "01");
+                });
+            }
         }*/
-        zz500RepalyComponent.replay("20210201","20220120");
+          zz500RepalyComponent.replay("20210101","20210201");
+          zz500RepalyComponent.replay("20211201","20220101");
 
-      /*  try {
+     /*   try {
             TimeUnit.HOURS.sleep(24);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -211,6 +219,11 @@ public class ReplayTest extends BaseTestCase {
       //  plankQuantityDivideComponent.replay();
 
        // zuangReplayComponent.replay20220320();
-        manyCannonReplayComponent.replay();
+      //  manyCannonReplayComponent.replay();
+        try {
+            bollingReplayComponent.replay();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

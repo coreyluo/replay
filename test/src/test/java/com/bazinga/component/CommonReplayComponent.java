@@ -4,6 +4,7 @@ package com.bazinga.component;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
+import com.bazinga.dto.IndexRate500DTO;
 import com.bazinga.dto.IndexRateDTO;
 import com.bazinga.dto.OpenCompeteDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -11,21 +12,25 @@ import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
+import com.bazinga.replay.model.RedisMonior;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.CirculateInfoService;
+import com.bazinga.replay.service.RedisMoniorService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
+import com.bazinga.util.SortUtil;
 import com.google.common.collect.Lists;
 import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
+import com.tradex.model.suport.F10Cates;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -52,6 +57,96 @@ public class CommonReplayComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
 
+    @Autowired
+    private RedisMoniorService redisMoniorService;
+
+    public Map<String, Integer> endPlanksMap(List<CirculateInfo> circulateInfos){
+        Map<String, Integer> map = new HashMap<>();
+        for (CirculateInfo circulateInfo:circulateInfos){
+            System.out.println(circulateInfo.getStockCode());
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            //query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(stockKbars)){
+                continue;
+            }
+            StockKbar preStockKbar = null;
+            for (StockKbar stockKbar:stockKbars){
+                if(preStockKbar!=null){
+                    boolean historyPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
+                    if(historyPrice){
+                        Integer counts = map.get(stockKbar.getKbarDate());
+                        if(counts==null){
+                            counts = 0;
+                        }
+                        counts = counts+1;
+                        map.put(stockKbar.getKbarDate(),counts);
+                    }
+                }
+                preStockKbar = stockKbar;
+            }
+        }
+        return map;
+    }
+
+
+    public Map<String,Integer> initAmountRankMap(String kbarDateFrom ,String kbarDateTo){
+        Map<String, Integer > rankMap = new HashMap<>();
+
+        String key = "stock_rank_map" + kbarDateFrom +SymbolConstants.UNDERLINE + kbarDateTo;
+        RedisMonior redisMonior = redisMoniorService.getByRedisKey(key);
+        if(redisMonior !=null){
+            JSONObject jsonObject = JSONObject.parseObject(redisMonior.getRedisValue());
+            jsonObject.forEach((jsonKey,value)->{
+                rankMap.put(jsonKey, Integer.valueOf(value.toString()));
+            });
+        }else {
+            TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
+            tradeQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
+            tradeQuery.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
+            List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
+
+            List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+            Map<String,Long> circulateMap = new HashMap<>();
+            for (CirculateInfo circulateInfo : circulateInfos) {
+                circulateMap.put(circulateInfo.getStockCode(),circulateInfo.getCirculate());
+            }
+
+            for (TradeDatePool tradeDatePool : tradeDatePools) {
+                String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+                StockKbarQuery query = new StockKbarQuery();
+                query.setKbarDate(kbarDate);
+                List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+                if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<100){
+                    continue;
+                }
+                Map<String ,BigDecimal> amountMap = new HashMap<>();
+                for (StockKbar stockKbar : stockKbarList) {
+                    Long circulate = circulateMap.get(stockKbar.getStockCode());
+                    if(circulate == null){
+                        continue;
+                    }
+                    amountMap.put(stockKbar.getKbarDate()+ SymbolConstants.UNDERLINE + stockKbar.getStockCode(),stockKbar.getClosePrice().multiply(new BigDecimal(circulate.toString())));
+                }
+
+                Map<String, BigDecimal> sortMap = SortUtil.sortByValue(amountMap);
+
+                int rank = 1;
+                for (Map.Entry<String, BigDecimal> entry : sortMap.entrySet()) {
+                    //  log.info("amount{}",entry.getValue());
+                    rankMap.put(entry.getKey(),rank);
+                    rank++;
+                }
+            }
+            redisMonior = new RedisMonior();
+            redisMonior.setRedisKey(key);
+            redisMonior.setRedisValue(JSONObject.toJSONString(rankMap));
+            redisMoniorService.save(redisMonior);
+        }
+        return rankMap;
+
+    }
 
 
 

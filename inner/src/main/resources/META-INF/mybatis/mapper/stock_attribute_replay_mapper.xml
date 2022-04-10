@@ -9,10 +9,12 @@
         <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
         <result column="unique_key" jdbcType="VARCHAR" property="uniqueKey"/>
         <result column="avg_range_day10" jdbcType="DECIMAL" property="avgRangeDay10"/>
+        <result column="avg_amount_day5" jdbcType="DECIMAL" property="avgAmountDay5"/>
         <result column="rate_day5" jdbcType="DECIMAL" property="rateDay5"/>
         <result column="market_new" jdbcType="TINYINT" property="marketNew"/>
         <result column="market_value" jdbcType="DECIMAL" property="marketValue"/>
         <result column="planks_day10" jdbcType="TINYINT" property="planksDay10"/>
+        <result column="close_planks_day10" jdbcType="TINYINT" property="closePlanksDay10"/>
         <result column="high_rate" jdbcType="DECIMAL" property="highRate"/>
         <result column="upper_shadow_rate" jdbcType="DECIMAL" property="upperShadowRate"/>
         <result column="avg_rate5" jdbcType="DECIMAL" property="avgRate5"/>
@@ -29,10 +31,12 @@
             kbar_date,
             unique_key,
             avg_range_day10,
+            avg_amount_day5,
             rate_day5,
             market_new,
             market_value,
             planks_day10,
+            close_planks_day10,
             high_rate,
             upper_shadow_rate,
             avg_rate5,
@@ -114,10 +118,12 @@
             #{kbarDate, jdbcType=VARCHAR},
             #{uniqueKey, jdbcType=VARCHAR},
             #{avgRangeDay10, jdbcType=DECIMAL},
+            #{avgAmountDay5, jdbcType=DECIMAL},
         #{rateDay5, jdbcType=DECIMAL},
         #{marketNew, jdbcType=TINYINT},
         #{marketValue, jdbcType=DECIMAL},
         #{planksDay10, jdbcType=TINYINT},
+        #{closePlanksDay10, jdbcType=TINYINT},
         #{highRate, jdbcType=DECIMAL},
         #{upperShadowRate, jdbcType=DECIMAL},
         #{avgRate5, jdbcType=DECIMAL},

@@ -68,10 +68,12 @@ public class StockAttributeReplayComponent {
                 }
                 BigDecimal marketValue = calMarketValue(stockKBars, circulateInfo);
                 Integer planksDay10 = calPlanksDay10(stockKBars, circulateInfo.getStockCode());
+                Integer closePlanksDay10 = calPlanksEndDay10(stockKBars, circulateInfo.getStockCode());
                 BigDecimal highRate = calHighRate(stockKBars);
                 BigDecimal upperShadowRate = calUpperShadowRate(stockKBars);
                 BigDecimal avgRate5 = calAvgRate5(stockKBars, circulateInfo);
                 String highTime = calHighTime(circulateInfo.getStockCode());
+                BigDecimal avgAmountDay5 = calAvgAmountDay5(stockKBars);
 
                 StockAttributeReplay stockAttributeReplay = new StockAttributeReplay();
                 stockAttributeReplay.setStockCode(circulateInfo.getStockCode());
@@ -79,10 +81,12 @@ public class StockAttributeReplayComponent {
                 stockAttributeReplay.setKbarDate(currentKbarDate);
                 stockAttributeReplay.setUniqueKey(circulateInfo.getStockCode() + "_" + currentKbarDate);
                 stockAttributeReplay.setAvgRangeDay10(avgRangeDay10);
+                stockAttributeReplay.setAvgAmountDay5(avgAmountDay5);
                 stockAttributeReplay.setRateDay5(rateDay5);
                 stockAttributeReplay.setMarketNew(markerNew);
                 stockAttributeReplay.setMarketValue(marketValue);
                 stockAttributeReplay.setPlanksDay10(planksDay10);
+                stockAttributeReplay.setClosePlanksDay10(closePlanksDay10);
                 stockAttributeReplay.setHighRate(highRate);
                 stockAttributeReplay.setUpperShadowRate(upperShadowRate);
                 stockAttributeReplay.setAvgRate5(avgRate5);
@@ -123,6 +127,20 @@ public class StockAttributeReplayComponent {
         return avgRange;
     }
 
+    public BigDecimal calAvgAmountDay5(List<StockKbar> stockKbars){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<11){
+            return null;
+        }
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (int i = 0; i < 5; i++) {
+            StockKbar stockKbar = stockKbars.get(i);
+            totalAmount = totalAmount.add(stockKbar.getTradeAmount());
+        }
+        return totalAmount.divide(new BigDecimal("5"),1,BigDecimal.ROUND_HALF_UP);
+    }
+
+
     public BigDecimal calRateDay5(List<StockKbar> stockKbars){
         if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<6){
             return null;
@@ -153,6 +171,26 @@ public class StockAttributeReplayComponent {
             i++;
             if(nextKbar!=null&&i<=11){
                 boolean upperPrice = PriceUtil.isUpperPrice(stockCode, nextKbar.getHighPrice(), stockKbar.getClosePrice());
+                if(upperPrice){
+                    planks++;
+                }
+            }
+            nextKbar = stockKbar;
+        }
+        return planks;
+    }
+
+    public Integer calPlanksEndDay10(List<StockKbar> stockKbars,String stockCode){
+        if(CollectionUtils.isEmpty(stockKbars)){
+            return null;
+        }
+        int planks = 0;
+        int i = 0;
+        StockKbar nextKbar = null;
+        for (StockKbar stockKbar:stockKbars){
+            i++;
+            if(nextKbar!=null&&i<=11){
+                boolean upperPrice = PriceUtil.isUpperPrice(stockCode, nextKbar.getClosePrice(), stockKbar.getClosePrice());
                 if(upperPrice){
                     planks++;
                 }

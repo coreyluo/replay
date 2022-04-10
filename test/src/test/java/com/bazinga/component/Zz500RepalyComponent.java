@@ -59,21 +59,23 @@ public class Zz500RepalyComponent {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
+    @Autowired
+    private CommonReplayComponent commonReplayComponent;
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
         Map<String, Index500NDayDTO> ndayRateMap = index500Component.getNdayRateMap(1200);
         log.info("获取500涨幅成功");
         Map<String, IndexRate500DTO> index500RateMap = index500Component.getIndex500RateMap();
         log.info("获取500分时map成功");
-
+        Map<String, Integer> circulateAmountRankMap = commonReplayComponent.initAmountRankMap(kbarDateFrom, kbarDateTo);
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-
-        circulateInfos = circulateInfos.stream()
+        Date fromDate = DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd);
+        Date toDate = DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd);
+        /*circulateInfos = circulateInfos.stream()
                 .filter(item-> ReplayConstant.HISTORY_ALL_500_LIST.contains(item.getStockCode()))
              //   .filter(item-> "000089".equals(item.getStockCode()))
-                .collect(Collectors.toList());
-
-
-        Map<String, List<String>> nodeList = index500Component.getNodeList();
+                .collect(Collectors.toList());*/
+//        Map<String, List<String>> nodeList = index500Component.getNodeList();
         // Map<String,RankDTO> rankMap = getStockDayRank(circulateInfos);
 
         List<Zz500ReplayDTO> resultList = Lists.newArrayList();
@@ -83,8 +85,8 @@ public class Zz500RepalyComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom(kbarDateFrom);
-            query.setKbarDateTo(kbarDateTo);
+            query.setKbarDateFrom("20201201");
+            query.setKbarDateTo("20220101");
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             stockKbarList = stockKbarList.stream().filter(item-> item.getTradeQuantity()!=0).collect(Collectors.toList());
 
@@ -94,16 +96,20 @@ public class Zz500RepalyComponent {
 
             for (int i = 16; i < stockKbarList.size()-1; i++) {
                 StockKbar buyStockKbar = stockKbarList.get(i);
+                Date buyDate = DateUtil.parseDate(buyStockKbar.getKbarDate(),DateUtil.yyyyMMdd);
+                if(buyDate.before(fromDate) || toDate.before(buyDate)){
+                    continue;
+                }
                 StockKbar sellStockKbar = stockKbarList.get(i+1);
                 StockKbar firstPlankKbar = stockKbarList.get(i - 1);
                 StockKbar preKbar = stockKbarList.get(i - 2);
 
-                String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
+              /*  String recentNode = index500Component.getRecentNode(buyStockKbar.getKbarDate());
                 List<String> history500List = nodeList.get(recentNode);
                 if(!history500List.contains(buyStockKbar.getStockCode())){
                     log.info("此票不在历史500数据 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
                     continue;
-                }
+                }*/
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(buyStockKbar.getStockCode(), buyStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list) || list.size()<3){
                     continue;
@@ -235,6 +241,11 @@ public class Zz500RepalyComponent {
                         exportDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),5));
                         exportDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),10));
                         exportDTO.setDay15Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-16,i),15));
+
+                        Integer rank = circulateAmountRankMap.get(preKbar.getKbarDate() + SymbolConstants.UNDERLINE + buyStockKbar.getStockCode());
+                        if(rank!=null){
+                            exportDTO.setAmountRank(rank);
+                        }
 
                         exportDTO.setOverOpenCountMin5(indexRate500DTO.getOverOpenCount());
 

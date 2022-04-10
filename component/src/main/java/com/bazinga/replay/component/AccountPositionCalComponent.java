@@ -58,12 +58,13 @@ public class AccountPositionCalComponent {
         ACCOUNT_NAME_MAP.put("398000104352","产品");
         ACCOUNT_NAME_MAP.put("398000104348","大佬");
         ACCOUNT_NAME_MAP.put("398000102550","问");
+        ACCOUNT_NAME_MAP.put("505000011155","陆家嘴");
         ACCOUNT_NAME_MAP.put("398000104865","产品二");
     }
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-       // currentTradeDate = DateUtil.parseDate("20220318",DateUtil.yyyyMMdd);
+    //    currentTradeDate = DateUtil.parseDate("20220401",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -267,6 +268,15 @@ public class AccountPositionCalComponent {
                             continue;
                         }
                         positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh()-1 + "+");
+                        if("505000011155".equals(preName)){
+                            String orderTime = positionCalDTO.getOrderTime();
+                            Integer orderInteger = Integer.parseInt(orderTime.replaceAll(":",""));
+                            if(orderInteger< 94000){
+                                positionCalDTO.setBuyStrategy("上影线");
+                            }else {
+                                positionCalDTO.setBuyStrategy("500勇士");
+                            }
+                        }
                     }else {
                         if(plankHighDTO.getUnPlank()==0){
                             positionCalDTO.setPlankHigh(plankHighDTO.getPlankHigh().toString());
@@ -294,6 +304,212 @@ public class AccountPositionCalComponent {
 
 
     }
+
+    public void calTiger(String preName){
+        Date currentTradeDate = commonComponent.getCurrentTradeDate();
+      //   currentTradeDate = DateUtil.parseDate("20220401",DateUtil.yyyyMMdd);
+        String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
+        Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
+        String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
+        List<PositionCalDTO> resultList = Lists.newArrayList();
+
+        try {
+            File orderFile = new File("E:\\positionCal\\"+preName+"_当日委托_"+kbarDate+".csv");
+            List<String> orderList = FileUtils.readLines(orderFile, "GBK");
+            File importFile = new File("E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+preKbarDate+".xls");
+            List<PositionCalDTO> importList = new Excel2JavaPojoUtil(importFile).excel2JavaPojo(PositionCalDTO.class);
+
+
+            Map<String, SellGroupDTO> sellAmountMap = new HashMap<>();
+            for (int i = 0; i < orderList.size(); i++) {
+                String objectString = orderList.get(i);
+                String[] objArr = objectString.split(SymbolConstants.COMMA);
+                String stockCode =  objArr[1];
+                Pattern pattern = Pattern.compile("\\d+");
+                Matcher matcher = pattern.matcher(stockCode);
+                while (matcher.find()) {
+                    stockCode =  matcher.group(0);
+                }
+                String direction = objArr[3];
+                String tradeTime = objArr[14];
+                if("-".equals(tradeTime)){
+                    continue;
+                }
+                if("卖出".equals(direction)){
+                    SellGroupDTO sellGroupDTO = sellAmountMap.get(stockCode);
+                    if(sellGroupDTO==null){
+                        sellGroupDTO = new SellGroupDTO();
+                        sellGroupDTO.setStockCode(stockCode);
+                        sellGroupDTO.setSellQuantity(Integer.valueOf(objArr[7]));
+                        sellGroupDTO.setSellAmount(new BigDecimal(objArr[8]));
+                        sellAmountMap.put(stockCode,sellGroupDTO);
+                    } else {
+                        sellGroupDTO.setSellQuantity(sellGroupDTO.getSellQuantity() + Integer.valueOf(objArr[7]));
+                        sellGroupDTO.setSellAmount(sellGroupDTO.getSellAmount().add(new BigDecimal(objArr[8])));
+                    }
+                }
+            }
+
+            log.info("卖出聚合结果{}", JSONObject.toJSONString(sellAmountMap));
+
+            Map<String, List<PositionCalDTO>> unResultMap = importList.stream().filter(item -> item.getPremiumRate() == null).collect(Collectors.groupingBy(PositionCalDTO::getStockCode));
+
+            unResultMap.forEach((stockCode,unResultList)->{
+
+                SellGroupDTO sellGroupDTO = sellAmountMap.get(stockCode);
+                if(sellGroupDTO==null){
+                    log.info("当前未结算票没有卖出记录stockCode{}",stockCode);
+                }else {
+                    int unCalQuantiy = unResultList.stream().mapToInt(PositionCalDTO::getTradeQuantity).sum();
+                    if(sellGroupDTO.getSellQuantity().equals(unCalQuantiy)){
+                        log.info("满足结算条件stockCode{}",stockCode);
+                        if(unResultList.size()==1){
+                            PositionCalDTO positionCalDTO = unResultList.get(0);
+                            positionCalDTO.setTradeQuantity(0);
+                            if(positionCalDTO.getSellAmount()==null){
+                                positionCalDTO.setSellAmount(sellGroupDTO.getSellAmount());
+                            }else {
+                                positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellGroupDTO.getSellAmount()));
+                            }
+                            positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
+                            positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
+                        }else {
+                            for (int i = 0; i < unResultList.size(); i++) {
+                                PositionCalDTO positionCalDTO = unResultList.get(i);
+                                BigDecimal quantityRate = new BigDecimal(positionCalDTO.getTradeQuantity().toString()).divide(new BigDecimal(String.valueOf(unCalQuantiy)),3, RoundingMode.HALF_UP);
+                                positionCalDTO.setTradeQuantity(0);
+                                BigDecimal sellAmount = sellGroupDTO.getSellAmount().multiply(quantityRate).setScale(2, RoundingMode.HALF_UP);
+                                if(positionCalDTO.getSellAmount()==null){
+                                    positionCalDTO.setSellAmount(sellAmount);
+                                }else {
+                                    positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellAmount));
+                                }
+                                positionCalDTO.setPremium(positionCalDTO.getSellAmount().subtract(positionCalDTO.getBuyAmount()));
+                                positionCalDTO.setPremiumRate(PriceUtil.getPricePercentRate(positionCalDTO.getPremium(),positionCalDTO.getBuyAmount()).divide(CommonConstant.DECIMAL_HUNDRED,4,RoundingMode.HALF_UP));
+                            }
+                        }
+                    }else {
+                        log.info("不满足结算条件需要更新卖出金额stockCode{}",stockCode);
+                        if(unResultList.size()==1){
+                            PositionCalDTO positionCalDTO = unResultList.get(0);
+                            positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()-sellGroupDTO.getSellQuantity());
+                            if(positionCalDTO.getSellAmount()==null){
+                                positionCalDTO.setSellAmount(sellGroupDTO.getSellAmount());
+                            }else {
+                                positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellGroupDTO.getSellAmount()));
+                            }
+                        }else {
+                            Integer totalSubQuantity = 0;
+                            for (int i = 0; i < unResultList.size(); i++) {
+                                PositionCalDTO positionCalDTO = unResultList.get(i);
+                                BigDecimal quantityRate = new BigDecimal(positionCalDTO.getTradeQuantity().toString()).divide(new BigDecimal(String.valueOf(unCalQuantiy)),3, RoundingMode.HALF_UP);
+                                Integer subtractQuantity = new BigDecimal(sellGroupDTO.getSellQuantity().toString()).multiply(quantityRate).intValue();
+                                totalSubQuantity = totalSubQuantity + subtractQuantity;
+                                if(i== unResultList.size()-1){
+                                    positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()-(sellGroupDTO.getSellQuantity()- totalSubQuantity));
+                                }else {
+                                    positionCalDTO.setTradeQuantity(positionCalDTO.getTradeQuantity()- subtractQuantity);
+                                }
+                                BigDecimal sellAmount = sellGroupDTO.getSellAmount().multiply(quantityRate).setScale(2, RoundingMode.HALF_UP);
+                                if(positionCalDTO.getSellAmount()==null){
+                                    positionCalDTO.setSellAmount(sellAmount);
+                                }else {
+                                    positionCalDTO.setSellAmount(positionCalDTO.getSellAmount().add(sellAmount));
+                                }
+                            }
+                        }
+
+
+                    }
+
+                }
+            });
+
+            resultList.addAll(importList);
+            Map<String,PositionCalDTO> absortMap = new HashMap<>();
+            Map<String,PositionCalDTO> plankMap = new HashMap<>();
+            for (int i = 1; i < orderList.size(); i++) {
+
+                String objectString = orderList.get(i);
+                String[] objArr = objectString.split(SymbolConstants.COMMA);
+                String direction = objArr[3];
+                String tradeTime = objArr[14];
+                if("-".equals(tradeTime)){
+                    continue;
+                }
+                if("买入".equals(direction)){
+                    PositionCalDTO positionCalDTO = new PositionCalDTO();
+                    positionCalDTO.setTradeDate(DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd));
+                    positionCalDTO.setOrderTime(objArr[0]);
+                    String stockCode = objArr[1];
+                    Pattern pattern = Pattern.compile("\\d+");
+                    Matcher matcher = pattern.matcher(stockCode);
+                    while (matcher.find()) {
+                        stockCode =  matcher.group(0);
+                    }
+                    positionCalDTO.setStockCode(stockCode);
+
+                    positionCalDTO.setStockName(objArr[2]);
+                    positionCalDTO.setTradeQuantity(Integer.valueOf(objArr[7]));
+                    positionCalDTO.setBuyAmount(new BigDecimal(objArr[8]));
+                    BigDecimal orderPrice = new BigDecimal(objArr[5]);
+                    positionCalDTO.setTradeTime(tradeTime);
+                    Date orderDate = DateUtil.parseDate(positionCalDTO.getOrderTime().startsWith("9")?"0"+positionCalDTO.getOrderTime():positionCalDTO.getOrderTime(), DateUtil.HH_MM_SS);
+                    Date tradeDate = DateUtil.parseDate(positionCalDTO.getTradeTime().startsWith("9")?"0"+positionCalDTO.getTradeTime():positionCalDTO.getTradeTime(), DateUtil.HH_MM_SS);
+                    long subTimeLong = tradeDate.getTime() - orderDate.getTime();
+                    long hour = subTimeLong/(1000*60*60);
+                    long min = subTimeLong%(1000*60*60)/(1000*60);
+                    long second = subTimeLong%(1000*60)/(1000);
+
+                    String subtractTime = hour + ":" +(min>9?min:"0"+min)+":"+ (second>9?second:"0"+second);
+                    positionCalDTO.setSubtractTime(subtractTime);
+
+                    StockKbarQuery query = new StockKbarQuery();
+                    query.setStockCode(positionCalDTO.getStockCode());
+                    query.setKbarDateTo(kbarDate);
+                    query.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    query.setLimit(10);
+
+                    Integer sealType=0;
+
+
+                    if (doMultiOrder(absortMap, positionCalDTO)){
+                        continue;
+                    }
+                    positionCalDTO.setPlankHigh("");
+                    if("505000011155".equals(preName)){
+                        if(stockCode.startsWith("1")){
+                            positionCalDTO.setBuyStrategy("双低");
+                        }else {
+                            String orderTime = positionCalDTO.getOrderTime();
+                            Integer orderInteger = Integer.parseInt(orderTime.replaceAll(":",""));
+                            if(orderInteger< 94000){
+                                positionCalDTO.setBuyStrategy("上影线");
+                            }else {
+                                positionCalDTO.setBuyStrategy("500勇士");
+                            }
+                        }
+                    }
+                    positionCalDTO.setSealType(sealType);
+                    positionCalDTO.setAccountName(preName);
+
+                    resultList.add(positionCalDTO);
+                }
+
+
+
+            }
+            log.info("");
+            ExcelExportUtil.exportToFile(resultList, "E:\\positionCal\\收益\\"+ACCOUNT_NAME_MAP.get(preName)+SymbolConstants.UNDERLINE +"收益"+kbarDate+".xls");
+
+        } catch (Exception e) {
+            log.error(e.getMessage()+ preName,e);
+        }
+
+
+    }
+
+
 
     private boolean doMultiOrder(Map<String, PositionCalDTO> cacheMap, PositionCalDTO positionCalDTO) {
         PositionCalDTO orignalDTO = cacheMap.get(positionCalDTO.getStockCode());
