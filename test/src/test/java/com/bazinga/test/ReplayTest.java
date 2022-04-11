@@ -115,8 +115,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invoke();
-       // middlePlankReplayComponent.invokeSecond();
+       // middlePlankReplayComponent.invoke();
+        middlePlankReplayComponent.invokeSecond();
     }
 
     @Test

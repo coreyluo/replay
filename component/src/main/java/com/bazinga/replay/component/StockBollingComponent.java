@@ -4,10 +4,7 @@ package com.bazinga.replay.component;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.model.*;
-import com.bazinga.replay.query.CirculateInfoQuery;
-import com.bazinga.replay.query.StockAverageLineQuery;
-import com.bazinga.replay.query.StockKbarQuery;
-import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.query.*;
 import com.bazinga.replay.service.*;
 import com.bazinga.util.CommonUtil;
 import com.bazinga.util.DateFormatUtils;
@@ -21,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -54,6 +52,7 @@ public class StockBollingComponent {
 
     public void calCurrentDayBoll(Date date){
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+       // circulateInfos = circulateInfos.stream().filter(item->"600191".equals(item.getStockCode())).collect(Collectors.toList());
         for (CirculateInfo circulateInfo : circulateInfos) {
             String stockCode = circulateInfo.getStockCode();
             String kbarDate = DateFormatUtils.format(date, DateUtil.yyyyMMdd);
@@ -87,6 +86,13 @@ public class StockBollingComponent {
 
 
     public  void initBoll(String stockCode){
+
+        StockBollingQuery query= new StockBollingQuery();
+        query.setStockCode(stockCode);
+        List<StockBolling> stockBollings = stockBollingService.listByCondition(query);
+        if(!CollectionUtils.isEmpty(stockBollings)){
+            return;
+        }
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(new TradeDatePoolQuery());
         for (TradeDatePool tradeDatePool : tradeDatePools) {
             String kbarDate = DateFormatUtils.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
