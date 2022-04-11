@@ -48,6 +48,8 @@ public class SynExcelComponent {
     private ThsZhuanZaiChenWeiComponent thsZhuanZaiChenWeiComponent;
     @Autowired
     private BlockHighBuyComponent blockHighBuyComponent;
+    @Autowired
+    private BoxOneTwoStockComponent boxOneTwoStockComponent;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -271,6 +273,51 @@ public class SynExcelComponent {
             throw new BusinessException("文件解析及同步异常", e);
         }
 
+    }
+
+
+    public void boxTwoBuy() {
+        File file = new File("D:\\circulate\\xiangti100.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\xiangti100.xlsx") + "不存在");
+        }
+        try {
+            List<BoxTwoExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(BoxTwoExcelDTO.class);
+            for (BoxTwoExcelDTO data:dataList){
+                String tradeDate = data.getTradeDate();
+                Date parse = parse(tradeDate, "EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+                String format = DateUtil.format(parse, DateUtil.yyyyMMdd);
+                data.setTradeDate(format);
+
+                Date buyTimeDate = parse(data.getBuyTime(), "EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+                String buyTime = DateUtil.format(buyTimeDate, DateUtil.HH_MM);
+                data.setBuyTime(buyTime);
+
+                Date firstHighTimeDate = parse(data.getFirstHighTime(), "EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+                String firstHigh = DateUtil.format(firstHighTimeDate, DateUtil.HH_MM);
+                data.setFirstHighTime(firstHigh);
+            }
+            boxOneTwoStockComponent.oneStockBox(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+
+    // 格林威治时间转Date
+    private Date parse(String str, String pattern, Locale locale) {
+        if (str == null || pattern == null) {
+            return null;
+        }
+        try {
+            return new SimpleDateFormat(pattern, locale).parse(str);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
