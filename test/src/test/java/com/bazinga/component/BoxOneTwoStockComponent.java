@@ -132,9 +132,9 @@ public class BoxOneTwoStockComponent {
 
             String[] rowNames = {"index", "stockCode", "stockName", "流通z", "总股本", "tradeDate", "买入时间", "买入价格", "开盘涨幅", "买入时候成交额", "第一次高点涨幅", "第一次高点时间", "前一日成交额", "前一日几连板", "前一日封住数量", "买入前低点涨幅", "中间低点幅度", "3日涨幅", "5日涨幅",
                     "10日涨幅", "30日涨幅", "买入相对第一次高点时间","买入时涨速","第一次高点时候涨速","5日平均成交额", "买入时间排名", "盈利", "扫板时间", "尾盘是否封住（0没有 1封住）", "扫板盈利", "二次高点时间", "二次买入时间", "二次买入价格", "二次买入盈利", "jishu"};
-            PoiExcelUtil poiExcelUtil = new PoiExcelUtil("个股箱体", rowNames, datas);
+            PoiExcelUtil poiExcelUtil = new PoiExcelUtil("个股箱体6", rowNames, datas);
             try {
-                poiExcelUtil.exportExcelUseExcelTitle("个股箱体");
+                poiExcelUtil.exportExcelUseExcelTitle("个股箱体6");
             } catch (Exception e) {
                 log.info(e.getMessage());
             }
@@ -162,23 +162,34 @@ public class BoxOneTwoStockComponent {
         int i = 0;
         boolean flag = false;
         for (StockKbar stockKbar:stockKbars){
-            if(flag==true){
+            if(flag){
                i++;
             }
-            if(i==1&&boxTwoExcelDTO.getPlankBuyTime()!=null){
-                if(boxTwoExcelDTO.getPlankBuyTime()!=null) {
-                    BigDecimal avgPrice = stockKbar.getTradeAmount().divide(new BigDecimal(stockKbar.getTradeQuantity()), 2, BigDecimal.ROUND_HALF_UP);
-                    BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
-                    BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(boxTwoExcelDTO.getPlankAdjPrice()), boxTwoExcelDTO.getPlankAdjPrice());
-                    boxTwoExcelDTO.setPlankProfit(profit);
-                }
-
-                if(boxTwoExcelDTO.getTwoBuyTime()!=null) {
-                    BigDecimal avgPrice = stockKbar.getTradeAmount().divide(new BigDecimal(stockKbar.getTradeQuantity()), 2, BigDecimal.ROUND_HALF_UP);
-                    BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
-                    BigDecimal chuQuanTwoBuyPrice = chuQuanAvgPrice(boxTwoExcelDTO.getTwoBuyPrice(), preStockKbar);
-                    BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(chuQuanTwoBuyPrice), chuQuanTwoBuyPrice);
-                    boxTwoExcelDTO.setTwoProfit(profit);
+            if(i==1){
+                List<ThirdSecondTransactionDataDTO> dtos = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                if(!CollectionUtils.isEmpty(datas)){
+                    BigDecimal totalAmount = BigDecimal.ZERO;
+                    Integer count = 0;
+                    for (ThirdSecondTransactionDataDTO data:dtos){
+                        count = count+data.getTradeQuantity();
+                        totalAmount = totalAmount.add(data.getTradePrice().multiply(new BigDecimal(data.getTradeQuantity())));
+                        if(data.getTradeTime().startsWith("13")){
+                            break;
+                        }
+                    }
+                    if(count>0&&boxTwoExcelDTO.getPlankBuyTime()!=null){
+                        BigDecimal avgPrice = totalAmount.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
+                        BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(boxTwoExcelDTO.getPlankAdjPrice()), boxTwoExcelDTO.getPlankAdjPrice());
+                        boxTwoExcelDTO.setPlankProfit(profit);
+                    }
+                    if(count>0&&boxTwoExcelDTO.getTwoBuyTime()!=null) {
+                        BigDecimal avgPrice = totalAmount.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal chuQuanAvgPrice = chuQuanAvgPrice(avgPrice, stockKbar);
+                        BigDecimal chuQuanTwoBuyPrice = chuQuanAvgPrice(boxTwoExcelDTO.getTwoBuyPrice(), preStockKbar);
+                        BigDecimal profit = PriceUtil.getPricePercentRate(chuQuanAvgPrice.subtract(chuQuanTwoBuyPrice), chuQuanTwoBuyPrice);
+                        boxTwoExcelDTO.setTwoProfit(profit);
+                    }
                 }
                 return;
             }
@@ -186,8 +197,8 @@ public class BoxOneTwoStockComponent {
                 return;
             }
             if(stockKbar.getKbarDate().equals(boxTwoExcelDTO.getTradeDate())){
-                datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                 flag = true;
+                datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                 boolean historyUpperPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preStockKbar.getClosePrice(), stockKbar.getKbarDate());
                 if(historyUpperPrice){
                     boxTwoExcelDTO.setPlankBuyPrice(stockKbar.getHighPrice());
@@ -225,7 +236,7 @@ public class BoxOneTwoStockComponent {
                             twoHighPrice = dto.getTradePrice();
                         }
                     }
-                    if(date.after(twoHighDateStart)){
+                    if(date.after(twoHighDateStart)&&boxTwoExcelDTO.getTwoBuyTime()==null){
                         if(dto.getTradePrice().compareTo(twoHighPrice)==1){
                             boxTwoExcelDTO.setTwoHighTime(twoHighTime);
                             boxTwoExcelDTO.setTwoBuyTime(dto.getTradeTime());

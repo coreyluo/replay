@@ -277,7 +277,7 @@ public class SynExcelComponent {
 
 
     public void boxTwoBuy() {
-        File file = new File("D:\\circulate\\xiangti100.xlsx");
+        File file = new File("D:\\circulate\\xiangti6.xlsx");
         if (!file.exists()) {
             throw new BusinessException("文件:" + Conf.get("D:\\circulate\\xiangti100.xlsx") + "不存在");
         }
