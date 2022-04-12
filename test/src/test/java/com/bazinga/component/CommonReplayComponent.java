@@ -7,6 +7,7 @@ import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.IndexRate500DTO;
 import com.bazinga.dto.IndexRateDTO;
 import com.bazinga.dto.OpenCompeteDTO;
+import com.bazinga.dto.StockPlankTimeInfoDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
@@ -32,6 +33,7 @@ import com.tradex.enums.KCate;
 import com.tradex.model.suport.DataTable;
 import com.tradex.model.suport.F10Cates;
 import com.tradex.util.TdxHqUtil;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -298,9 +300,9 @@ public class CommonReplayComponent {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         circulateInfos = circulateInfos.stream().filter(item -> !item.getStockCode().startsWith("3")).collect(Collectors.toList());
 
-        Map<String, List<String>> resultMap = new HashMap<>();
+        Map<String, List<PlankTimeDTO>> resultMap = new HashMap<>();
         for (CirculateInfo circulateInfo : circulateInfos) {
-           /* if(!"000665".equals(circulateInfo.getStockCode())){
+     /*       if(!"603963".equals(circulateInfo.getStockCode())){
                 continue;
             }*/
             StockKbarQuery query = new StockKbarQuery();
@@ -312,9 +314,10 @@ public class CommonReplayComponent {
             if (CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size() < 7) {
                 continue;
             }
-            for (int i = 7; i < stockKbarList.size(); i++) {
+            for (int i = 7; i < stockKbarList.size()-1; i++) {
 
                 StockKbar stockKbar = stockKbarList.get(i);
+                StockKbar sellStockKbar = stockKbarList.get(i+1);
                 StockKbar prestockKbar = stockKbarList.get(i - 1);
                 if (!StockKbarUtil.isHighUpperPrice(stockKbar, prestockKbar)) {
                     continue;
@@ -325,14 +328,47 @@ public class CommonReplayComponent {
 
                 int plank = PlankHighUtil.calSerialsPlank(stockKbarList.subList(i - 7, i));
                 if (plank > 1) {
-                    log.info("滿足连板地天条件 stockCode{} kbarDate{}", stockKbar.getStockCode(), stockKbar.getKbarDate());
 
-                    List<String> list = resultMap.get(stockKbar.getKbarDate());
-                    if (list == null) {
-                        list = new ArrayList<>();
-                        resultMap.put(stockKbar.getKbarDate(), list);
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+
+                    BigDecimal lowPrice = list.get(0).getTradePrice();
+                    boolean isSuddenUpper = false;
+                    String plankTime ="";
+                    for (int j = 1; j < list.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                        if(transactionDataDTO.getTradePrice().compareTo(lowPrice)<0){
+                            lowPrice = transactionDataDTO.getTradePrice();
+                        }
+                        if(lowPrice.subtract(new BigDecimal("0.01")).compareTo(stockKbar.getLowPrice())<=0){
+                            ThirdSecondTransactionDataDTO preTransactionDataDTO = list.get(j-1);
+                            if(transactionDataDTO.getTradeType()==1 && stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice()) ==0 ){
+                                if(preTransactionDataDTO.getTradeType()!=1 || stockKbar.getHighPrice().compareTo(preTransactionDataDTO.getTradePrice()) >0){
+                                    isSuddenUpper = true;
+                                    plankTime = transactionDataDTO.getTradeTime();
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    list.add(stockKbar.getStockCode());
+                    if(isSuddenUpper){
+                        log.info("滿足连板地天条件 stockCode{} kbarDate{}", stockKbar.getStockCode(), stockKbar.getKbarDate());
+                        BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+
+
+
+                        BigDecimal premium = PriceUtil.getPricePercentRate(avgPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice());
+                        List<PlankTimeDTO> resultlist = resultMap.computeIfAbsent(stockKbar.getKbarDate(), k -> new ArrayList<>());
+                        Integer plankTimeInteger = Integer.parseInt(plankTime.replaceAll(":",""));
+                        if(resultlist.size()>=1){
+                            Integer preTimeInteger = resultlist.get(0).getPlankInteger();
+                            if(preTimeInteger > plankTimeInteger){
+                                resultlist.add(0,new PlankTimeDTO(stockKbar.getStockCode(),plankTimeInteger,premium));
+                            }
+                        }else {
+                            resultlist.add(new PlankTimeDTO(stockKbar.getStockCode(),plankTimeInteger,premium));
+                        }
+                    }
+
                 }
             }
 
@@ -342,13 +378,29 @@ public class CommonReplayComponent {
         resultMap.forEach((kbarDate, list) -> {
 
             if (!CollectionUtils.isEmpty(list)) {
-                log.info("kabrDate{} 地天板{}", kbarDate, JSONObject.toJSONString(list));
+
+
+                log.info("kabrDate{} 地天板{}", kbarDate, JSONObject.toJSONString(list.get(0)));
+
             }
 
 
         });
 
 
+    }
+
+    @Data
+    class PlankTimeDTO{
+        private String stockCode;
+        private Integer plankInteger;
+        private BigDecimal premium;
+
+        public PlankTimeDTO(String stockCode, Integer plankInteger, BigDecimal premium) {
+            this.stockCode = stockCode;
+            this.plankInteger = plankInteger;
+            this.premium = premium;
+        }
     }
 
 }

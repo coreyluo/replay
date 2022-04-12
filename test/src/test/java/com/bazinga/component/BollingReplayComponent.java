@@ -92,7 +92,7 @@ public class BollingReplayComponent {
                     StockBolling stockBolling = stockBollingService.getByUniqueKey(uniqueKey);
                     if(stockBolling == null ){
                         log.info("未找到布林带信息stockCode{} kbarDate{}",tempKbar.getStockCode(),tempKbar.getKbarDate());
-                        continue;
+                        throw new Exception("");
                     }
                     if(j>=i-2){
                         if(j==i-1) {

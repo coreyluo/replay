@@ -39,10 +39,13 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        // stockKbarComponent.batchcalAvgLine();
-
-
-        // stockBollingComponent.calCurrentDayBoll(DateUtil.parseDate("20220408",DateUtil.yyyyMMdd));
+      //  stockKbarComponent.calCurrentDayAvgLine(new Date());
+       /* try {
+            TimeUnit.HOURS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+        stockBollingComponent.calCurrentDayBoll(new Date());
        // stockKbarComponent.calCurrentDayAvgLine(new Date());
         //stockBollingComponent.batchInitBoll();
     }
