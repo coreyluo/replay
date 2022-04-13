@@ -127,9 +127,9 @@ public class HblTest extends BaseTestCase {
     @Test
     public void test(){
         //thsHttpTestComponent.getAccessToken();
-        //boxOneStockComponent.oneStockBox();
+        boxOneStockComponent.oneStockBox();
         //boxOneBetweenStockComponent.oneStockBox();
-        synExcelComponent.boxTwoBuy();
+        //synExcelComponent.boxTwoBuy();
         //yiZhiHangYeComponent.yiZhiBanBuy();
         //boxBuyComponent.xiangTi();
         //guaiLilvPlankComponent.guaiLiLv();
