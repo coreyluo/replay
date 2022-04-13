@@ -107,6 +107,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private BollingReplayComponent bollingReplayComponent;
+
+    @Autowired
+    private BlockOpenReplayComponent blockOpenReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -165,12 +168,14 @@ public class ReplayTest extends BaseTestCase {
     public void test10(){
        // rotPlankReplayComponent.replay(2);
        // rotPlankReplayComponent.replay(3);
-        rotPlankReplayComponent.replay(4);
+       // rotPlankReplayComponent.replay(4);
        // rotPlankReplayComponent.replay(5);
 
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
-       month2RateReplayComponent.szNeeddle();
+      // month2RateReplayComponent.szNeeddle();
+        blockOpenReplayComponent.replay();
+      //  blockOpenReplayComponent.getOpenAmountRank("20220301","20220413");
     }
 
     @Test

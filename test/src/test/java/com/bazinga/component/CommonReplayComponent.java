@@ -217,7 +217,7 @@ public class CommonReplayComponent {
 
         StockKbarQuery query = new StockKbarQuery();
         query.setStockCode("999999");
-        query.setKbarDateFrom("20191115");
+        query.setKbarDateFrom("20201115");
         query.addOrderBy("kbar_date", Sort.SortType.ASC);
         List<StockKbar> kbarList = stockKbarService.listByCondition(query);
         for (int i = 1; i < kbarList.size(); i++) {

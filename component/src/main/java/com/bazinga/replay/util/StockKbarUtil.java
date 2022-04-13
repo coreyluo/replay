@@ -42,17 +42,17 @@ public class StockKbarUtil {
     }
 
     public static BigDecimal getNDaysUpperRateDesc(List<StockKbar> stockKbarList45, int i) {
-        StockKbar stockKbar = stockKbarList45.get(i-1);
+        StockKbar stockKbar = stockKbarList45.get(i);
         StockKbar currentStockKbar = stockKbarList45.get(0);
 
-        return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice()), stockKbar.getAdjOpenPrice());
+        return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
     }
 
     public static BigDecimal getNDaysUpperRate(List<StockKbar> stockKbarList45, int i) {
         StockKbar stockKbar = stockKbarList45.get(stockKbarList45.size() - i-1);
         StockKbar currentStockKbar = stockKbarList45.get(stockKbarList45.size() - 1);
 
-        return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice()), stockKbar.getAdjOpenPrice());
+        return PriceUtil.getPricePercentRate(currentStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
     }
 
     public static BigDecimal getNDaysLowCloseRate(List<StockKbar> stockKbarList45, int i) {
