@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.text.resources.no.JavaTimeSupplementary_no;
 
+import java.sql.Time;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -174,8 +175,26 @@ public class ReplayTest extends BaseTestCase {
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
       // month2RateReplayComponent.szNeeddle();
-        blockOpenReplayComponent.replay();
-      //  blockOpenReplayComponent.getOpenAmountRank("20220301","20220413");
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20220301","20220413");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20220201","20220301");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20220101","20220201");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20211201","20220101");
+        });
+
+        try {
+            TimeUnit.HOURS.sleep(12);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        //  blockOpenReplayComponent.getOpenAmountRank("20220301","20220413");
     }
 
     @Test

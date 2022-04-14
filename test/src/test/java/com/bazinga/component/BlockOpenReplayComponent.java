@@ -62,11 +62,11 @@ public class BlockOpenReplayComponent {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
-    public void replay(){
+    public void replay(String kbarDateFrom ,String kbarDateTo){
 
         List<BlockOpenReplayDTO> resultList = new ArrayList<>();
         Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
-        Map<String, List<RankDTO>> openAmountRankMap = getOpenAmountRank("20220411","20220412");
+        Map<String, List<RankDTO>> openAmountRankMap = getOpenAmountRank(kbarDateFrom,kbarDateTo);
 
         List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
         blockInfos =  blockInfos.stream().filter(item-> item.getBlockCode().startsWith("8803") || item.getBlockCode().startsWith("8804")).collect(Collectors.toList());
@@ -151,12 +151,14 @@ public class BlockOpenReplayComponent {
                     exportDTO.setDayRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +1));
                     exportDTO.setDay3Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +3));
                     exportDTO.setDay5Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +5));
+                    exportDTO.setBlockOpenRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +0));
                 }
                 resultList.add(exportDTO);
             });
 
         });
-        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板块竞价维度.xls");
+        log.info("文件输出");
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板块竞价维度"+kbarDateFrom+"_"+kbarDateTo+".xls");
     }
 
 
@@ -171,6 +173,9 @@ public class BlockOpenReplayComponent {
             for (int i = 0; i < 200; i++) {
                 DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, blockCode, i, 1);
                 List<StockKbar> kBarDTOS = KBarDTOConvert.convertStockKbar(blockCode,dataTable);
+                if(CollectionUtils.isEmpty(kBarDTOS)){
+                    break;
+                }
                 kbarList.add(kBarDTOS.get(0));
             }
             if(CollectionUtils.isEmpty(kbarList) || kbarList.size()<6){
@@ -178,6 +183,10 @@ public class BlockOpenReplayComponent {
             }
             for (int i = 0; i < kbarList.size()-6; i++) {
                 StockKbar stockKbar = kbarList.get(i);
+                StockKbar preStockKbar = kbarList.get(i+1);
+
+                resultMap.put(blockCode + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+0,
+                        PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice()));
                 resultMap.put(blockCode + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+1, getNDaysUpperRateDesc(kbarList.subList(i+1,i+7),1));
                 resultMap.put(blockCode + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+3, getNDaysUpperRateDesc(kbarList.subList(i+1,i+7),3));
                 resultMap.put(blockCode + SymbolConstants.UNDERLINE + stockKbar.getKbarDate()+5, getNDaysUpperRateDesc(kbarList.subList(i+1,i+7),5));
@@ -256,12 +265,19 @@ public class BlockOpenReplayComponent {
                     }
                     StockKbar sellStockKbar = sellStockKbarList.get(1);
                     BigDecimal premium;
+
+
                     if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
                         BigDecimal sellPrice = sellStockKbar.getOpenPrice().add(sellStockKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
                         premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getOpenPrice()),stockKbar.getOpenPrice());
                     }else {
+                        log.info("卖出发生复权stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                         BigDecimal sellPrice = sellStockKbar.getAdjOpenPrice().add(sellStockKbar.getAdjClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
                         premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getAdjOpenPrice()),stockKbar.getAdjOpenPrice());
+                    }
+                    if(StockKbarUtil.isUpperPrice(stockKbar,preStockKbar) && stockKbar.getLowPrice().compareTo(stockKbar.getHighPrice())==0){
+                        log.info("判断为一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                        premium = BigDecimal.ZERO;
                     }
                     rankList.add(new RankDTO(entry.getKey(),rank,entry.getValue(),openRate,premium));
 

@@ -48,6 +48,9 @@ public class BlockOpenReplayDTO {
     @ExcelField(name = "买入前5日涨幅")
     private BigDecimal day5Rate;
 
+    @ExcelField(name = "当日开盘涨幅")
+    private BigDecimal blockOpenRate;
+
     @ExcelField(name = "收益总和")
     private BigDecimal premium;
 

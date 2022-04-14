@@ -53,7 +53,7 @@ public class BollingReplayComponent {
 
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20191201");
+            query.setKbarDateFrom("20211201");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<30){
