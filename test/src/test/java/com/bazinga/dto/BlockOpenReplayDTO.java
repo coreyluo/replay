@@ -51,6 +51,9 @@ public class BlockOpenReplayDTO {
     @ExcelField(name = "当日开盘涨幅")
     private BigDecimal blockOpenRate;
 
+    @ExcelField(name = "30秒超过开盘跳数")
+    private Integer overOpenCount;
+
     @ExcelField(name = "收益总和")
     private BigDecimal premium;
 

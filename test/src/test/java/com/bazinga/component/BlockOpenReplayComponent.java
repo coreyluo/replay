@@ -147,6 +147,16 @@ public class BlockOpenReplayComponent {
                 exportDTO.setTotalOpenRate(totalOpenRate);
                 exportDTO.setPremium(totalPremium);
 
+                List<ThirdSecondTransactionDataDTO> fenshiList = historyTransactionDataComponent.getData(blockCode, kbarDate);
+                ThirdSecondTransactionDataDTO open = fenshiList.get(0);
+                int overOpenCount = 0;
+                for (int j = 1; j < 11; j++) {
+                    ThirdSecondTransactionDataDTO transactionDataDTO = fenshiList.get(j);
+                    if(transactionDataDTO.getTradePrice().compareTo(open.getTradePrice())>0){
+                        overOpenCount++;
+                    }
+                }
+                exportDTO.setOverOpenCount(overOpenCount);
                 if(blockRateMap!=null){
                     exportDTO.setDayRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +1));
                     exportDTO.setDay3Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +3));
@@ -266,15 +276,20 @@ public class BlockOpenReplayComponent {
                     StockKbar sellStockKbar = sellStockKbarList.get(1);
                     BigDecimal premium;
 
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                    if(CollectionUtils.isEmpty(list) || list.size()<20){
+                        continue;
+                    }
+                    ThirdSecondTransactionDataDTO buyDTO = list.get(10);
+                    BigDecimal sellPrice = sellStockKbar.getOpenPrice().add(sellStockKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
+                    premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(buyDTO.getTradePrice()),buyDTO.getTradePrice());
+                   /* if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
 
-                    if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
-                        BigDecimal sellPrice = sellStockKbar.getOpenPrice().add(sellStockKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
-                        premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getOpenPrice()),stockKbar.getOpenPrice());
                     }else {
                         log.info("卖出发生复权stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                         BigDecimal sellPrice = sellStockKbar.getAdjOpenPrice().add(sellStockKbar.getAdjClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
                         premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getAdjOpenPrice()),stockKbar.getAdjOpenPrice());
-                    }
+                    }*/
                     if(StockKbarUtil.isUpperPrice(stockKbar,preStockKbar) && stockKbar.getLowPrice().compareTo(stockKbar.getHighPrice())==0){
                         log.info("判断为一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                         premium = BigDecimal.ZERO;
