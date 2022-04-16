@@ -162,7 +162,7 @@ public class HblTest extends BaseTestCase {
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
         //upperShadowComponent.upperShadowBuy();
-        upperShadowBuyTimeComponent.upperShadowBuy();
+        //upperShadowBuyTimeComponent.upperShadowBuy();
         //plankEndRateComponent.plankRates();
        // chungYeBugComponent.chuangYeBuy();
 
