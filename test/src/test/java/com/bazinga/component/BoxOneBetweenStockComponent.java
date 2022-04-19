@@ -2,9 +2,7 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.dto.BlockLevelDTO;
-import com.bazinga.dto.BoxBuyDTO;
 import com.bazinga.dto.BoxStockBuyDTO;
-import com.bazinga.dto.MonthDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -21,7 +19,6 @@ import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
 import com.bazinga.util.ThreadPoolUtils;
 import com.google.common.collect.Lists;
-import com.tradex.model.suport.F10Cates;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,7 +36,7 @@ import java.util.concurrent.ExecutorService;
  */
 @Component
 @Slf4j
-public class BoxOneStockComponent {
+public class BoxOneBetweenStockComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -174,12 +171,12 @@ public class BoxOneStockComponent {
                 List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
                 StockKbar preStockKbar = null;
                 for (StockKbar stockKbar : stockKbars) {
-                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20220401", DateUtil.yyyyMMdd))) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).before(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))) {
                         continue;
                     }
-                    /*if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20210401", DateUtil.yyyyMMdd))) {
+                    if (DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd).after(DateUtil.parseDate("20210401", DateUtil.yyyyMMdd))) {
                         continue;
-                    }*/
+                    }
                 /*if(stockKbar.getKbarDate().equals("20220322")){
                     System.out.println(1111);
                 }*/
@@ -384,10 +381,10 @@ public class BoxOneStockComponent {
             if(firstHighTime!=null){
                 Date date = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
                 Date firstHighDate = DateUtil.parseDate(firstHighTime, DateUtil.HH_MM);
-                //Date newHighDateStart = DateUtil.addStockMarketMinutes(firstHighDate, 10);
+                Date newHighDateStart = DateUtil.addStockMarketMinutes(firstHighDate, 10);
                 Date newHighDateEnd = DateUtil.addStockMarketMinutes(firstHighDate, 30);
                 if(data.getTradePrice().compareTo(firstHighPrice)>0){
-                    if(date.after(newHighDateEnd)){
+                    if(date.after(newHighDateStart)&&date.before(newHighDateEnd)){
                         buyIndex = index;
                         BigDecimal firtHighRate = PriceUtil.getPricePercentRate(firstHighPrice.subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
                         BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preStockKbar.getAdjClosePrice()), preStockKbar.getAdjClosePrice());
