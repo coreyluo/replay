@@ -520,7 +520,7 @@ public class StockKbarComponent {
                     }*/
                     //calAvgLine(item.getStock(), item.getStockName(), 10);
 
-                    calAvgLine(item.getStockCode(), item.getStockName(), 20);
+                    calAvgLine(item.getStockCode(), item.getStockName(), 5);
                 }
                 System.out.println(item.getStockCode()+"结束");
            // });

@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.text.resources.no.JavaTimeSupplementary_no;
 
+import java.sql.Time;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -107,6 +108,12 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private BollingReplayComponent bollingReplayComponent;
+
+    @Autowired
+    private BlockOpenReplayComponent blockOpenReplayComponent;
+
+    @Autowired
+    private StockReplayByGroupComponent stockReplayByGroupComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -115,8 +122,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invoke();
-       // middlePlankReplayComponent.invokeSecond();
+       // middlePlankReplayComponent.invoke();
+        middlePlankReplayComponent.invokeSecond();
     }
 
     @Test
@@ -142,7 +149,26 @@ public class ReplayTest extends BaseTestCase {
     @Test
     public void test7(){
         //sellReplayComponent.replayMarket();
-        selfExcelReplayComponent.replayPosition();
+       // selfExcelReplayComponent.replayPosition();
+       // commonReplayComponent.replay();
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210101","20210401");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210401","20210701");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210701","20211001");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20211001","20220101");
+        });
+
+        try {
+            TimeUnit.HOURS.sleep(12);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
        // selfExcelReplayComponent.zhuanzhai();
     }
 
@@ -164,12 +190,32 @@ public class ReplayTest extends BaseTestCase {
     public void test10(){
        // rotPlankReplayComponent.replay(2);
        // rotPlankReplayComponent.replay(3);
-        rotPlankReplayComponent.replay(4);
+       // rotPlankReplayComponent.replay(4);
        // rotPlankReplayComponent.replay(5);
 
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
-       month2RateReplayComponent.szNeeddle();
+      // month2RateReplayComponent.szNeeddle();
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20210101","20210401");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20210401","20210701");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20210701","20211001");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20211001","20220101");
+        });
+
+        try {
+            TimeUnit.HOURS.sleep(12);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        //  blockOpenReplayComponent.getOpenAmountRank("20220301","20220413");
     }
 
     @Test

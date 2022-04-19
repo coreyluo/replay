@@ -3,6 +3,7 @@ package com.bazinga.dto;
 
 import com.xuxueli.poi.excel.annotation.ExcelField;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 
@@ -56,6 +57,12 @@ public class StockBollingReplayDTO {
 
     @ExcelField(name = "前三到8日涨幅")
     private BigDecimal day3to8Rate;
+
+    @ExcelField(name = "收盘与5日均线偏离比值")
+    private BigDecimal offsetBolling;
+
+    @ExcelField(name = "流通市值")
+    private BigDecimal circulateAmount;
 
     @ExcelField(name = "收益")
     private BigDecimal premium;

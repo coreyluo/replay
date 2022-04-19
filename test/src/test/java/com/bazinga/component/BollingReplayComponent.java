@@ -53,16 +53,19 @@ public class BollingReplayComponent {
 
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20191201");
+            query.setKbarDateFrom("20211201");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<30){
                 continue;
             }
-            for (int i = 30; i < stockKbarList.size()-2; i++) {
+            for (int i = 30; i < stockKbarList.size(); i++) {
 
                 StockKbar stockKbar = stockKbarList.get(i);
-                StockKbar sellStockKbar = stockKbarList.get(i+1);
+                StockKbar sellStockKbar = null ;
+                if(i+1<stockKbarList.size()){
+                   sellStockKbar = stockKbarList.get(i+1);
+                }
                 StockKbar pre1stockKbar = stockKbarList.get(i-1);
                 StockKbar pre2StockKbar = stockKbarList.get(i-2);
                 StockKbar pre3StockKbar = stockKbarList.get(i-3);
@@ -82,16 +85,19 @@ public class BollingReplayComponent {
 
                 BigDecimal total2Brand = BigDecimal.ZERO;
                 BigDecimal total5Brand = BigDecimal.ZERO;
-
-                for (int j = i-1; j >i-8; j--) {
+                StockBolling preStockBolling = null ;
+                for (int j = i-1; j >=i-8; j--) {
                     StockKbar tempKbar = stockKbarList.get(j);
                     String uniqueKey  = tempKbar.getStockCode() + SymbolConstants.UNDERLINE + tempKbar.getKbarDate() + SymbolConstants.UNDERLINE + 5;
                     StockBolling stockBolling = stockBollingService.getByUniqueKey(uniqueKey);
                     if(stockBolling == null ){
                         log.info("未找到布林带信息stockCode{} kbarDate{}",tempKbar.getStockCode(),tempKbar.getKbarDate());
-                        throw new Exception();
+                        throw new Exception("");
                     }
                     if(j>=i-2){
+                        if(j==i-1) {
+                            preStockBolling = stockBolling;
+                        }
                         total2Brand = total2Brand.add(stockBolling.getUpPrice().subtract(stockBolling.getLowPrice()));
                     }else {
                         total5Brand = total5Brand.add(stockBolling.getUpPrice().subtract(stockBolling.getLowPrice()));
@@ -109,6 +115,8 @@ public class BollingReplayComponent {
                     continue;
                 }
                 BigDecimal bollRatio = avg2Brand.divide(avg5Brand, 4, RoundingMode.HALF_UP);
+
+
                 if(bollRatio.compareTo(new BigDecimal("0.7"))<0){
                     log.info("满足买入条件stockCode{} kbarDate{}" ,stockKbar.getStockCode(),stockKbar.getKbarDate());
                     StockBollingReplayDTO exportDTO = new StockBollingReplayDTO();
@@ -116,7 +124,11 @@ public class BollingReplayComponent {
                     exportDTO.setStockName(stockKbar.getStockName());
                     exportDTO.setBuykbarDate(stockKbar.getKbarDate());
                     exportDTO.setBuyPrice(stockKbar.getOpenPrice());
-
+                    exportDTO.setCirculateAmount(pre1stockKbar.getClosePrice().multiply(new BigDecimal(circulateInfo.getCirculate())));
+                    if(preStockBolling!=null){
+                        BigDecimal offserBolling = pre1stockKbar.getAdjClosePrice().divide(preStockBolling.getMiddlePrice().multiply(preStockBolling.getUpPrice().subtract(preStockBolling.getLowPrice())),4,BigDecimal.ROUND_HALF_UP);
+                        exportDTO.setOffsetBolling(offserBolling);
+                    }
                     exportDTO.setDay3Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-10,i),3));
                     exportDTO.setDay5Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-10,i),5));
                     exportDTO.setDay10Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-11,i),10));
@@ -133,15 +145,19 @@ public class BollingReplayComponent {
                     exportDTO.setBuyTime("09:25");
                     exportDTO.setPreDayAmount(pre1stockKbar.getTradeAmount());
                     exportDTO.setBuyRate(PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(pre1stockKbar.getClosePrice()),pre1stockKbar.getClosePrice()));
-                    if(StockKbarUtil.isUpperPrice(sellStockKbar,stockKbar) || PriceUtil.isSuddenPrice(sellStockKbar.getStockCode(),sellStockKbar.getClosePrice(),stockKbar.getClosePrice())){
-                        log.info("涨停或跌停 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                        sellStockKbar = stockKbarList.get(i+2);
+                    if(sellStockKbar!=null && (StockKbarUtil.isUpperPrice(sellStockKbar,stockKbar) || PriceUtil.isSuddenPrice(sellStockKbar.getStockCode(),sellStockKbar.getClosePrice(),stockKbar.getClosePrice()))) {
+                        log.info("涨停或跌停 stockCode{} kbarDate{}", stockKbar.getStockCode(), stockKbar.getKbarDate());
+                        if (i + 2 < stockKbarList.size()) {
+                            sellStockKbar = stockKbarList.get(i + 2);
+                        }
                     }
-                    if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
-                        exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getClosePrice().subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
-                    }else {
-                        exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice())
-                                ,stockKbar.getAdjOpenPrice()));
+                    if(sellStockKbar!=null){
+                        if( stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
+                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getClosePrice().subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
+                        }else {
+                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice())
+                                    ,stockKbar.getAdjOpenPrice()));
+                        }
                     }
                     exportDTO.setDay3to8Rate(pre3to7);
                     resultList.add(exportDTO);

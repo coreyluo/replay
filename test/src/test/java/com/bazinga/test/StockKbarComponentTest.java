@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class StockKbarComponentTest extends BaseTestCase {
 
@@ -38,8 +39,14 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        stockKbarComponent.calCurrentDayAvgLine(DateUtil.parseDate("20220406",DateUtil.yyyyMMdd));
-        stockKbarComponent.calCurrentDayAvgLine(new Date());
+      //  stockKbarComponent.calCurrentDayAvgLine(new Date());
+       /* try {
+            TimeUnit.HOURS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+        stockBollingComponent.calCurrentDayBoll(new Date());
+       // stockKbarComponent.calCurrentDayAvgLine(new Date());
         //stockBollingComponent.batchInitBoll();
     }
 
@@ -50,9 +57,9 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test4(){
-        Double avgPrice = stockKbarComponent.calDaysAvg("600860", "20211230", 20);
-        System.out.println(avgPrice);
-        stockBollingComponent.initBoll("600860");
+      /*  Double avgPrice = stockKbarComponent.calDaysAvg("600860", "20211230", 20);
+        System.out.println(avgPrice);*/
+        stockBollingComponent.initBoll("600519");
 
     }
 }
