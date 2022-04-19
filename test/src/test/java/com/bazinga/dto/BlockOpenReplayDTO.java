@@ -3,6 +3,7 @@ package com.bazinga.dto;
 
 import com.xuxueli.poi.excel.annotation.ExcelField;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 
@@ -53,6 +54,15 @@ public class BlockOpenReplayDTO {
 
     @ExcelField(name = "30秒超过开盘跳数")
     private Integer overOpenCount;
+
+    @ExcelField(name = "板块前一日封住数量")
+    private Integer closePlankCount;
+
+    @ExcelField(name = "板块涨停未封住数量")
+    private Integer closeUnPlankCount;
+
+    @ExcelField(name = "前一日最高板位")
+    private Integer plankHigh;
 
     @ExcelField(name = "收益总和")
     private BigDecimal premium;

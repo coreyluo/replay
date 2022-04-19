@@ -17,6 +17,7 @@ import com.bazinga.replay.query.*;
 import com.bazinga.replay.service.*;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
+import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
 import com.bazinga.util.SortUtil;
 import com.google.common.collect.Lists;
@@ -62,6 +63,9 @@ public class BlockOpenReplayComponent {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
+    @Autowired
+    private CommonComponent commonComponent;
+
     public void replay(String kbarDateFrom ,String kbarDateTo){
 
         List<BlockOpenReplayDTO> resultList = new ArrayList<>();
@@ -81,7 +85,12 @@ public class BlockOpenReplayComponent {
             blockNameMap.put(blockInfo.getBlockCode(),blockInfo.getBlockName());
         }
 
+        Map<String, Integer> blockPlankInfoMap = getPlankInfo(blockDetailMap);
+
+
         openAmountRankMap.forEach((kbarDate,list) -> {
+            Date preTradeDate = commonComponent.preTradeDate(DateUtil.parseDate(kbarDate, DateUtil.yyyyMMdd));
+            String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
             Map<String,List<RankDTO>> blockCurrentMap = new HashMap<>();
             for (RankDTO rankDTO : list) {
                 String stockCode = rankDTO.getStockCode();
@@ -163,6 +172,11 @@ public class BlockOpenReplayComponent {
                     exportDTO.setDay5Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +5));
                     exportDTO.setBlockOpenRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +0));
                 }
+                if(blockPlankInfoMap!=null){
+                    exportDTO.setClosePlankCount(blockPlankInfoMap.get(blockCode + SymbolConstants.UNDERLINE + preKbarDate +1));
+                    exportDTO.setCloseUnPlankCount(blockPlankInfoMap.get(blockCode + SymbolConstants.UNDERLINE + preKbarDate +2));
+                    exportDTO.setPlankHigh(blockPlankInfoMap.get(blockCode + SymbolConstants.UNDERLINE + preKbarDate +3));
+                }
                 resultList.add(exportDTO);
             });
 
@@ -171,6 +185,59 @@ public class BlockOpenReplayComponent {
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板块竞价维度"+kbarDateFrom+"_"+kbarDateTo+".xls");
     }
 
+    private  Map<String,Integer>  getPlankInfo(Map<String, List<String>> blockDetailMap) {
+
+        Map<String,Integer> resultMap = new HashMap<>();
+
+        TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
+        tradeQuery.setTradeDateFrom(DateUtil.parseDate("20201201",DateUtil.yyyyMMdd));
+        tradeQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+            String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+            blockDetailMap.forEach((blockCode,detailList)->{
+
+                int plankCount = 0;
+                int unPlankCount = 0;
+                int plankHigh = 0;
+                for (String stockCode : detailList) {
+                    StockKbarQuery query = new StockKbarQuery();
+                    query.setStockCode(stockCode);
+                    query.setKbarDateTo(kbarDate);
+                    query.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    query.setLimit(10);
+                    List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+                    if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<10){
+                        continue;
+                    }
+
+                    StockKbar stockKbar = stockKbarList.get(0);
+                    StockKbar preStockKbar = stockKbarList.get(1);
+                    if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                        continue;
+                    }
+                    if(StockKbarUtil.isUpperPrice(stockKbar,preStockKbar)){
+                        plankCount ++;
+                        int plank = PlankHighUtil.calSerialsPlank(stockKbarList);
+                        if(plankHigh<plank){
+                            plankHigh = plank;
+                        }
+                    }else {
+                        unPlankCount++;
+                    }
+                }
+
+                resultMap.put(blockCode + SymbolConstants.UNDERLINE + kbarDate+ 1,plankCount);
+                resultMap.put(blockCode + SymbolConstants.UNDERLINE + kbarDate+ 2,unPlankCount);
+                resultMap.put(blockCode + SymbolConstants.UNDERLINE + kbarDate+ 3,plankHigh);
+            });
+
+
+        }
+
+        return resultMap;
+
+    }
 
 
     public Map<String,BigDecimal> getBlockRateMap(List<BlockInfo> blockInfos){
@@ -180,7 +247,7 @@ public class BlockOpenReplayComponent {
         for (BlockInfo blockInfo : blockInfos) {
             String blockCode = blockInfo.getBlockCode();
             List<StockKbar> kbarList = Lists.newArrayList();
-            for (int i = 0; i < 200; i++) {
+            for (int i = 0; i < 300; i++) {
                 DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, blockCode, i, 1);
                 List<StockKbar> kBarDTOS = KBarDTOConvert.convertStockKbar(blockCode,dataTable);
                 if(CollectionUtils.isEmpty(kBarDTOS)){

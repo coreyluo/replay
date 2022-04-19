@@ -111,6 +111,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private BlockOpenReplayComponent blockOpenReplayComponent;
+
+    @Autowired
+    private StockReplayByGroupComponent stockReplayByGroupComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -147,7 +150,25 @@ public class ReplayTest extends BaseTestCase {
     public void test7(){
         //sellReplayComponent.replayMarket();
        // selfExcelReplayComponent.replayPosition();
-        commonReplayComponent.replay();
+       // commonReplayComponent.replay();
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210101","20210401");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210401","20210701");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20210701","20211001");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20211001","20220101");
+        });
+
+        try {
+            TimeUnit.HOURS.sleep(12);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
        // selfExcelReplayComponent.zhuanzhai();
     }
 
@@ -175,17 +196,17 @@ public class ReplayTest extends BaseTestCase {
        /* Map<String, BlockCompeteDTO> blockRateMap = blockReplayComponent.getBlockRateMap();
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
       // month2RateReplayComponent.szNeeddle();
-     /*   THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20220301","20220413");
-        });*/
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20220201","20220301");
+            blockOpenReplayComponent.replay("20210101","20210401");
         });
-       /* THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20220101","20220201");
-        });*/
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20211201","20220101");
+            blockOpenReplayComponent.replay("20210401","20210701");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20210701","20211001");
+        });
+        THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20211001","20220101");
         });
 
         try {
