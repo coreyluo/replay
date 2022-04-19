@@ -76,7 +76,7 @@ public class BlockOpenReplayComponent {
         blockInfos =  blockInfos.stream().filter(item-> item.getBlockCode().startsWith("8803") || item.getBlockCode().startsWith("8804")).collect(Collectors.toList());
         Map<String,List<String>> blockDetailMap = new HashMap<>();
         Map<String, String > blockNameMap = new HashMap<>();
-        Map<String, BigDecimal> blockRateMap = getBlockRateMap(blockInfos);
+       // Map<String, BigDecimal> blockRateMap = getBlockRateMap(blockInfos);
         for (BlockInfo blockInfo : blockInfos) {
             BlockStockDetailQuery detailQuery = new BlockStockDetailQuery();
             detailQuery.setBlockCode(blockInfo.getBlockCode());
@@ -166,12 +166,12 @@ public class BlockOpenReplayComponent {
                     }
                 }
                 exportDTO.setOverOpenCount(overOpenCount);
-                if(blockRateMap!=null){
+                /*if(blockRateMap!=null){
                     exportDTO.setDayRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +1));
                     exportDTO.setDay3Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +3));
                     exportDTO.setDay5Rate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +5));
                     exportDTO.setBlockOpenRate(blockRateMap.get(blockCode + SymbolConstants.UNDERLINE + kbarDate +0));
-                }
+                }*/
                 if(blockPlankInfoMap!=null){
                     exportDTO.setClosePlankCount(blockPlankInfoMap.get(blockCode + SymbolConstants.UNDERLINE + preKbarDate +1));
                     exportDTO.setCloseUnPlankCount(blockPlankInfoMap.get(blockCode + SymbolConstants.UNDERLINE + preKbarDate +2));
