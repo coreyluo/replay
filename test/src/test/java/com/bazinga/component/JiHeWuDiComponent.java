@@ -68,7 +68,7 @@ public class JiHeWuDiComponent {
                 String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
                 String timeStart = dateStryyyy_MM_dd+" 09:15:00";
                 String timeEnd = dateStryyyy_MM_dd+" 09:29:00";
-                String quoteStr = JDIBridge.THS_Snapshot(thsStockCode,"bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;tradeDate;latest","",timeStart,timeEnd);
+                String quoteStr = JDIBridge.THS_Snapshot(thsStockCode,"bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;preClose;tradeDate;latest","",timeStart,timeEnd);
                 List<ThsQuoteDTO> quotes = convertQuote(quoteStr, circulateInfo.getStockCode());
                 wuDiJiheInfo(circulateInfo,stockKbar.getKbarDate(),quotes);
             }
