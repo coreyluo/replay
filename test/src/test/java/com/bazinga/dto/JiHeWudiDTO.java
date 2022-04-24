@@ -23,6 +23,11 @@ public class JiHeWudiDTO {
     private BigDecimal buyTwoAmount920;
     private BigDecimal buyTwoCount920;
 
+    private BigDecimal rate924;
+    private BigDecimal amount924;
+    private BigDecimal buyTwoAmount924;
+    private BigDecimal buyTwoCount924;
+
     private BigDecimal rate925;
     private BigDecimal amount925;
     private BigDecimal buyTwoAmount925;

@@ -67,8 +67,8 @@ public class JiHeWuDiComponent {
             log.error("更新流通 z 信息异常", e);
             throw new BusinessException("文件解析及同步异常", e);
         }
-        //jiHeTest(list);
-        exportJiHeInfo(list);
+        jiHeTest(list);
+        //exportJiHeInfo(list);
     }
 
 
@@ -264,6 +264,18 @@ public class JiHeWuDiComponent {
                     }
                 }
             }
+            if(quote.getTradeTime().startsWith("09:24")){
+                if(quote.getBuyOneQuantity()!=null&&quote.getBuyOneQuantity()>0) {
+                    BigDecimal rate = PriceUtil.getPricePercentRate(quote.getBuyOnePrice().subtract(quote.getPreEndPrice()), quote.getPreEndPrice());
+                    BigDecimal amount = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyOneQuantity()));
+                    jiHeWudiDTO.setRate924(rate);
+                    jiHeWudiDTO.setAmount924(amount);
+                }
+                if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
+                    BigDecimal amount2 = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                    jiHeWudiDTO.setBuyTwoAmount924(amount2);
+                }
+            }
 
             if(quote.getTradeAmount()!=null&&quote.getTradeAmount().compareTo(new BigDecimal(1))>0){
                 if(jiHeWudiDTO.getRate925()==null){
@@ -279,6 +291,7 @@ public class JiHeWuDiComponent {
                     }
                 }
             }
+
         }
         String str = JSONObject.toJSONString(jiHeWudiDTO);
         RedisMonior redisMonior = new RedisMonior();
