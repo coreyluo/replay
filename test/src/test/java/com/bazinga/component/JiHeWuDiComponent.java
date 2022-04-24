@@ -101,11 +101,12 @@ public class JiHeWuDiComponent {
                     wuDiJiheInfo(circulateInfo, stockKbar.getKbarDate(), quotes);
                 }
             });
-            try {
-                THREAD_POOL_QUOTE_JIHE.awaitTermination(10, TimeUnit.HOURS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println(circulateInfo.getStockCode()+"======jiesu======"+index);
+        }
+        try {
+            THREAD_POOL_QUOTE_JIHE.awaitTermination(10, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }
