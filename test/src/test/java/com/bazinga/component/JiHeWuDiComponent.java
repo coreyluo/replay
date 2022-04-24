@@ -50,7 +50,7 @@ public class JiHeWuDiComponent {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
-    public static final ExecutorService THREAD_POOL_QUOTE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
+    public static final ExecutorService THREAD_POOL_QUOTE_JIHE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
 
     public void hs300Info() {
         File file = new File("D:/circulate/hs300.xlsx");
@@ -83,21 +83,28 @@ public class JiHeWuDiComponent {
             }*/
             index++;
             System.out.println(circulateInfo.getStockCode()+"======"+index);
-            StockKbarQuery stockKbarQuery = new StockKbarQuery();
-            stockKbarQuery.setStockCode(circulateInfo.getStockCode());
-            List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
-            String thsStockCode = ThsCommonUtil.getThsStockCode(circulateInfo.getStockCode());
-            for (StockKbar stockKbar:stockKbars){
-                Date dateyyyyMMdd = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
-                if(dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))){
-                    continue;
+            THREAD_POOL_QUOTE_JIHE.execute(() -> {
+                StockKbarQuery stockKbarQuery = new StockKbarQuery();
+                stockKbarQuery.setStockCode(circulateInfo.getStockCode());
+                List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+                String thsStockCode = ThsCommonUtil.getThsStockCode(circulateInfo.getStockCode());
+                for (StockKbar stockKbar : stockKbars) {
+                    Date dateyyyyMMdd = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
+                    if (dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
+                        continue;
+                    }
+                    String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
+                    String timeStart = dateStryyyy_MM_dd + " 09:15:00";
+                    String timeEnd = dateStryyyy_MM_dd + " 09:29:00";
+                    String quoteStr = JDIBridge.THS_Snapshot(thsStockCode, "bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;preClose;tradeDate;latest", "", timeStart, timeEnd);
+                    List<ThsQuoteDTO> quotes = convertQuote(quoteStr, circulateInfo.getStockCode());
+                    wuDiJiheInfo(circulateInfo, stockKbar.getKbarDate(), quotes);
                 }
-                String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
-                String timeStart = dateStryyyy_MM_dd+" 09:15:00";
-                String timeEnd = dateStryyyy_MM_dd+" 09:29:00";
-                String quoteStr = JDIBridge.THS_Snapshot(thsStockCode,"bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;preClose;tradeDate;latest","",timeStart,timeEnd);
-                List<ThsQuoteDTO> quotes = convertQuote(quoteStr, circulateInfo.getStockCode());
-                wuDiJiheInfo(circulateInfo,stockKbar.getKbarDate(),quotes);
+            });
+            try {
+                THREAD_POOL_QUOTE_JIHE.awaitTermination(10, TimeUnit.HOURS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
