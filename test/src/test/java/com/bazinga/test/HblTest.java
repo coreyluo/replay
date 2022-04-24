@@ -127,9 +127,12 @@ public class HblTest extends BaseTestCase {
     private UpperShadowBuyTimeComponent upperShadowBuyTimeComponent;
     @Autowired
     private XiaoTuComponent xiaoTuComponent;
+    @Autowired
+    private JiHeWuDiComponent jiHeWuDiComponent;
 
     @Test
     public void test(){
+        jiHeWuDiComponent.jiHeTest();
         //xiaoTuComponent.xiaoTuInfo();
         //thsHttpTestComponent.getAccessToken();
         //boxOneStockComponent.oneStockBox();
@@ -165,7 +168,7 @@ public class HblTest extends BaseTestCase {
         System.out.println(data);*/
         //highAvgComponent.highThanAvgBuys();
         //upperShadowComponent.upperShadowBuy();
-        upperShadowBuyTimeComponent.upperShadowBuy();
+        //upperShadowBuyTimeComponent.upperShadowBuy();
         //plankEndRateComponent.plankRates();
        // chungYeBugComponent.chuangYeBuy();
 

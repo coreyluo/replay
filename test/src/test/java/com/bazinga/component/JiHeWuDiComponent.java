@@ -1,0 +1,213 @@
+package com.bazinga.component;
+
+
+import Ths.JDIBridge;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.bazinga.base.Sort;
+import com.bazinga.dto.JiHeWudiDTO;
+import com.bazinga.dto.ThsQuoteDTO;
+import com.bazinga.dto.ZhuanZaiExcelDTO;
+import com.bazinga.replay.model.*;
+import com.bazinga.replay.query.CirculateInfoQuery;
+import com.bazinga.replay.query.StockKbarQuery;
+import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.*;
+import com.bazinga.util.*;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * @author yunshan
+ * @date 2019/1/25
+ */
+@Component
+@Slf4j
+public class JiHeWuDiComponent {
+    @Autowired
+    private ThsQuoteInfoService thsQuoteInfoService;
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
+    @Autowired
+    private CirculateInfoService circulateInfoService;
+    @Autowired
+    private StockKbarService stockKbarService;
+    @Autowired
+    private RedisMoniorService redisMoniorService;
+
+    public static final ExecutorService THREAD_POOL_QUOTE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
+
+    public void jiHeTest() {
+        int ret = thsLogin();
+        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+        for( CirculateInfo circulateInfo:circulateInfos) {
+            if(!circulateInfo.getStockCode().equals("605138")){
+                continue;
+            }
+            StockKbarQuery stockKbarQuery = new StockKbarQuery();
+            stockKbarQuery.setStockCode(circulateInfo.getStockCode());
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+            String thsStockCode = ThsCommonUtil.getThsStockCode(circulateInfo.getStockCode());
+            for (StockKbar stockKbar:stockKbars){
+                Date dateyyyyMMdd = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
+                if(dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))){
+                    continue;
+                }
+                String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
+                String timeStart = dateStryyyy_MM_dd+" 09:15:00";
+                String timeEnd = dateStryyyy_MM_dd+" 09:29:00";
+                String quoteStr = JDIBridge.THS_Snapshot(thsStockCode,"bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;tradeDate;latest","",timeStart,timeEnd);
+                List<ThsQuoteDTO> quotes = convertQuote(quoteStr, circulateInfo.getStockCode());
+                wuDiJiheInfo(circulateInfo,stockKbar.getKbarDate(),quotes);
+            }
+        }
+
+    }
+
+    public void wuDiJiheInfo(CirculateInfo circulateInfo,String tradeDate,List<ThsQuoteDTO> quotes){
+        if(CollectionUtils.isEmpty(quotes)){
+            return;
+        }
+        JiHeWudiDTO jiHeWudiDTO = new JiHeWudiDTO();
+        jiHeWudiDTO.setStockCode(circulateInfo.getStockCode());
+        for (ThsQuoteDTO quote:quotes){
+           if(quote.getTradeTime().startsWith("09:15")){
+               if(jiHeWudiDTO.getRate915()==null){
+                   if(quote.getBuyOneQuantity()!=null&&quote.getBuyOneQuantity()>0) {
+                       BigDecimal rate = PriceUtil.getPricePercentRate(quote.getBuyOnePrice().subtract(quote.getPreEndPrice()), quote.getPreEndPrice());
+                       BigDecimal amount = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyOneQuantity()));
+                       jiHeWudiDTO.setRate915(rate);
+                       jiHeWudiDTO.setAmount915(amount);
+                   }
+                   if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
+                       BigDecimal amount2 = quote.getBuyTwoPrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                       jiHeWudiDTO.setBuyTwoAmount915(amount2);
+                   }
+               }
+           }
+
+            if(quote.getTradeTime().startsWith("09:20")){
+                if(jiHeWudiDTO.getRate920()==null){
+                    if(quote.getBuyOneQuantity()!=null&&quote.getBuyOneQuantity()>0) {
+                        BigDecimal rate = PriceUtil.getPricePercentRate(quote.getBuyOnePrice().subtract(quote.getPreEndPrice()), quote.getPreEndPrice());
+                        BigDecimal amount = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyOneQuantity()));
+                        jiHeWudiDTO.setRate920(rate);
+                        jiHeWudiDTO.setAmount920(amount);
+                    }
+                    if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
+                        BigDecimal amount2 = quote.getBuyTwoPrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                        jiHeWudiDTO.setBuyTwoAmount920(amount2);
+                    }
+                }
+            }
+
+            if(quote.getTradeAmount()!=null&&quote.getTradeAmount().compareTo(new BigDecimal(1))>0){
+                if(jiHeWudiDTO.getRate925()==null){
+                    if(quote.getBuyOneQuantity()!=null&&quote.getBuyOneQuantity()>0) {
+                        BigDecimal rate = PriceUtil.getPricePercentRate(quote.getCurrentPrice().subtract(quote.getPreEndPrice()), quote.getPreEndPrice());
+                        BigDecimal amount = quote.getTradeAmount();
+                        jiHeWudiDTO.setRate925(rate);
+                        jiHeWudiDTO.setAmount925(amount);
+                    }
+                    if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
+                        BigDecimal amount2 = quote.getBuyTwoPrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                        jiHeWudiDTO.setBuyTwoAmount925(amount2);
+                    }
+                }
+            }
+        }
+        String str = JSONObject.toJSONString(jiHeWudiDTO);
+        RedisMonior redisMonior = new RedisMonior();
+        redisMonior.setRedisKey(circulateInfo.getStockCode()+"_"+tradeDate);
+        redisMonior.setRedisValue(str);
+        redisMonior.setCreateTime(new Date());
+        redisMoniorService.save(redisMonior);
+    }
+
+
+
+    public List<ThsQuoteDTO> convertQuote(String quoteStr,String stockCode){
+        ArrayList<ThsQuoteDTO> quotes = Lists.newArrayList();
+      if(!StringUtils.isEmpty(quoteStr)){
+            JSONObject jsonObject = JSONObject.parseObject(quoteStr);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return quotes;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return quotes;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<String> tradeTimes = tableInfo.getJSONArray("tradeTime").toJavaList(String.class);
+            List<BigDecimal> ask1s = tableInfo.getJSONArray("ask1").toJavaList(BigDecimal.class);
+            List<BigDecimal> bid1s = tableInfo.getJSONArray("bid1").toJavaList(BigDecimal.class);
+            List<BigDecimal> bid2s = tableInfo.getJSONArray("bid2").toJavaList(BigDecimal.class);
+            List<Long> askSize1s = tableInfo.getJSONArray("askSize1").toJavaList(Long.class);
+            List<Long> bidSize1s = tableInfo.getJSONArray("bidSize1").toJavaList(Long.class);
+            List<Long> bidSize2s = tableInfo.getJSONArray("bidSize2").toJavaList(Long.class);
+            List<BigDecimal> preCloses = tableInfo.getJSONArray("preClose").toJavaList(BigDecimal.class);
+            List<BigDecimal> amts = tableInfo.getJSONArray("amt").toJavaList(BigDecimal.class);
+            List<BigDecimal> latests = tableInfo.getJSONArray("latest").toJavaList(BigDecimal.class);
+
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.DEFAULT_FORMAT);
+                ThsQuoteDTO quote = new ThsQuoteDTO();
+                quote.setStockCode(stockCode);
+                quote.setQuoteTime(date);
+                quote.setTradeDate(DateUtil.format(date, DateUtil.yyyyMMdd));
+                quote.setTradeTime(tradeTimes.get(i));
+                quote.setCurrentPrice(latests.get(i));
+                quote.setPreEndPrice(preCloses.get(i));
+                quote.setTradeAmount(amts.get(i));
+                quote.setBuyOnePrice(bid1s.get(i));
+                quote.setBuyTwoPrice(bid2s.get(i));
+                quote.setSellOnePrice(ask1s.get(i));
+                quote.setBuyOneQuantity(bidSize1s.get(i).longValue());
+                quote.setBuyTwoQuantity(bidSize2s.get(i).longValue());
+                quote.setSellOneQuantity(askSize1s.get(i).longValue());
+                quotes.add(quote);
+                i++;
+            }
+        }
+        return quotes;
+    }
+    public int thsLogin(){
+        try {
+            System.load("E://iFinDJava.dll");
+            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            return ret;
+        }catch (Exception e){
+            log.error("同花顺登录失败",e);
+            return -1;
+        }
+    }
+
+    public int thsLoginOut(){
+        try {
+            System.load("E://iFinDJava.dll");
+            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            return ret;
+        }catch (Exception e){
+            log.error("同花顺登录失败",e);
+            return -1;
+        }
+    }
+
+
+}
