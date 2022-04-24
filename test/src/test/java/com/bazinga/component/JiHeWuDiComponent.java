@@ -8,6 +8,9 @@ import com.bazinga.base.Sort;
 import com.bazinga.dto.JiHeWudiDTO;
 import com.bazinga.dto.ThsQuoteDTO;
 import com.bazinga.dto.ZhuanZaiExcelDTO;
+import com.bazinga.exception.BusinessException;
+import com.bazinga.replay.dto.HuShen300ExcelDTO;
+import com.bazinga.replay.dto.TransferableBondInfoExcelDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
@@ -21,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,14 +52,37 @@ public class JiHeWuDiComponent {
 
     public static final ExecutorService THREAD_POOL_QUOTE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
 
-    public void jiHeTest() {
+    public void hs300Info() {
+        File file = new File("D:/circulate/hs300.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + "D:/circulate/hs300.xlsx" + "不存在");
+        }
+        ArrayList<CirculateInfo> list = Lists.newArrayList();
+        try {
+            List<HuShen300ExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(HuShen300ExcelDTO.class);
+            dataList.forEach(item -> {
+                CirculateInfo circulateInfo = new CirculateInfo();
+                circulateInfo.setStockCode(item.getStockCode());
+                circulateInfo.setStockName(item.getStockName());
+                list.add(circulateInfo);
+            });
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+        jiHeTest(list);
+    }
+
+    public void jiHeTest(List<CirculateInfo> circulateInfos) {
+        int index = 0;
         int ret = thsLogin();
-        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
-        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
         for( CirculateInfo circulateInfo:circulateInfos) {
-            if(!circulateInfo.getStockCode().equals("605138")){
+           /* if(!circulateInfo.getStockCode().equals("605138")){
                 continue;
-            }
+            }*/
+            index++;
+            System.out.println(circulateInfo.getStockCode()+"======"+index);
             StockKbarQuery stockKbarQuery = new StockKbarQuery();
             stockKbarQuery.setStockCode(circulateInfo.getStockCode());
             List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);

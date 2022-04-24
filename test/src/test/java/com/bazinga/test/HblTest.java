@@ -132,7 +132,7 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
-        jiHeWuDiComponent.jiHeTest();
+        jiHeWuDiComponent.hs300Info();
         //xiaoTuComponent.xiaoTuInfo();
         //thsHttpTestComponent.getAccessToken();
         //boxOneStockComponent.oneStockBox();
