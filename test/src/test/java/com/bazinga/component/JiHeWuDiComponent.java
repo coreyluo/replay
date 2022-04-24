@@ -92,7 +92,7 @@ public class JiHeWuDiComponent {
                        jiHeWudiDTO.setAmount915(amount);
                    }
                    if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
-                       BigDecimal amount2 = quote.getBuyTwoPrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                       BigDecimal amount2 = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
                        jiHeWudiDTO.setBuyTwoAmount915(amount2);
                    }
                }
@@ -107,7 +107,7 @@ public class JiHeWuDiComponent {
                         jiHeWudiDTO.setAmount920(amount);
                     }
                     if(quote.getBuyTwoQuantity()!=null&&quote.getBuyTwoQuantity()>0) {
-                        BigDecimal amount2 = quote.getBuyTwoPrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
+                        BigDecimal amount2 = quote.getBuyOnePrice().multiply(new BigDecimal(quote.getBuyTwoQuantity()));
                         jiHeWudiDTO.setBuyTwoAmount920(amount2);
                     }
                 }
@@ -178,9 +178,9 @@ public class JiHeWuDiComponent {
                 quote.setBuyOnePrice(bid1s.get(i));
                 quote.setBuyTwoPrice(bid2s.get(i));
                 quote.setSellOnePrice(ask1s.get(i));
-                quote.setBuyOneQuantity(bidSize1s.get(i).longValue());
-                quote.setBuyTwoQuantity(bidSize2s.get(i).longValue());
-                quote.setSellOneQuantity(askSize1s.get(i).longValue());
+                quote.setBuyOneQuantity(bidSize1s.get(i));
+                quote.setBuyTwoQuantity(bidSize2s.get(i));
+                quote.setSellOneQuantity(askSize1s.get(i));
                 quotes.add(quote);
                 i++;
             }
@@ -190,7 +190,7 @@ public class JiHeWuDiComponent {
     public int thsLogin(){
         try {
             System.load("E://iFinDJava.dll");
-            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            int ret = JDIBridge.THS_iFinDLogin("ylz200", "620865");
             return ret;
         }catch (Exception e){
             log.error("同花顺登录失败",e);
@@ -201,7 +201,7 @@ public class JiHeWuDiComponent {
     public int thsLoginOut(){
         try {
             System.load("E://iFinDJava.dll");
-            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            int ret = JDIBridge.THS_iFinDLogin("ylz200", "620865");
             return ret;
         }catch (Exception e){
             log.error("同花顺登录失败",e);
