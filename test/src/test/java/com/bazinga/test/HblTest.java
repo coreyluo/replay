@@ -125,9 +125,12 @@ public class HblTest extends BaseTestCase {
     private ThsHttpTestComponent thsHttpTestComponent;
     @Autowired
     private UpperShadowBuyTimeComponent upperShadowBuyTimeComponent;
+    @Autowired
+    private XiaoTuComponent xiaoTuComponent;
 
     @Test
     public void test(){
+        //xiaoTuComponent.xiaoTuInfo();
         //thsHttpTestComponent.getAccessToken();
         //boxOneStockComponent.oneStockBox();
         //boxOneBetweenStockComponent.oneStockBox();

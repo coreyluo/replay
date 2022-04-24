@@ -43,11 +43,12 @@ public class ThsDataComponent {
     public void zhuanZaiStocks(){
         int ret = thsLogin();
         quoteInfo();
+        thsLoginOut();
 
     }
 
     public void quoteInfo(){
-        String quote_str = JDIBridge.THS_Snapshot("000001.SZ","amt;vol;latest;tradeDate;tradeTime","","2022-03-30 09:15:00","2022-03-31 15:15:00");
+        String quote_str = JDIBridge.THS_Snapshot("301088.SZ","bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;tradeDate;latest","","2022-04-21 09:15:00","2022-04-21 09:29:00");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             System.out.println(JSONObject.toJSONString(jsonObject));

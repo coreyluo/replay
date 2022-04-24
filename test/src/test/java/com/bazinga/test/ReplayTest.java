@@ -197,16 +197,16 @@ public class ReplayTest extends BaseTestCase {
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
       // month2RateReplayComponent.szNeeddle();
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210101","20210401");
+            blockOpenReplayComponent.replay("20180101","20180401");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210401","20210701");
+            blockOpenReplayComponent.replay("20180401","20180701");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210701","20211001");
+            blockOpenReplayComponent.replay("20180701","20181001");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20211001","20220101");
+            blockOpenReplayComponent.replay("20181001","20190101");
         });
 
         try {
