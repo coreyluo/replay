@@ -5,9 +5,7 @@ import Ths.JDIBridge;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
-import com.bazinga.dto.JiHeWudiDTO;
-import com.bazinga.dto.ThsQuoteDTO;
-import com.bazinga.dto.ZhuanZaiExcelDTO;
+import com.bazinga.dto.*;
 import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.dto.HuShen300ExcelDTO;
 import com.bazinga.replay.dto.TransferableBondInfoExcelDTO;
@@ -26,9 +24,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -71,8 +67,126 @@ public class JiHeWuDiComponent {
             log.error("更新流通 z 信息异常", e);
             throw new BusinessException("文件解析及同步异常", e);
         }
-        jiHeTest(list);
+        //jiHeTest(list);
+        exportJiHeInfo(list);
     }
+
+
+    public void exportJiHeInfo(List<CirculateInfo> circulateInfos){
+        Map<String, JiHeWudiTotalDTO> map = getJiHeInfo(circulateInfos);
+        List<Object[]> datas = Lists.newArrayList();
+        for(String kbarDate:map.keySet()){
+            JiHeWudiTotalDTO dto = map.get(kbarDate);
+            BigDecimal avgRate915 = dto.getRate915().divide(new BigDecimal(dto.getRateCount915()), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal avgRate920 = dto.getRate920().divide(new BigDecimal(dto.getRateCount920()), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal avgRate925 = dto.getRate925().divide(new BigDecimal(dto.getRateCount925()), 2, BigDecimal.ROUND_HALF_UP);
+            List<Object> list = new ArrayList<>();
+            list.add(kbarDate);
+            list.add(kbarDate);
+            list.add(avgRate915);
+            list.add(dto.getAmount915());
+            list.add(dto.getBuyTwoAmount915());
+            list.add(dto.getBuyTwoCount915());
+            list.add(avgRate920);
+            list.add(dto.getAmount920());
+            list.add(dto.getBuyTwoAmount920());
+            list.add(dto.getBuyTwoCount920());
+            list.add(avgRate925);
+            list.add(dto.getAmount925());
+            list.add(dto.getBuyTwoAmount925());
+            list.add(dto.getBuyTwoCount925());
+
+            Object[] objects = list.toArray();
+            datas.add(objects);
+        }
+
+        String[] rowNames = {"index","日起","915平均涨幅","915总成交额","915买二总成交额","915有买二的数量","920平均涨幅","920总成交额","920买二总成交额","920有买二的数量","925平均涨幅","925总成交额","925买二总成交额","925有买二的数量"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
+        try {
+            poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
+        }catch (Exception e){
+            log.info(e.getMessage());
+        }
+    }
+
+    public Map<String,JiHeWudiTotalDTO> getJiHeInfo(List<CirculateInfo> circulateInfos){
+        Map<String, JiHeWudiTotalDTO> map = new HashMap<>();
+        for (CirculateInfo circulateInfo:circulateInfos){
+            StockKbarQuery stockKbarQuery = new StockKbarQuery();
+            stockKbarQuery.setStockCode(circulateInfo.getStockCode());
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
+            for (StockKbar stockKbar : stockKbars) {
+                Date dateyyyyMMdd = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
+                if (dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
+                    continue;
+                }
+                String stockCode = stockKbar.getStockCode()+"_"+stockKbar.getKbarDate();
+                RedisMonior redisMonior = redisMoniorService.getByRedisKey(stockCode);
+                if(redisMonior==null||StringUtils.isBlank(redisMonior.getRedisValue())){
+                    continue;
+                }
+                String redisValue = redisMonior.getRedisValue();
+                JiHeWudiDTO jiHeWudiDTO = JSONObject.parseObject(redisValue, JiHeWudiDTO.class);
+                JiHeWudiTotalDTO jiHe = map.get(stockKbar.getKbarDate());
+                if(jiHe==null){
+                    jiHe = new JiHeWudiTotalDTO();
+                    map.put(stockKbar.getKbarDate(),jiHe);
+                }
+                if(jiHeWudiDTO.getRate915()!=null){
+                    BigDecimal rate915 = jiHe.getRate915().add(jiHeWudiDTO.getRate915());
+                    int rateCount915 = jiHe.getRateCount915()+1;
+                    BigDecimal amount915 = jiHe.getAmount915().add(jiHeWudiDTO.getAmount915());
+                    int buyTwoCount915 = jiHe.getBuyTwoCount915();
+                    BigDecimal buyTwoAmount915 = jiHe.getBuyTwoAmount915();
+                    if(jiHeWudiDTO.getBuyTwoAmount915()!=null){
+                        buyTwoAmount915 = jiHe.getBuyTwoAmount915().add(jiHeWudiDTO.getBuyTwoAmount915());
+                        buyTwoCount915 = buyTwoCount915+1;
+                    }
+                    jiHe.setRate915(rate915);
+                    jiHe.setRateCount915(rateCount915);
+                    jiHe.setAmount915(amount915);
+                    jiHe.setBuyTwoAmount915(buyTwoAmount915);
+                    jiHe.setBuyTwoCount915(buyTwoCount915);
+                }
+
+                if(jiHeWudiDTO.getRate920()!=null){
+                    BigDecimal rate920 = jiHe.getRate920().add(jiHeWudiDTO.getRate920());
+                    int rateCount920 = jiHe.getRateCount920()+1;
+                    BigDecimal amount920 = jiHe.getAmount920().add(jiHeWudiDTO.getAmount920());
+                    int buyTwoCount920 = jiHe.getBuyTwoCount920();
+                    BigDecimal buyTwoAmount920 = jiHe.getBuyTwoAmount920();
+                    if(jiHeWudiDTO.getBuyTwoAmount920()!=null){
+                        buyTwoAmount920 = jiHe.getBuyTwoAmount920().add(jiHeWudiDTO.getBuyTwoAmount920());
+                        buyTwoCount920 = buyTwoCount920+1;
+                    }
+                    jiHe.setRate920(rate920);
+                    jiHe.setRateCount920(rateCount920);
+                    jiHe.setAmount920(amount920);
+                    jiHe.setBuyTwoAmount920(buyTwoAmount920);
+                    jiHe.setBuyTwoCount920(buyTwoCount920);
+                }
+
+                if(jiHeWudiDTO.getRate925()!=null){
+                    BigDecimal rate925 = jiHe.getRate925().add(jiHeWudiDTO.getRate925());
+                    int rateCount925 = jiHe.getRateCount925()+1;
+                    BigDecimal amount925 = jiHe.getAmount925().add(jiHeWudiDTO.getAmount925());
+                    int buyTwoCount925 = jiHe.getBuyTwoCount925();
+                    BigDecimal buyTwoAmount925 = jiHe.getBuyTwoAmount925();
+                    if(jiHeWudiDTO.getBuyTwoAmount925()!=null){
+                        buyTwoAmount925 = jiHe.getBuyTwoAmount925().add(jiHeWudiDTO.getBuyTwoAmount925());
+                        buyTwoCount925 = buyTwoCount925+1;
+                    }
+                    jiHe.setRate925(rate925);
+                    jiHe.setRateCount925(rateCount925);
+                    jiHe.setAmount925(amount925);
+                    jiHe.setBuyTwoAmount925(buyTwoAmount925);
+                    jiHe.setBuyTwoCount925(buyTwoCount925);
+                }
+            }
+        }
+        return map;
+    }
+
 
     public void jiHeTest(List<CirculateInfo> circulateInfos) {
         int index = 0;
