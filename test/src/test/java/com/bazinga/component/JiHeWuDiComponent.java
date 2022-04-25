@@ -238,6 +238,10 @@ public class JiHeWuDiComponent {
                     if (!dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
                         continue;
                     }
+                    RedisMonior rediseMin = redisMoniorService.getByRedisKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                    if(rediseMin!=null){
+                        continue;
+                    }
                     String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
                     String timeStart = dateStryyyy_MM_dd + " 09:15:00";
                     String timeEnd = dateStryyyy_MM_dd + " 09:29:00";
