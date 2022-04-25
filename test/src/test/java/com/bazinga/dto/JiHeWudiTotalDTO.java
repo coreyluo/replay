@@ -21,6 +21,12 @@ public class JiHeWudiTotalDTO {
     private int buyTwoCount920;
     private int rateCount920;
 
+    private BigDecimal rate924= BigDecimal.ZERO;
+    private BigDecimal amount924= BigDecimal.ZERO;
+    private BigDecimal buyTwoAmount924= BigDecimal.ZERO;
+    private int buyTwoCount924;
+    private int rateCount924;
+
     private BigDecimal rate925= BigDecimal.ZERO;
     private BigDecimal amount925= BigDecimal.ZERO;
     private BigDecimal buyTwoAmount925= BigDecimal.ZERO;

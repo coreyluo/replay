@@ -67,8 +67,8 @@ public class JiHeWuDiComponent {
             log.error("更新流通 z 信息异常", e);
             throw new BusinessException("文件解析及同步异常", e);
         }
-        jiHeTest(list);
-        //exportJiHeInfo(list);
+        //jiHeTest(list);
+        exportJiHeInfo(list);
     }
 
 
@@ -79,6 +79,7 @@ public class JiHeWuDiComponent {
             JiHeWudiTotalDTO dto = map.get(kbarDate);
             BigDecimal avgRate915 = dto.getRate915().divide(new BigDecimal(dto.getRateCount915()), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal avgRate920 = dto.getRate920().divide(new BigDecimal(dto.getRateCount920()), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal avgRate924 = dto.getRate924().divide(new BigDecimal(dto.getRateCount924()), 2, BigDecimal.ROUND_HALF_UP);
             BigDecimal avgRate925 = dto.getRate925().divide(new BigDecimal(dto.getRateCount925()), 2, BigDecimal.ROUND_HALF_UP);
             List<Object> list = new ArrayList<>();
             list.add(kbarDate);
@@ -87,10 +88,17 @@ public class JiHeWuDiComponent {
             list.add(dto.getAmount915());
             list.add(dto.getBuyTwoAmount915());
             list.add(dto.getBuyTwoCount915());
+
             list.add(avgRate920);
             list.add(dto.getAmount920());
             list.add(dto.getBuyTwoAmount920());
             list.add(dto.getBuyTwoCount920());
+
+            list.add(avgRate924);
+            list.add(dto.getAmount924());
+            list.add(dto.getBuyTwoAmount924());
+            list.add(dto.getBuyTwoCount924());
+
             list.add(avgRate925);
             list.add(dto.getAmount925());
             list.add(dto.getBuyTwoAmount925());
@@ -100,10 +108,13 @@ public class JiHeWuDiComponent {
             datas.add(objects);
         }
 
-        String[] rowNames = {"index","日起","915平均涨幅","915总成交额","915买二总成交额","915有买二的数量","920平均涨幅","920总成交额","920买二总成交额","920有买二的数量","925平均涨幅","925总成交额","925买二总成交额","925有买二的数量"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("上引线买入",rowNames,datas);
+        String[] rowNames = {"index","日期","915平均涨幅","915总成交额","915买二总成交额","915有买二的数量",
+                "920平均涨幅","920总成交额","920买二总成交额","920有买二的数量",
+                "924平均涨幅","924总成交额","924买二总成交额","924有买二的数量",
+                "925平均涨幅","925总成交额","925买二总成交额","925有买二的数量"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("集合相关信息",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("上引线买入");
+            poiExcelUtil.exportExcelUseExcelTitle("集合相关信息");
         }catch (Exception e){
             log.info(e.getMessage());
         }
@@ -117,7 +128,7 @@ public class JiHeWuDiComponent {
             List<StockKbar> stockKbars = stockKbarService.listByCondition(stockKbarQuery);
             for (StockKbar stockKbar : stockKbars) {
                 Date dateyyyyMMdd = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
-                if (dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
+                if (dateyyyyMMdd.before(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))) {
                     continue;
                 }
                 String stockCode = stockKbar.getStockCode()+"_"+stockKbar.getKbarDate();
@@ -164,6 +175,23 @@ public class JiHeWuDiComponent {
                     jiHe.setAmount920(amount920);
                     jiHe.setBuyTwoAmount920(buyTwoAmount920);
                     jiHe.setBuyTwoCount920(buyTwoCount920);
+                }
+
+                if(jiHeWudiDTO.getRate924()!=null){
+                    BigDecimal rate924 = jiHe.getRate924().add(jiHeWudiDTO.getRate924());
+                    int rateCount924 = jiHe.getRateCount924()+1;
+                    BigDecimal amount924 = jiHe.getAmount924().add(jiHeWudiDTO.getAmount924());
+                    int buyTwoCount924 = jiHe.getBuyTwoCount924();
+                    BigDecimal buyTwoAmount924 = jiHe.getBuyTwoAmount924();
+                    if(jiHeWudiDTO.getBuyTwoAmount924()!=null){
+                        buyTwoAmount924 = jiHe.getBuyTwoAmount924().add(jiHeWudiDTO.getBuyTwoAmount924());
+                        buyTwoCount924 = buyTwoCount924+1;
+                    }
+                    jiHe.setRate924(rate924);
+                    jiHe.setRateCount924(rateCount924);
+                    jiHe.setAmount924(amount924);
+                    jiHe.setBuyTwoAmount924(buyTwoAmount924);
+                    jiHe.setBuyTwoCount924(buyTwoCount924);
                 }
 
                 if(jiHeWudiDTO.getRate925()!=null){
