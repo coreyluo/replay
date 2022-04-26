@@ -4,10 +4,7 @@ package com.bazinga.component;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
-import com.bazinga.dto.IndexRate500DTO;
-import com.bazinga.dto.IndexRateDTO;
-import com.bazinga.dto.OpenCompeteDTO;
-import com.bazinga.dto.StockPlankTimeInfoDTO;
+import com.bazinga.dto.*;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.convert.KBarDTOConvert;
 import com.bazinga.replay.dto.KBarDTO;
@@ -61,6 +58,38 @@ public class CommonReplayComponent {
 
     @Autowired
     private RedisMoniorService redisMoniorService;
+
+
+    public Map<String, List<PlankDayDTO>> getPlankDayInfoMap(){
+
+        Map<String,List<PlankDayDTO>> resultMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo:circulateInfos){
+            System.out.println(circulateInfo.getStockCode());
+            StockKbarQuery query = new StockKbarQuery();
+            query.setStockCode(circulateInfo.getStockCode());
+            query.setKbarDateFrom("20210101");
+            query.addOrderBy("kbar_date", Sort.SortType.ASC);
+            List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
+            if(CollectionUtils.isEmpty(stockKbars)|| stockKbars.size()<2){
+                continue;
+            }
+            for (int i = 1; i < stockKbars.size(); i++) {
+                StockKbar stockKbar = stockKbars.get(i);
+                StockKbar preStockKbar = stockKbars.get(i-1);
+                if(StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+
+                    Integer sealType = StockKbarUtil.isUpperPrice(stockKbar,preStockKbar)?1:0;
+                    List<PlankDayDTO> plankDayDTOList = resultMap.computeIfAbsent(stockKbar.getKbarDate(), k-> new ArrayList<>());
+                    plankDayDTOList.add(new PlankDayDTO(stockKbar.getStockCode(),sealType,stockKbar.getTradeAmount()));
+                }
+            }
+        }
+        return resultMap;
+
+
+    }
+
 
     public Map<String, Integer> endPlanksMap(List<CirculateInfo> circulateInfos){
         Map<String, Integer> map = new HashMap<>();
@@ -217,7 +246,7 @@ public class CommonReplayComponent {
 
         StockKbarQuery query = new StockKbarQuery();
         query.setStockCode("999999");
-        query.setKbarDateFrom("20201115");
+        query.setKbarDateFrom("20191115");
         query.addOrderBy("kbar_date", Sort.SortType.ASC);
         List<StockKbar> kbarList = stockKbarService.listByCondition(query);
         for (int i = 1; i < kbarList.size(); i++) {

@@ -122,8 +122,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-       // middlePlankReplayComponent.invoke();
-        middlePlankReplayComponent.invokeSecond();
+        middlePlankReplayComponent.invoke();
+       // middlePlankReplayComponent.invokeSecond();
     }
 
     @Test
@@ -138,7 +138,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test5(){
-        marketPlankReplayComponent.replay();
+      //  stockReplayByGroupComponent.replayDayPlank();
+        middlePlankReplayComponent.invokejiaQuan();
     }
 
     @Test
@@ -151,19 +152,40 @@ public class ReplayTest extends BaseTestCase {
         //sellReplayComponent.replayMarket();
        // selfExcelReplayComponent.replayPosition();
        // commonReplayComponent.replay();
-        THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20210101","20210401");
+     /*    THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20220301","20220413");
         });
         THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20210401","20210701");
+            stockReplayByGroupComponent.replay("20220201","20220301");
         });
         THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20210701","20211001");
-        });
-        THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20211001","20220101");
-        });
+            stockReplayByGroupComponent.replay("20220101","20220201");
+        });*/
 
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20220101","20220201");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20220201","20220301");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20220301","20220413");
+        });
+       /* THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20211001","20220101");
+        });*/
+       /* THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20190101","20190401");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20190401","20190701");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20190701","20191001");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replay("20191001","20200101");
+        });*/
         try {
             TimeUnit.HOURS.sleep(12);
         } catch (InterruptedException e) {
@@ -197,17 +219,20 @@ public class ReplayTest extends BaseTestCase {
         System.out.println(JSONObject.toJSONString(blockRateMap));*/
       // month2RateReplayComponent.szNeeddle();
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210101","20210401");
+            blockOpenReplayComponent.replay("20200101","20200401");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210401","20210701");
+            blockOpenReplayComponent.replay("20200401","20200701");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20210701","20211001");
+            blockOpenReplayComponent.replay("20200701","20201001");
         });
         THREAD_POOL.execute(()->{
-            blockOpenReplayComponent.replay("20211001","20220101");
+            blockOpenReplayComponent.replay("20201001","20210101");
         });
+   /*     THREAD_POOL.execute(()->{
+            blockOpenReplayComponent.replay("20201001","20210101");
+        });*/
 
         try {
             TimeUnit.HOURS.sleep(12);
