@@ -67,8 +67,8 @@ public class JiHeWuDiComponent {
             log.error("更新流通 z 信息异常", e);
             throw new BusinessException("文件解析及同步异常", e);
         }
-        //jiHeTest(list);
-        exportJiHeInfo(list);
+        jiHeTest(list);
+        //exportJiHeInfo(list);
     }
 
 
@@ -246,12 +246,37 @@ public class JiHeWuDiComponent {
                     if(rediseMin!=null){
                         continue;
                     }
+                    if(stockKbar.getKbarDate().equals("20210719")){
+                        continue;
+                    }
                     String dateStryyyy_MM_dd = DateUtil.format(dateyyyyMMdd, DateUtil.yyyy_MM_dd);
-                    String timeStart = dateStryyyy_MM_dd + " 09:15:00";
-                    String timeEnd = dateStryyyy_MM_dd + " 09:29:00";
-                    String quoteStr = JDIBridge.THS_Snapshot(thsStockCode, "bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;preClose;tradeDate;latest", "", timeStart, timeEnd);
-                    List<ThsQuoteDTO> quotes = convertQuote(quoteStr, circulateInfo.getStockCode());
-                    wuDiJiheInfo(circulateInfo, stockKbar.getKbarDate(), quotes);
+                    String timeStart15 = dateStryyyy_MM_dd + " 09:15:00";
+                    String timeEnd15 = dateStryyyy_MM_dd + " 09:15:30";
+
+                    String timeStart20 = dateStryyyy_MM_dd + " 09:20:00";
+                    String timeEnd20 = dateStryyyy_MM_dd + " 09:20:30";
+
+                    String timeStart24 = dateStryyyy_MM_dd + " 09:24:00";
+                    String timeEnd24 = dateStryyyy_MM_dd + " 09:25:30";
+
+                    String timeEnd = dateStryyyy_MM_dd + " 09:26:00";
+                    String quoteStr15 = JDIBridge.THS_Snapshot(thsStockCode, "bid1;bid2;bidSize1;bidSize2;amt;tradeTime;preClose;tradeDate;latest", "", timeStart15, timeEnd15);
+                    String quoteStr20 = JDIBridge.THS_Snapshot(thsStockCode, "bid1;bid2;bidSize1;bidSize2;amt;tradeTime;preClose;tradeDate;latest", "", timeStart20, timeEnd20);
+                    String quoteStr24 = JDIBridge.THS_Snapshot(thsStockCode, "bid1;bid2;bidSize1;bidSize2;amt;tradeTime;preClose;tradeDate;latest", "", timeStart24, timeEnd24);
+                    List<ThsQuoteDTO> quotes15 = convertQuote(quoteStr15, circulateInfo.getStockCode());
+                    List<ThsQuoteDTO> quotes20 = convertQuote(quoteStr20, circulateInfo.getStockCode());
+                    List<ThsQuoteDTO> quotes24 = convertQuote(quoteStr24, circulateInfo.getStockCode());
+                    List<ThsQuoteDTO> list = Lists.newArrayList();
+                    if(!CollectionUtils.isEmpty(quotes15)){
+                        list.addAll(quotes15);
+                    }
+                    if(!CollectionUtils.isEmpty(quotes20)){
+                        list.addAll(quotes20);
+                    }
+                    if(!CollectionUtils.isEmpty(quotes24)){
+                        list.addAll(quotes24);
+                    }
+                    wuDiJiheInfo(circulateInfo, stockKbar.getKbarDate(),list);
                 }
             });
             System.out.println(circulateInfo.getStockCode()+"======jiesu======"+index);
@@ -355,10 +380,10 @@ public class JiHeWuDiComponent {
             List<String> times = timeArray.toJavaList(String.class);
             JSONObject tableInfo = tableJson.getJSONObject("table");
             List<String> tradeTimes = tableInfo.getJSONArray("tradeTime").toJavaList(String.class);
-            List<BigDecimal> ask1s = tableInfo.getJSONArray("ask1").toJavaList(BigDecimal.class);
+           // List<BigDecimal> ask1s = tableInfo.getJSONArray("ask1").toJavaList(BigDecimal.class);
             List<BigDecimal> bid1s = tableInfo.getJSONArray("bid1").toJavaList(BigDecimal.class);
             List<BigDecimal> bid2s = tableInfo.getJSONArray("bid2").toJavaList(BigDecimal.class);
-            List<Long> askSize1s = tableInfo.getJSONArray("askSize1").toJavaList(Long.class);
+            //List<Long> askSize1s = tableInfo.getJSONArray("askSize1").toJavaList(Long.class);
             List<Long> bidSize1s = tableInfo.getJSONArray("bidSize1").toJavaList(Long.class);
             List<Long> bidSize2s = tableInfo.getJSONArray("bidSize2").toJavaList(Long.class);
             List<BigDecimal> preCloses = tableInfo.getJSONArray("preClose").toJavaList(BigDecimal.class);
@@ -378,10 +403,10 @@ public class JiHeWuDiComponent {
                 quote.setTradeAmount(amts.get(i));
                 quote.setBuyOnePrice(bid1s.get(i));
                 quote.setBuyTwoPrice(bid2s.get(i));
-                quote.setSellOnePrice(ask1s.get(i));
+                //quote.setSellOnePrice(ask1s.get(i));
                 quote.setBuyOneQuantity(bidSize1s.get(i));
                 quote.setBuyTwoQuantity(bidSize2s.get(i));
-                quote.setSellOneQuantity(askSize1s.get(i));
+                //quote.setSellOneQuantity(askSize1s.get(i));
                 quotes.add(quote);
                 i++;
             }
