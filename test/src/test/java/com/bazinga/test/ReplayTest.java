@@ -114,6 +114,9 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private StockReplayByGroupComponent stockReplayByGroupComponent;
+
+    @Autowired
+    private One2TwoReplayComponent one2TwoReplayComponent;
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -139,7 +142,9 @@ public class ReplayTest extends BaseTestCase {
     @Test
     public void test5(){
       //  stockReplayByGroupComponent.replayDayPlank();
-        middlePlankReplayComponent.invokejiaQuan();
+       // middlePlankReplayComponent.invokejiaQuan();
+        one2TwoReplayComponent.replay();
+
     }
 
     @Test
