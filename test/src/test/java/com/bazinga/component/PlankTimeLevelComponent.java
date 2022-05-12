@@ -74,12 +74,13 @@ public class PlankTimeLevelComponent {
                 list.add(dto.getRateDay5());
                 list.add(dto.getRateDay10());
                 list.add(dto.getPlanks());
+                list.add(dto.getPercentAmount());
                 list.add(dto.getProfit());
                 Object[] objects = list.toArray();
                 datas.add(objects);
             }
         }
-        String[] rowNames = {"index","股票代码","股票名称","交易日期","买入时间","排名","上午排名","下午排名","板高排名","尾盘是否封住（1封住 0未封住）","3日涨幅","5日涨幅","10日涨幅","板高","盈利"};
+        String[] rowNames = {"index","股票代码","股票名称","交易日期","买入时间","排名","上午排名","下午排名","板高排名","尾盘是否封住（1封住 0未封住）","3日涨幅","5日涨幅","10日涨幅","板高","相对爆量日比例","盈利"};
         PoiExcelUtil poiExcelUtil = new PoiExcelUtil("买入时间排序",rowNames,datas);
         try {
             poiExcelUtil.exportExcelUseExcelTitle("买入时间排序");
@@ -97,7 +98,7 @@ public class PlankTimeLevelComponent {
                 continue;
             }*/
             System.out.println(circulateInfo.getStockCode());
-            /*if(circulateInfo.getStockCode().equals("600383")){
+            /*if(!circulateInfo.getStockCode().equals("002432")){
                 continue;
             }*/
             List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode());
@@ -142,7 +143,6 @@ public class PlankTimeLevelComponent {
                             list.add(buyDTO);
                         }
                     }
-
                 }
                 preKbar = stockKbar;
             }
@@ -250,7 +250,7 @@ public class PlankTimeLevelComponent {
 
 
     public Integer calPlanks(LimitQueue<StockKbar> limitQueue){
-        if(limitQueue==null||limitQueue.size()<20){
+        if(limitQueue==null||limitQueue.size()<3){
             return 0;
         }
         List<StockKbar> list = Lists.newArrayList();
@@ -290,7 +290,9 @@ public class PlankTimeLevelComponent {
         int i=0;
         for (StockKbar stockKbar:stockKbars){
             if(flag){
-                i++;
+                if(stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())!=0) {
+                    i++;
+                }
             }
             if(i==1){
                 BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(stockKbar.getStockCode(), DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd));
@@ -310,6 +312,7 @@ public class PlankTimeLevelComponent {
         StockKbar endStockKbar = null;
         boolean flag = false;
         int i=0;
+        StockKbar highStockKbar = null;
         for (StockKbar stockKbar:reverse){
             if(flag){
                 i++;
@@ -329,13 +332,35 @@ public class PlankTimeLevelComponent {
                 BigDecimal rate = PriceUtil.getPricePercentRate(endStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
                 buyDTO.setRateDay10(rate);
             }
-            if(i>12){
-                return;
+            if(i>0&&i<=30){
+                if(highStockKbar==null){
+                    highStockKbar = stockKbar;
+                }else{
+                    if(stockKbar.getTradeAmount().compareTo(highStockKbar.getTradeAmount())==1){
+                        highStockKbar = stockKbar;
+                    }
+                }
+            }
+            if(i>30){
+                break;
             }
             if(stockKbar.getKbarDate().equals(buyStockKbar.getKbarDate())){
                 flag = true;
             }
         }
+        if(highStockKbar!=null){
+            BigDecimal percentAmount = getPercentAmount(highStockKbar, buyStockKbar.getAdjHighPrice());
+            buyDTO.setPercentAmount(percentAmount);
+        }
+    }
+    public BigDecimal getPercentAmount(StockKbar highStockKbar,BigDecimal plankPrice){
+        BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(highStockKbar.getStockCode(), highStockKbar.getKbarDate());
+        if(avgPrice!=null) {
+            avgPrice = chuQuanAvgPrice(avgPrice, highStockKbar);
+            BigDecimal percent = (plankPrice.subtract(avgPrice)).divide(avgPrice, 4, BigDecimal.ROUND_HALF_UP);
+            return percent;
+        }
+        return null;
     }
 
 
@@ -346,10 +371,10 @@ public class PlankTimeLevelComponent {
             query.setStockCode(stockCode);
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-            if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<=20){
+            /*if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<=20){
                 return null;
             }
-            stockKbars = stockKbars.subList(20, stockKbars.size());
+            stockKbars = stockKbars.subList(20, stockKbars.size());*/
             List<StockKbar> result = Lists.newArrayList();
             for (StockKbar stockKbar:stockKbars){
                 if(stockKbar.getTradeQuantity()>0){

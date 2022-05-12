@@ -138,7 +138,7 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
-        //plankTimeLevelComponent.plankExchangeAmountInfo();
+        plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
         //jiHeWuDiComponent.hs300Info();
