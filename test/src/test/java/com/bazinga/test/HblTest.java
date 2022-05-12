@@ -133,10 +133,13 @@ public class HblTest extends BaseTestCase {
     private DisableSellUtilComponent disableSellUtilComponent;
     @Autowired
     private PlankExchangeAmountComponent plankExchangeAmountComponent;
+    @Autowired
+    private PlankTimeLevelComponent plankTimeLevelComponent;
 
     @Test
     public void test(){
-        plankExchangeAmountComponent.plankExchangeAmountInfo();
+        //plankTimeLevelComponent.plankExchangeAmountInfo();
+        //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
         //jiHeWuDiComponent.hs300Info();
         //xiaoTuComponent.xiaoTuInfo();
