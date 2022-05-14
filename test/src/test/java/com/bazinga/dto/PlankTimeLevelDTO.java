@@ -27,6 +27,8 @@ public class PlankTimeLevelDTO {
     private BigDecimal rateDay5;
     private BigDecimal rateDay10;
     private BigDecimal percentAmount;
+    private BigDecimal buyPrice;
+    private  Long circulateZ;
     private BigDecimal profit;
 
     public static List<PlankTimeLevelDTO> timeIntSort(List<PlankTimeLevelDTO> list){

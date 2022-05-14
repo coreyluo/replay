@@ -1,7 +1,7 @@
 package com.bazinga.component;
 
 import com.bazinga.base.Sort;
-import com.bazinga.dto.PlankExchangeAmountDTO;
+import com.bazinga.dto.HighPlankBuyDTO;
 import com.bazinga.dto.PlankTimeLevelDTO;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.CommonComponent;
@@ -20,7 +20,6 @@ import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.omg.CORBA.PUBLIC_MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -35,7 +34,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class PlankTimeLevelComponent {
+public class HighPlankBuyComponent {
     @Autowired
     private CirculateInfoService circulateInfoService;
     @Autowired
@@ -51,56 +50,43 @@ public class PlankTimeLevelComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
     public void plankExchangeAmountInfo(){
-        Map<String, List<PlankTimeLevelDTO>> map = judgePlankInfo();
-        Map<String, List<PlankTimeLevelDTO>> levelMap = getLevel(map);
+        List<HighPlankBuyDTO> dtos = judgePlankInfo();
         List<Object[]> datas = Lists.newArrayList();
-        for (String tradeDate:levelMap.keySet()) {
-            List<PlankTimeLevelDTO> buys = levelMap.get(tradeDate);
-            int i = 0;
-            for (PlankTimeLevelDTO dto : buys) {
-                i++;
-                List<Object> list = new ArrayList<>();
-                list.add(dto.getStockCode());
-                list.add(dto.getStockCode());
-                list.add(dto.getStockName());
-                list.add(dto.getCirculateZ());
-                list.add(dto.getBuyPrice());
-                list.add(dto.getTradeDate());
-                list.add(dto.getBuyTime());
-                list.add(dto.getAllLevel());
-                list.add(dto.getMorningLevel());
-                list.add(dto.getAfternoonLevel());
-                list.add(dto.getPlankLevel());
-                list.add(dto.getEndFlag());
-                list.add(dto.getRateDay3());
-                list.add(dto.getRateDay5());
-                list.add(dto.getRateDay10());
-                list.add(dto.getPlanks());
-                list.add(dto.getPercentAmount());
-                list.add(dto.getProfit());
-                Object[] objects = list.toArray();
-                datas.add(objects);
-            }
+
+        for (HighPlankBuyDTO dto : dtos) {
+            List<Object> list = new ArrayList<>();
+            list.add(dto.getStockCode());
+            list.add(dto.getStockCode());
+            list.add(dto.getStockName());
+            list.add(dto.getTradeDate());
+            list.add(dto.getBuyTime());
+            list.add(dto.getBuyPrice());
+            list.add(dto.getEndFlag());
+            list.add(dto.getPlanks());
+            list.add(dto.getProfit());
+            Object[] objects = list.toArray();
+            datas.add(objects);
         }
-        String[] rowNames = {"index","股票代码","股票名称","流通z","买入价格","交易日期","买入时间","排名","上午排名","下午排名","板高排名","尾盘是否封住（1封住 0未封住）","3日涨幅","5日涨幅","10日涨幅","板高","相对爆量日比例","盈利"};
-        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("买入时间排序",rowNames,datas);
+
+        String[] rowNames = {"index","股票代码","股票名称","交易日期","买入时间","买入价格","尾盘是否封住（1封住 0未封住）","板高","盈利"};
+        PoiExcelUtil poiExcelUtil = new PoiExcelUtil("高位板买入",rowNames,datas);
         try {
-            poiExcelUtil.exportExcelUseExcelTitle("买入时间排序");
+            poiExcelUtil.exportExcelUseExcelTitle("高位板买入");
         }catch (Exception e){
             log.info(e.getMessage());
         }
     }
-    public Map<String, List<PlankTimeLevelDTO>> judgePlankInfo(){
-        Map<String, List<PlankTimeLevelDTO>> map = new HashMap<>();
+    public List<HighPlankBuyDTO> judgePlankInfo(){
+        List<HighPlankBuyDTO> list = new ArrayList<>();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         int m = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
             m++;
-            /*if(m>1000){
+            if(m>100){
                 continue;
-            }*/
+            }
             System.out.println(circulateInfo.getStockCode());
-            /*if(!circulateInfo.getStockCode().equals("000017")){
+            /*if(!circulateInfo.getStockCode().equals("605319")){
                 continue;
             }*/
             List<StockKbar> stockKbars = getStockKBarsDelete30Days(circulateInfo.getStockCode());
@@ -112,47 +98,45 @@ public class PlankTimeLevelComponent {
             for (StockKbar stockKbar:stockKbars){
                 limitQueue.offer(stockKbar);
                 Date date = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
-                if(date.before(DateUtil.parseDate("20180101", DateUtil.yyyyMMdd))){
+                if(date.before(DateUtil.parseDate("20210301", DateUtil.yyyyMMdd))){
                     continue;
                 }
-                if(date.after(DateUtil.parseDate("20190101", DateUtil.yyyyMMdd))){
+               /* if(date.after(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))){
                     continue;
-                }
+                }*/
                 if(preKbar!=null) {
-                    PlankTimeLevelDTO buyDTO = new PlankTimeLevelDTO();
+                    HighPlankBuyDTO buyDTO = new HighPlankBuyDTO();
                     buyDTO.setStockCode(circulateInfo.getStockCode());
                     buyDTO.setStockName(circulateInfo.getStockName());
                     buyDTO.setTradeDate(stockKbar.getKbarDate());
-                    buyDTO.setBuyPrice(stockKbar.getHighPrice());
-                    buyDTO.setCirculateZ(circulateInfo.getCirculateZ());
                     boolean highPlank = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getHighPrice(), preKbar.getClosePrice(),stockKbar.getKbarDate());
                     boolean endPlank = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), stockKbar.getClosePrice(), preKbar.getClosePrice(),stockKbar.getKbarDate());
-
                     if(endPlank) {
                         buyDTO.setEndFlag(1);
                     }else{
                         buyDTO.setEndFlag(0);
                     }
-                    if(highPlank && stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())>0) {
-                        String buyTime = firstBuyTime(stockKbar, preKbar.getClosePrice(), buyDTO);
-                        if (!StringUtils.isBlank(buyTime)) {
-                            Integer planks = calPlanks(limitQueue);
-                            buyDTO.setPlanks(planks);
-                            calProfit(stockKbars, buyDTO, stockKbar);
-                            calBeforeRateDay(stockKbars, buyDTO, stockKbar);
-                            List<PlankTimeLevelDTO> list = map.get(stockKbar.getKbarDate());
-                            if (list == null) {
-                                list = new ArrayList<>();
-                                map.put(stockKbar.getKbarDate(), list);
+                    buyDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                    if(highPlank && stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())!=0) {
+                        String planks = calPlanks(limitQueue);
+                        if(planks!=null&&!planks.equals("1连板")) {
+                            String buyTime = firstBuyTime(stockKbar, preKbar.getClosePrice());
+                            if (buyTime != null) {
+                                if (!StringUtils.isBlank(buyTime)) {
+                                    buyDTO.setPlanks(planks);
+                                    buyDTO.setBuyTime(buyTime);
+                                    buyDTO.setBuyPrice(stockKbar.getHighPrice());
+                                    calProfit(stockKbars, buyDTO, stockKbar);
+                                    list.add(buyDTO);
+                                }
                             }
-                            list.add(buyDTO);
                         }
                     }
                 }
                 preKbar = stockKbar;
             }
         }
-        return map;
+        return list;
     }
 
     public Map<String,List<PlankTimeLevelDTO>> getLevel(Map<String,List<PlankTimeLevelDTO>> map){
@@ -194,21 +178,13 @@ public class PlankTimeLevelComponent {
         return map;
     }
 
-    public String firstBuyTime(StockKbar stockKbar,BigDecimal preEndPrice,PlankTimeLevelDTO buyDTO){
+    public String firstBuyTime(StockKbar stockKbar,BigDecimal preEndPrice){
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd));
         if(CollectionUtils.isEmpty(datas)){
             return null;
         }
         boolean isPlank = true;
-        int times = 0;
-        String tradeTimeStamp = "09:25";
         for (ThirdSecondTransactionDataDTO data:datas){
-            if(tradeTimeStamp.equals(data.getTradeTime())){
-                times++;
-            }else{
-                times = 0;
-                tradeTimeStamp = data.getTradeTime();
-            }
             BigDecimal tradePrice = data.getTradePrice();
             boolean upperPrice = PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(), tradePrice, preEndPrice,stockKbar.getKbarDate());
             if(data.getTradeTime().equals("09:25")){
@@ -221,17 +197,10 @@ public class PlankTimeLevelComponent {
                 continue;
             }
             Integer tradeType = data.getTradeType();
-            if(upperPrice){
+            if(upperPrice && tradeType==1){
                 if(!isPlank){
-                    String tradeTime = data.getTradeTime();
-                    int timeInt = tradeTimeInt(tradeTime, times);
-                    buyDTO.setTimeInt(timeInt);
-                    buyDTO.setBuyTime(tradeTime);
                     return data.getTradeTime();
                 }
-            }
-
-            if(upperPrice && tradeType==1){
                 isPlank = true;
             }else{
                 isPlank = false;
@@ -239,27 +208,13 @@ public class PlankTimeLevelComponent {
         }
         return null;
     }
-    public static int tradeTimeInt(String tradeTime,int times){
-        String tradeTimeStr = tradeTime.replace(":", "");
-        if(tradeTimeStr.startsWith("0")){
-            tradeTimeStr = tradeTimeStr.substring(1);
-        }
-        int second = times * 3;
-        if(second>=10){
-            tradeTimeStr = tradeTimeStr + (times * 3);
-        }else{
-            tradeTimeStr = tradeTimeStr + "0"+(times * 3);
-        }
-        Integer timeInt = Integer.valueOf(tradeTimeStr);
-        return timeInt;
-    }
 
 
 
 
-    public Integer calPlanks(LimitQueue<StockKbar> limitQueue){
+    public String calPlanks(LimitQueue<StockKbar> limitQueue){
         if(limitQueue==null||limitQueue.size()<3){
-            return 0;
+            return null;
         }
         List<StockKbar> list = Lists.newArrayList();
         Iterator<StockKbar> iterator = limitQueue.iterator();
@@ -269,7 +224,9 @@ public class PlankTimeLevelComponent {
         }
         List<StockKbar> reverse = Lists.reverse(list);
         StockKbar nextKbar = null;
-        int planks  = 1;
+        int afterPlanks  = 1;
+        int beforePlanks = 0;
+        int  noPlankTime = 0;
         int i=0;
         for (StockKbar stockKbar:reverse){
             i++;
@@ -277,23 +234,30 @@ public class PlankTimeLevelComponent {
                 continue;
             }
             if(nextKbar!=null) {
-                boolean upperPrice = PriceUtil.isUpperPrice(nextKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice());
-                if (!upperPrice) {
-                    upperPrice = PriceUtil.isUpperPrice(nextKbar.getStockCode(), nextKbar.getAdjClosePrice(), stockKbar.getAdjClosePrice());
-                }
-                if(!upperPrice){
-                    return planks;
+                boolean endPlank = PriceUtil.isHistoryUpperPrice(nextKbar.getStockCode(), nextKbar.getClosePrice(), stockKbar.getClosePrice(),nextKbar.getKbarDate());
+                if(!endPlank){
+                    noPlankTime++;
                 }else{
-                    planks++;
+                    if(noPlankTime==0){
+                        afterPlanks++;
+                    }else if(noPlankTime == 1){
+                        beforePlanks++;
+                    }
                 }
+            }
+            if(noPlankTime>=2){
+                break;
             }
             nextKbar = stockKbar;
         }
-        return planks;
-
+        if(beforePlanks==0){
+            return afterPlanks+"连板";
+        }else{
+            return beforePlanks+"+"+afterPlanks+"板";
+        }
     }
 
-    public void calProfit(List<StockKbar> stockKbars,PlankTimeLevelDTO buyDTO,StockKbar buyStockKbar){
+    public void calProfit(List<StockKbar> stockKbars,HighPlankBuyDTO buyDTO,StockKbar buyStockKbar){
         boolean flag = false;
         int i=0;
         for (StockKbar stockKbar:stockKbars){
@@ -379,17 +343,18 @@ public class PlankTimeLevelComponent {
             query.setStockCode(stockCode);
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-            /*if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<=20){
+           if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<=20){
                 return null;
             }
-            stockKbars = stockKbars.subList(20, stockKbars.size());*/
+           // stockKbars = stockKbars.subList(20, stockKbars.size());
             List<StockKbar> result = Lists.newArrayList();
             for (StockKbar stockKbar:stockKbars){
                 if(stockKbar.getTradeQuantity()>0){
                     result.add(stockKbar);
                 }
             }
-            return result;
+            List<StockKbar> best = commonComponent.deleteNewStockTimes(stockKbars, 2000);
+            return best;
         }catch (Exception e){
             return null;
         }

@@ -135,10 +135,13 @@ public class HblTest extends BaseTestCase {
     private PlankExchangeAmountComponent plankExchangeAmountComponent;
     @Autowired
     private PlankTimeLevelComponent plankTimeLevelComponent;
+    @Autowired
+    private HighPlankBuyComponent highPlankBuyComponent;
 
     @Test
     public void test(){
-        plankTimeLevelComponent.plankExchangeAmountInfo();
+        highPlankBuyComponent.plankExchangeAmountInfo();
+        //plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
         //jiHeWuDiComponent.hs300Info();
@@ -218,7 +221,7 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
-        //raiseDropComponent.raiseDrop();
+        raiseDropComponent.raiseDrop();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
         System.out.println(JSONObject.toJSONString(data));*/
 
