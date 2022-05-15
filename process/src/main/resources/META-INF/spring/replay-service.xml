@@ -12,13 +12,13 @@
 						   http://www.springframework.org/schema/tx/spring-tx.xsd
 						   http://www.springframework.org/schema/aop
 						   http://www.springframework.org/schema/aop/spring-aop.xsd">
-	<context:property-placeholder location="classpath:jdbc.properties" />
+	<context:property-placeholder location="classpath:jdbc.properties"  ignore-unresolvable="true"/>
 	<!-- 事务支持 -->
 	<tx:annotation-driven transaction-manager="transactionManager" />
 	
 	<!-- 配置事务管理器，注意这里的dataSource和SqlSessionFactoryBean的dataSource要一致，不然事务就没有作用了 -->
 	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-		<property name="dataSource" ref="dataSource" />
+		<property name="dataSource" ref="shardingDataSource" />
 	</bean>
 
 	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">

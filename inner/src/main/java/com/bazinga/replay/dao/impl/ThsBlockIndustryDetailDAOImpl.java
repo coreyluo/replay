@@ -1,8 +1,8 @@
 package com.bazinga.replay.dao.impl;
 
-import com.bazinga.replay.dao.CirculateInfoDAO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.query.CirculateInfoQuery;
+import com.bazinga.replay.dao.ThsBlockIndustryDetailDAO;
+import com.bazinga.replay.model.ThsBlockIndustryDetail;
+import com.bazinga.replay.query.ThsBlockIndustryDetailQuery;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
@@ -14,16 +14,16 @@ import java.util.List;
 import org.springframework.util.Assert;
 
  /**
-  * 〈CirculateInfo DAO〉<p>
+  * 〈ThsBlockIndustryDetail DAO〉<p>
   * 〈功能详细描述〉
   *
   * @author
-  * @date 2021-05-10
+  * @date 2022-05-15
   */
 @Repository
-public class CirculateInfoDAOImpl extends SqlSessionDaoSupport implements CirculateInfoDAO {
+public class ThsBlockIndustryDetailDAOImpl extends SqlSessionDaoSupport implements ThsBlockIndustryDetailDAO {
 
-    private final String MAPPER_NAME = "com.bazinga.replay.dao.CirculateInfoDAO";
+    private final String MAPPER_NAME = "com.bazinga.replay.dao.ThsBlockIndustryDetailDAO";
 
     @Resource
     @Override
@@ -32,32 +32,28 @@ public class CirculateInfoDAOImpl extends SqlSessionDaoSupport implements Circul
     }
 
     @Override
-    public int insert(CirculateInfo record) {
+    public int insert(ThsBlockIndustryDetail record) {
         return this.getSqlSession().insert( MAPPER_NAME + ".insert", record);
     }
 
     @Override
-    public CirculateInfo selectByPrimaryKey(Long id) {
+    public ThsBlockIndustryDetail selectByPrimaryKey(Long id) {
         return this.getSqlSession().selectOne( MAPPER_NAME + ".selectByPrimaryKey", id);
     }
-     @Override
-     public void deleteByPrimaryKey(Long id) {
-         this.getSqlSession().delete( MAPPER_NAME + ".deleteByPrimaryKey", id);
-     }
 
     @Override
-    public int updateByPrimaryKeySelective(CirculateInfo record) {
+    public int updateByPrimaryKeySelective(ThsBlockIndustryDetail record) {
         return this.getSqlSession().update( MAPPER_NAME + ".updateByPrimaryKeySelective", record);
     }
 
     @Override
-    public List<CirculateInfo> selectByCondition(CirculateInfoQuery query) {
+    public List<ThsBlockIndustryDetail> selectByCondition(ThsBlockIndustryDetailQuery query) {
 
         return this.getSqlSession().selectList( MAPPER_NAME + ".selectByCondition", query);
     }
 
     @Override
-    public Integer countByCondition(CirculateInfoQuery query) {
+    public Integer countByCondition(ThsBlockIndustryDetailQuery query) {
 
         return (Integer)this.getSqlSession().selectOne( MAPPER_NAME + ".countByCondition", query);
     }

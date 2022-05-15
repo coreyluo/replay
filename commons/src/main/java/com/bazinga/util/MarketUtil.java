@@ -20,7 +20,7 @@ public class MarketUtil {
     }
 
     public static boolean isChuangYe(String stockCode) {
-        if(StringUtils.isEmpty(stockCode)){
+        if(StringUtils.isBlank(stockCode)){
             return false;
         }
         if(stockCode.startsWith("30")){
@@ -48,6 +48,36 @@ public class MarketUtil {
         }
         return true;
     }
+
+    public static boolean isAStocks(String stockCode) {
+        if(StringUtils.isBlank(stockCode)){
+            return false;
+        }
+        if(isShMain(stockCode)||isSzMain(stockCode)||isChuangYe(stockCode)){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isShMain(String stockCode) {
+        if(StringUtils.isEmpty(stockCode)){
+            return false;
+        }
+        if(stockCode.startsWith("60")){
+            return true;
+        }
+        return false;
+    }
+    public static boolean isSzMain(String stockCode) {
+        if(StringUtils.isEmpty(stockCode)){
+            return false;
+        }
+        if(stockCode.startsWith("00")){
+            return true;
+        }
+        return false;
+    }
+
 
     public static boolean isSHMarket(String stockCode){
         if(stockCode.startsWith("60")){

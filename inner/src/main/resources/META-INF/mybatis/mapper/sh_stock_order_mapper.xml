@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.ShStockOrderDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.ShStockOrder">
+        <result column="thscode" jdbcType="VARCHAR" property="thscode"/>
+        <result column="market" jdbcType="VARCHAR" property="market"/>
+        <result column="sec_type" jdbcType="VARCHAR" property="secType"/>
+        <result column="date_trade" jdbcType="TIMESTAMP" property="dateTrade"/>
+        <result column="time_trade" jdbcType="VARCHAR" property="timeTrade"/>
+        <result column="order_seq" jdbcType="DECIMAL" property="orderSeq"/>
+        <result column="order_aisle" jdbcType="DECIMAL" property="orderAisle"/>
+        <result column="order_type" jdbcType="VARCHAR" property="orderType"/>
+        <result column="original_order_seq" jdbcType="DECIMAL" property="originalOrderSeq"/>
+        <result column="order_price" jdbcType="DECIMAL" property="orderPrice"/>
+        <result column="remain_order_volume" jdbcType="DECIMAL" property="remainOrderVolume"/>
+        <result column="order_direction" jdbcType="VARCHAR" property="orderDirection"/>
+        <result column="business_seq" jdbcType="DECIMAL" property="businessSeq"/>
+        <result column="seq" jdbcType="DECIMAL" property="seq"/>
+        <result column="mseq" jdbcType="DECIMAL" property="mseq"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        thscode,
+            market,
+            sec_type,
+            date_trade,
+            time_trade,
+            order_seq,
+            order_aisle,
+            order_type,
+            original_order_seq,
+            order_price,
+            remain_order_volume,
+            order_direction,
+            business_seq,
+            seq,
+            mseq
+        </sql>
+
+    
+
+    <select id="selectByDateTrade" parameterType="hashmap" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from sh_stock_order
+        <where>
+            and date_trade = #{dateTrade, jdbcType=TIMESTAMP}
+        </where>
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.ShStockOrder" useGeneratedKeys="true" keyProperty="${table.primaryKey.fieldName}">
+        insert into sh_stock_order (<include refid="Base_Column_List" />)
+        values(
+        #{thscode, jdbcType=VARCHAR},
+            #{market, jdbcType=VARCHAR},
+            #{secType, jdbcType=VARCHAR},
+            #{dateTrade, jdbcType=TIMESTAMP},
+            #{timeTrade, jdbcType=VARCHAR},
+            #{orderSeq, jdbcType=DECIMAL},
+            #{orderAisle, jdbcType=DECIMAL},
+            #{orderType, jdbcType=VARCHAR},
+            #{originalOrderSeq, jdbcType=DECIMAL},
+            #{orderPrice, jdbcType=DECIMAL},
+            #{remainOrderVolume, jdbcType=DECIMAL},
+            #{orderDirection, jdbcType=VARCHAR},
+            #{businessSeq, jdbcType=DECIMAL},
+            #{seq, jdbcType=DECIMAL},
+            #{mseq, jdbcType=DECIMAL}
+            )
+    </insert>
+
+
+    <update id="updateByDateTrade" parameterType="com.bazinga.replay.model.ShStockOrder">
+        update sh_stock_order
+        <set>
+            <if test="thscode != null">
+                thscode = #{thscode, jdbcType=VARCHAR},
+            </if>
+            <if test="market != null">
+                market = #{market, jdbcType=VARCHAR},
+            </if>
+            <if test="secType != null">
+                sec_type = #{secType, jdbcType=VARCHAR},
+            </if>
+            <if test="timeTrade != null">
+                time_trade = #{timeTrade, jdbcType=VARCHAR},
+            </if>
+            <if test="orderSeq != null">
+                order_seq = #{orderSeq, jdbcType=DECIMAL},
+            </if>
+            <if test="orderAisle != null">
+                order_aisle = #{orderAisle, jdbcType=DECIMAL},
+            </if>
+            <if test="orderType != null">
+                order_type = #{orderType, jdbcType=VARCHAR},
+            </if>
+            <if test="originalOrderSeq != null">
+                original_order_seq = #{originalOrderSeq, jdbcType=DECIMAL},
+            </if>
+            <if test="orderPrice != null">
+                order_price = #{orderPrice, jdbcType=DECIMAL},
+            </if>
+            <if test="remainOrderVolume != null">
+                remain_order_volume = #{remainOrderVolume, jdbcType=DECIMAL},
+            </if>
+            <if test="orderDirection != null">
+                order_direction = #{orderDirection, jdbcType=VARCHAR},
+            </if>
+            <if test="businessSeq != null">
+                business_seq = #{businessSeq, jdbcType=DECIMAL},
+            </if>
+            <if test="seq != null">
+                seq = #{seq, jdbcType=DECIMAL},
+            </if>
+            <if test="mseq != null">
+                mseq = #{mseq, jdbcType=DECIMAL},
+            </if>
+        </set>
+        <where>
+            and date_trade = #{dateTrade, jdbcType=TIMESTAMP}
+        </where>
+    </update>
+
+
+    <sql id="Equal_Where_List">
+        <if test="thscode != null">
+            and thscode = #{thscode, jdbcType=VARCHAR}
+        </if>
+        <if test="market != null">
+            and market = #{market, jdbcType=VARCHAR}
+        </if>
+        <if test="secType != null">
+            and sec_type = #{secType, jdbcType=VARCHAR}
+        </if>
+        <if test="timeTrade != null">
+            and time_trade = #{timeTrade, jdbcType=VARCHAR}
+        </if>
+        <if test="orderSeq != null">
+            and order_seq = #{orderSeq, jdbcType=DECIMAL}
+        </if>
+        <if test="orderAisle != null">
+            and order_aisle = #{orderAisle, jdbcType=DECIMAL}
+        </if>
+        <if test="orderType != null">
+            and order_type = #{orderType, jdbcType=VARCHAR}
+        </if>
+        <if test="originalOrderSeq != null">
+            and original_order_seq = #{originalOrderSeq, jdbcType=DECIMAL}
+        </if>
+        <if test="orderPrice != null">
+            and order_price = #{orderPrice, jdbcType=DECIMAL}
+        </if>
+        <if test="remainOrderVolume != null">
+            and remain_order_volume = #{remainOrderVolume, jdbcType=DECIMAL}
+        </if>
+        <if test="orderDirection != null">
+            and order_direction = #{orderDirection, jdbcType=VARCHAR}
+        </if>
+        <if test="businessSeq != null">
+            and business_seq = #{businessSeq, jdbcType=DECIMAL}
+        </if>
+        <if test="seq != null">
+            and seq = #{seq, jdbcType=DECIMAL}
+        </if>
+        <if test="mseq != null">
+            and mseq = #{mseq, jdbcType=DECIMAL}
+        </if>
+        <if test="dateTrade != null">
+            <![CDATA[
+            and date_trade = #{dateTrade, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="timeTradeFrom != null">
+            <![CDATA[
+            and timeTradeFrom >= #{timeTradeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="timeTradeTo != null">
+            <![CDATA[
+            and timeTradeTo <= #{timeTradeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.ShStockOrderQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from sh_stock_order
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.ShStockOrderQuery" resultType="java.lang.Integer">
+        select count(1)
+        from sh_stock_order
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+    <select id="selectByConditionWithTable" parameterType="com.bazinga.replay.query.ShStockOrderQuery" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from sh_stock_order_${tableSuffix}
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+</mapper>

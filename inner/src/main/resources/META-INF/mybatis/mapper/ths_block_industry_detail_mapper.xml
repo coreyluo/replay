@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.bazinga.replay.dao.CirculateInfoDAO">
+<mapper namespace="com.bazinga.replay.dao.ThsBlockIndustryDetailDAO">
 
-    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.CirculateInfo">
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.ThsBlockIndustryDetail">
         <id column="id" jdbcType="BIGINT"  property="id" />
         <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
         <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
-        <result column="circulate" jdbcType="BIGINT" property="circulate"/>
-        <result column="stock_type" jdbcType="TINYINT" property="stockType"/>
-        <result column="market_type" jdbcType="TINYINT" property="marketType"/>
-        <result column="circulate_z" jdbcType="BIGINT" property="circulateZ"/>
+        <result column="block_name" jdbcType="VARCHAR" property="blockName"/>
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
 
 
@@ -18,43 +16,34 @@
         id,
             stock_code,
             stock_name,
-            circulate,
-            stock_type,
-            market_type,
-            circulate_z,
-            create_time
+            block_name,
+            create_time,
+            update_time
         </sql>
 
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
-        from circulate_info
+        from ths_block_industry_detail
         where id = #{id}
     </select>
 
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-        delete from circulate_info
-        where id = #{id}
-    </delete>
 
-
-    <insert id="insert" parameterType="com.bazinga.replay.model.CirculateInfo" useGeneratedKeys="true" keyProperty="id">
-        insert into circulate_info (<include refid="Base_Column_List" />)
+    <insert id="insert" parameterType="com.bazinga.replay.model.ThsBlockIndustryDetail" useGeneratedKeys="true" keyProperty="id">
+        insert into ths_block_industry_detail (<include refid="Base_Column_List" />)
         values(
         #{id, jdbcType=BIGINT},
             #{stockCode, jdbcType=VARCHAR},
             #{stockName, jdbcType=VARCHAR},
-            #{circulate, jdbcType=BIGINT},
-            #{stockType, jdbcType=TINYINT},
-            #{marketType, jdbcType=TINYINT},
-            #{circulateZ, jdbcType=BIGINT},
-            #{createTime, jdbcType=TIMESTAMP}
+            #{blockName, jdbcType=VARCHAR},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
             )
     </insert>
 
-    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.CirculateInfo">
-        update circulate_info
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.ThsBlockIndustryDetail">
+        update ths_block_industry_detail
         <set>
             <if test="stockCode != null">
                 stock_code = #{stockCode, jdbcType=VARCHAR},
@@ -62,20 +51,14 @@
             <if test="stockName != null">
                 stock_name = #{stockName, jdbcType=VARCHAR},
             </if>
-            <if test="circulate != null">
-                circulate = #{circulate, jdbcType=BIGINT},
-            </if>
-            <if test="stockType != null">
-                stock_type = #{stockType, jdbcType=TINYINT},
-            </if>
-            <if test="marketType != null">
-                market_type = #{marketType, jdbcType=TINYINT},
-            </if>
-            <if test="circulateZ != null">
-                circulate_z = #{circulateZ, jdbcType=BIGINT},
+            <if test="blockName != null">
+                block_name = #{blockName, jdbcType=VARCHAR},
             </if>
             <if test="createTime != null">
                 create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
             </if>
         </set>
         where id = #{id} limit 1
@@ -88,17 +71,8 @@
         <if test="stockName != null">
             and stock_name = #{stockName, jdbcType=VARCHAR}
         </if>
-        <if test="circulate != null">
-            and circulate = #{circulate, jdbcType=BIGINT}
-        </if>
-        <if test="stockType != null">
-            and stock_type = #{stockType, jdbcType=TINYINT}
-        </if>
-        <if test="marketType != null">
-            and market_type = #{marketType, jdbcType=TINYINT}
-        </if>
-        <if test="circulateZ != null">
-            and circulate_z = #{circulateZ, jdbcType=BIGINT}
+        <if test="blockName != null">
+            and block_name = #{blockName, jdbcType=VARCHAR}
         </if>
     </sql>
 
@@ -111,6 +85,16 @@
         <if test="createTimeTo != null">
             <![CDATA[
             and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
             ]]>
         </if>
     </sql>
@@ -130,10 +114,10 @@
         </if>
     </sql>
 
-    <select id="selectByCondition" parameterType="com.bazinga.replay.query.CirculateInfoQuery" resultMap="BaseResultMap">
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.ThsBlockIndustryDetailQuery" resultMap="BaseResultMap">
         select
             <include refid="Base_Column_List"/>
-        from circulate_info
+        from ths_block_industry_detail
         <where>
             <include refid="Equal_Where_List"/>
             <include refid="Range_Where_List"/>
@@ -145,9 +129,9 @@
         </if>
     </select>
 
-    <select id="countByCondition" parameterType="com.bazinga.replay.query.CirculateInfoQuery" resultType="java.lang.Integer">
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.ThsBlockIndustryDetailQuery" resultType="java.lang.Integer">
         select count(1)
-        from circulate_info
+        from ths_block_industry_detail
         <where>
             <include refid="Equal_Where_List"/>
             <include refid="Range_Where_List"/>

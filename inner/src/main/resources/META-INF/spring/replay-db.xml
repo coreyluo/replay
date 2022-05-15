@@ -56,12 +56,65 @@
         </property>
     </bean>
 
+    <bean id="thsDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url">
+            <value>
+                ${jdbc.druid.url1}
+            </value>
+        </property>
+        <property name="username">
+            <value>${jdbc.druid.user}</value>
+        </property>
+        <property name="password">
+            <value>${jdbc.druid.password}</value>
+        </property>
+        <property name="filters">
+            <value>${jdbc.druid.filters}</value>
+        </property>
+        <property name="maxActive">
+            <value>${jdbc.druid.maxActive}</value>
+        </property>
+        <property name="initialSize">
+            <value>${jdbc.druid.initialSize}</value>
+        </property>
+        <property name="maxWait">
+            <value>${jdbc.druid.maxWait}</value>
+        </property>
+        <property name="minIdle">
+            <value>${jdbc.druid.minIdle}</value>
+        </property>
+        <property name="timeBetweenEvictionRunsMillis">
+            <value>${jdbc.druid.timeBetweenEvictionRunsMillis}</value>
+        </property>
+        <property name="minEvictableIdleTimeMillis">
+            <value>${jdbc.druid.minEvictableIdleTimeMillis}</value>
+        </property>
+        <property name="validationQuery">
+            <value>${jdbc.druid.validationQuery}</value>
+        </property>
+        <property name="testWhileIdle">
+            <value>${jdbc.druid.testWhileIdle}</value>
+        </property>
+        <property name="testOnBorrow">
+            <value>${jdbc.druid.testOnBorrow}</value>
+        </property>
+        <property name="testOnReturn">
+            <value>${jdbc.druid.testOnReturn}</value>
+        </property>
+        <property name="poolPreparedStatements">
+            <value>${jdbc.druid.poolPreparedStatements}</value>
+        </property>
+        <property name="maxOpenPreparedStatements">
+            <value>${jdbc.druid.maxOpenPreparedStatements}</value>
+        </property>
+    </bean>
+
     <!-- myBatis文件 -->
-    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource"/>
+   <!-- <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="shardingDataSource"/>
         <property name="configLocation" value="classpath:META-INF/mybatis/replay-configuration.xml"/>
         <property name="mapperLocations" value="classpath*:META-INF/mybatis/mapper/*.xml"/>
-    </bean>
+    </bean>-->
 
 
 </beans>

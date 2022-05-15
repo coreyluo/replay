@@ -40,6 +40,12 @@ public class CirculateInfoServiceImpl implements CirculateInfoService {
     }
 
     @Override
+    public void deleteById(Long id) {
+        Assert.notNull(id, "主键不能为空");
+        circulateInfoDAO.deleteByPrimaryKey(id);
+    }
+
+    @Override
     public int updateById(CirculateInfo record) {
         Assert.notNull(record, "待更新记录不能为空");
         return circulateInfoDAO.updateByPrimaryKeySelective(record);

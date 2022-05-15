@@ -4,6 +4,7 @@ import com.bazinga.replay.component.StockBollingComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.component.StockCommonReplayComponent;
 import com.bazinga.replay.component.StockKbarComponent;
+import com.bazinga.util.DateUtil;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.util.DateUtil;
 import org.junit.Test;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -52,7 +54,15 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test3(){
-        stockBollingComponent.batchInitBoll();
+        //stockBollingComponent.batchInitBoll();
+      //  stockKbarComponent.calCurrentDayAvgLine(new Date());
+       /* try {
+            TimeUnit.HOURS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+
+        stockBollingComponent.calCurrentDayBoll(new Date());
     }
 
     @Test
