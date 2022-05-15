@@ -111,9 +111,6 @@ public class GuaiLilvComponent {
     public List<DaPanDropDTO> getHistoryInfo(StockKbar stockKbar,LimitQueue<StockKbar> limitQueue,StockKbar preStockKbar){
         List<DaPanDropDTO> list = new ArrayList<>();
         List<ThirdSecondTransactionDataDTO> datas = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
-        if(stockKbar.getKbarDate().equals("20190506")){
-            System.out.println(111111111);
-        }
         Long totalGather = null;
         Long total0930 = null;
         Long totalCurrent = 0L;
@@ -155,7 +152,7 @@ public class GuaiLilvComponent {
             Date currentDate = DateUtil.parseDate(data.getTradeTime(), DateUtil.HH_MM);
             Date signDate = DateUtil.parseDate("09:58",DateUtil.HH_MM);
             if(currentDate.after(signDate)) {
-                if (glv.compareTo(new BigDecimal("-1")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.3)) > 0) {
+                if (glv.compareTo(new BigDecimal("-4.8")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.78)) > 0) {
                     DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
                     daPanDropDTO.setDropRate(glv);
                     daPanDropDTO.setPercent(percent);
@@ -165,10 +162,10 @@ public class GuaiLilvComponent {
                     list.add(daPanDropDTO);
                 }
             }else {
-                if (glv.compareTo(new BigDecimal("-1")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(0.3)) > 0) {
-                    if (stockKbar.getKbarDate().equals("20200319")) {
+                if (glv.compareTo(new BigDecimal("-4.8")) == -1 && raiseRate != null && raiseRate.compareTo(new BigDecimal(1)) > 0) {
+                    /*if (stockKbar.getKbarDate().equals("20200319")) {
                         System.out.println(111111111);
-                    }
+                    }*/
                     DaPanDropDTO daPanDropDTO = new DaPanDropDTO();
                     daPanDropDTO.setDropRate(glv);
                     daPanDropDTO.setPercent(percent);

@@ -125,9 +125,27 @@ public class HblTest extends BaseTestCase {
     private ThsHttpTestComponent thsHttpTestComponent;
     @Autowired
     private UpperShadowBuyTimeComponent upperShadowBuyTimeComponent;
+    @Autowired
+    private XiaoTuComponent xiaoTuComponent;
+    @Autowired
+    private JiHeWuDiComponent jiHeWuDiComponent;
+    @Autowired
+    private DisableSellUtilComponent disableSellUtilComponent;
+    @Autowired
+    private PlankExchangeAmountComponent plankExchangeAmountComponent;
+    @Autowired
+    private PlankTimeLevelComponent plankTimeLevelComponent;
+    @Autowired
+    private HighPlankBuyComponent highPlankBuyComponent;
 
     @Test
     public void test(){
+        highPlankBuyComponent.plankExchangeAmountInfo();
+        //plankTimeLevelComponent.plankExchangeAmountInfo();
+        //plankExchangeAmountComponent.plankExchangeAmountInfo();
+        //disableSellUtilComponent.hs300Info();
+        //jiHeWuDiComponent.hs300Info();
+        //xiaoTuComponent.xiaoTuInfo();
         //thsHttpTestComponent.getAccessToken();
         //boxOneStockComponent.oneStockBox();
         //boxOneBetweenStockComponent.oneStockBox();
@@ -203,7 +221,7 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
-        //raiseDropComponent.raiseDrop();
+        raiseDropComponent.raiseDrop();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
         System.out.println(JSONObject.toJSONString(data));*/
 
