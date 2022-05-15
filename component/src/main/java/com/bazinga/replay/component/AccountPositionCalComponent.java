@@ -307,7 +307,7 @@ public class AccountPositionCalComponent {
 
     public void calTiger(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-       //  currentTradeDate = DateUtil.parseDate("20220429",DateUtil.yyyyMMdd);
+      //   currentTradeDate = DateUtil.parseDate("20220429",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -490,7 +490,7 @@ public class AccountPositionCalComponent {
                             }else if(orderInteger< 94000){
                                 positionCalDTO.setBuyStrategy("上影线");
                             }else {
-                                if(position.compareTo(new BigDecimal("25000"))>0){
+                                if(position.compareTo(new BigDecimal("20000"))>0){
                                     positionCalDTO.setBuyStrategy("日内突破");
                                 }else {
                                     positionCalDTO.setBuyStrategy("500勇士");

@@ -666,7 +666,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.setHeadKey(headList);
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-        circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
+        circulateInfos = circulateInfos.stream().filter(item->item.getStockCode().startsWith("0")).collect(Collectors.toList());
         TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
         for (CirculateInfo circulateInfo : circulateInfos) {
           /*  if(!"002011".equals(circulateInfo.getStockCode())){
@@ -838,7 +838,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\触及涨停含未封住相对打板价加权去一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\深触及涨停含未封住相对打板价加权去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

@@ -33,11 +33,17 @@ public class SellReplayImportDTO {
     @ExcelElement("发生日期")
     private Date kbarDate;
 
-  /*  @ExcelElement("委托时间")
-    private Date orderTime;*/
+    @ExcelElement("委托时间")
+    private Date orderTime;
 
-    @ExcelElement("是否炸板")
-    private Integer sealType;
+    @ExcelElement("成交时间")
+    private Date tradeTime;
+
+    @ExcelElement("买入方式")
+    private String buyType;
+
+   /* @ExcelElement("是否炸板")
+    private Integer sealType;*/
 
     @ExcelElement("盈亏比")
     private BigDecimal premiumRate;

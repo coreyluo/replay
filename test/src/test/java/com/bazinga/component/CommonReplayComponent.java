@@ -60,6 +60,26 @@ public class CommonReplayComponent {
     private RedisMoniorService redisMoniorService;
 
 
+    public Map<String,BigDecimal> initShRateMap(String fixTime){
+        Map<String,BigDecimal> resultMap = new HashMap<>();
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateFrom(DateUtil.parseDate("20210101",DateUtil.yyyy_MM_dd));
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+            List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData("999999", tradeDatePool.getTradeDate());
+            if(CollectionUtils.isEmpty(list)){
+                continue;
+            }
+            ThirdSecondTransactionDataDTO fixTimeData = historyTransactionDataComponent.getFixTimeDataOne(list, fixTime);
+            ThirdSecondTransactionDataDTO close = list.get(list.size() - 1);
+            BigDecimal rate = PriceUtil.getPricePercentRate(close.getTradePrice().subtract(fixTimeData.getTradePrice()), fixTimeData.getTradePrice());
+            resultMap.put(DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyy_MM_dd),rate);
+        }
+
+        return resultMap;
+    }
+
+
     public Map<String, List<PlankDayDTO>> getPlankDayInfoMap(){
 
         Map<String,List<PlankDayDTO>> resultMap = new HashMap<>();
