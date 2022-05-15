@@ -107,14 +107,15 @@ public class StockListComponent {
             tushareStockMap.put(circulateInfo.getStockCode(),circulateInfo);
             CirculateInfo all = map.get(circulateInfo.getStockCode());
             if(all==null){
-                circulateInfoService.save(circulateInfo);
+                //circulateInfoService.save(circulateInfo);
+                System.out.println(circulateInfo.getStockCode()+"=========");
             }
         }
         for (CirculateInfo circulateInfo:alls){
             CirculateInfo tuShareStock = tushareStockMap.get(circulateInfo.getStockCode());
             if(tuShareStock==null){
-                circulateInfoService.deleteById(circulateInfo.getId());
-                System.out.println(circulateInfo.getStockCode()+"=========");
+                //circulateInfoService.deleteById(circulateInfo.getId());
+                System.out.println(circulateInfo.getStockCode()+"=========删除");
             }
         }
         System.out.println(i);
@@ -201,6 +202,9 @@ public class StockListComponent {
         List<CirculateDetailDTO> list = Lists.newArrayList();
         for (CirculateDetailDTO circulateInfo:circulateInfos){
             if(MarketUtil.isAStocks(circulateInfo.getStockCode())){
+                if(circulateInfo.getStockCode().equals("002496")){
+                    System.out.println(111111);
+                }
                 if(circulateInfo.getStockName().contains("ST")||circulateInfo.getStockName().endsWith("退")||circulateInfo.getStockName().startsWith("退")){
                    // System.out.println(circulateInfo.getStockCode()+"==="+circulateInfo.getStockName());
                     continue;

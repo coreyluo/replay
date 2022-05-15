@@ -24,6 +24,7 @@
                 <!--logic-table逻辑表名称-->
                 <!--actual-data-nodes由数据源名 + 表名组成，以小数点分隔。多个表以逗号分隔，支持inline表达式。-->
                 <sharding:table-rule logic-table="sh_stock_order" actual-data-nodes="${shareding.table.rule1}"  table-strategy-ref="tableShardingStrategy" />
+                <sharding:table-rule logic-table="stock_order" actual-data-nodes="${shareding.table.rule2}"  table-strategy-ref="tableShardingStrategy" />
             </sharding:table-rules>
         </sharding:sharding-rule>
         <sharding:props>
