@@ -82,9 +82,9 @@ public class HighPlankBuyComponent {
         int m = 0;
         for (CirculateInfo circulateInfo:circulateInfos){
             m++;
-            if(m>100){
+            /*if(m>100){
                 continue;
-            }
+            }*/
             System.out.println(circulateInfo.getStockCode());
             /*if(!circulateInfo.getStockCode().equals("605319")){
                 continue;
@@ -98,12 +98,12 @@ public class HighPlankBuyComponent {
             for (StockKbar stockKbar:stockKbars){
                 limitQueue.offer(stockKbar);
                 Date date = DateUtil.parseDate(stockKbar.getKbarDate(), DateUtil.yyyyMMdd);
-                if(date.before(DateUtil.parseDate("20210301", DateUtil.yyyyMMdd))){
+                if(date.before(DateUtil.parseDate("20180101", DateUtil.yyyyMMdd))){
                     continue;
                 }
-               /* if(date.after(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))){
+                if(date.after(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))){
                     continue;
-                }*/
+                }
                 if(preKbar!=null) {
                     HighPlankBuyDTO buyDTO = new HighPlankBuyDTO();
                     buyDTO.setStockCode(circulateInfo.getStockCode());
