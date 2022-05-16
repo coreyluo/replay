@@ -194,8 +194,8 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
-        //synExcelComponent.zhuanZaiQuoteInfo();
-        thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
+        synExcelComponent.tableNameInfo();
+        //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
         //synExcelComponent.zhuanZaiQuoteInfo();
 
 

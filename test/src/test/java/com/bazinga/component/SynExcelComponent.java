@@ -6,11 +6,14 @@ import com.bazinga.exception.BusinessException;
 import com.bazinga.replay.model.BlockInfo;
 import com.bazinga.replay.model.ThsBlockInfo;
 import com.bazinga.replay.model.ThsBlockStockDetail;
+import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.ThsBlockInfoQuery;
 import com.bazinga.replay.query.ThsBlockStockDetailQuery;
+import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.ThsBlockInfoService;
 import com.bazinga.replay.service.ThsBlockStockDetailService;
 import com.bazinga.replay.service.ThsQuoteInfoService;
+import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
 import com.google.common.collect.Lists;
@@ -50,6 +53,8 @@ public class SynExcelComponent {
     private BlockHighBuyComponent blockHighBuyComponent;
     @Autowired
     private BoxOneTwoStockComponent boxOneTwoStockComponent;
+    @Autowired
+    private TradeDatePoolService tradeDatePoolService;
 
     public void otherStockBuy() {
         List<OtherExcelDTO> list = Lists.newArrayList();
@@ -302,6 +307,40 @@ public class SynExcelComponent {
         } catch (Exception e) {
             log.error("更新流通 z 信息异常", e);
             throw new BusinessException("文件解析及同步异常", e);
+        }
+
+    }
+
+    public void tableNameInfo() {
+        File file = new File("D:\\circulate\\name.xlsx");
+        if (!file.exists()) {
+            throw new BusinessException("文件:" + Conf.get("D:\\circulate\\name.xlsx") + "不存在");
+        }
+        List<String> tables = Lists.newArrayList();
+        try {
+            List<TableNameExcelDTO> dataList = new Excel2JavaPojoUtil(file).excel2JavaPojo(TableNameExcelDTO.class);
+            for (TableNameExcelDTO tableNameExcelDTO:dataList){
+                if(tableNameExcelDTO.getStockCode().startsWith("sh_stock_order")){
+                    String sh_stock_order = tableNameExcelDTO.getStockCode().replace("sh_stock_order", "");
+                    String replace = sh_stock_order.replace("_", "");
+                    tables.add(replace);
+                }
+            }
+            //thsDataUtilComponent.threadTest(dataList);
+            log.info("更新流通 z 信息完毕 size = {}", dataList.size());
+        } catch (Exception e) {
+            log.error("更新流通 z 信息异常", e);
+            throw new BusinessException("文件解析及同步异常", e);
+        }
+
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateFrom(DateUtil.parseDate("20210518",DateUtil.yyyyMMdd));
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
+            if(!tables.contains(format)){
+                System.out.println(format+"===========================");
+            }
         }
 
     }
