@@ -117,6 +117,10 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private One2TwoReplayComponent one2TwoReplayComponent;
+
+    @Autowired
+    private BlockIndustryReplayComponent blockIndustryReplayComponent;
+
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -296,10 +300,11 @@ public class ReplayTest extends BaseTestCase {
 
        // zuangReplayComponent.replay20220320();
       //  manyCannonReplayComponent.replay();
-        try {
+       /* try {
             bollingReplayComponent.replay();
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
+        blockIndustryReplayComponent.replay();
     }
 }
