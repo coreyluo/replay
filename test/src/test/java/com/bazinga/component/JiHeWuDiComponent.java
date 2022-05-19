@@ -131,6 +131,10 @@ public class JiHeWuDiComponent {
                 if (dateyyyyMMdd.before(DateUtil.parseDate("20210101", DateUtil.yyyyMMdd))) {
                     continue;
                 }
+
+                if (!dateyyyyMMdd.before(DateUtil.parseDate("20220101", DateUtil.yyyyMMdd))) {
+                    continue;
+                }
                 String stockCode = stockKbar.getStockCode()+"_"+stockKbar.getKbarDate();
                 RedisMonior redisMonior = redisMoniorService.getByRedisKey(stockCode);
                 if(redisMonior==null||StringUtils.isBlank(redisMonior.getRedisValue())){

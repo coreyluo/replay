@@ -35,6 +35,7 @@ public class DateUtil {
 	public final static String yyyyMMdd = "yyyyMMdd";
 	public final static String yyMMdd = "yyMMdd";
 	public static final String yyyy_MM_dd = "yyyy-MM-dd";
+	public static final String MMdd = "MMdd";
 	public final static String slashDateFormat = "yyyy/MM/dd";
 	public final static String slashDateFormat2 = "MM/dd/yyyy HH:mm:ss";
 	public final static String yyyyMMddHHmmssSSS = "yyyyMMddHHmmssSSS";

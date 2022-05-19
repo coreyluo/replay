@@ -61,6 +61,7 @@ public class StockAttributeReplayComponent {
                 List<StockKbar> stockKBars = getStockKBars(circulateInfo.getStockCode());
                 BigDecimal avgRangeDay10 = calAvgRangeDay10(stockKBars);
                 BigDecimal rateDay5 = calRateDay5(stockKBars);
+                BigDecimal rateDay3 = calRateDay3(stockKBars);
                 boolean marketNewFlag = isMarketNew(circulateInfo.getStockCode());
                 Integer markerNew  = 0;
                 if(marketNewFlag){
@@ -83,6 +84,7 @@ public class StockAttributeReplayComponent {
                 stockAttributeReplay.setAvgRangeDay10(avgRangeDay10);
                 stockAttributeReplay.setAvgAmountDay5(avgAmountDay5);
                 stockAttributeReplay.setRateDay5(rateDay5);
+                stockAttributeReplay.setRateDay3(rateDay3);
                 stockAttributeReplay.setMarketNew(markerNew);
                 stockAttributeReplay.setMarketValue(marketValue);
                 stockAttributeReplay.setPlanksDay10(planksDay10);
@@ -155,6 +157,25 @@ public class StockAttributeReplayComponent {
             if(i==6){
                 BigDecimal rateDay5 = PriceUtil.getPricePercentRate(firstKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
                 return rateDay5;
+            }
+        }
+        return null;
+    }
+
+    public BigDecimal calRateDay3(List<StockKbar> stockKbars){
+        if(CollectionUtils.isEmpty(stockKbars)||stockKbars.size()<4){
+            return null;
+        }
+        int i = 0;
+        StockKbar firstKbar = null;
+        for (StockKbar stockKbar:stockKbars){
+            i++;
+            if(i==1){
+                firstKbar = stockKbar;
+            }
+            if(i==4){
+                BigDecimal rateDay3 = PriceUtil.getPricePercentRate(firstKbar.getAdjClosePrice().subtract(stockKbar.getAdjClosePrice()), stockKbar.getAdjClosePrice());
+                return rateDay3;
             }
         }
         return null;

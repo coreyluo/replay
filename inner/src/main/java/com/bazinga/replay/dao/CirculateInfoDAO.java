@@ -29,6 +29,13 @@ public interface CirculateInfoDAO {
     CirculateInfo selectByPrimaryKey(Long id);
 
     /**
+     * 根据主键查询
+     *
+     * @param id 数据库主键
+     */
+    void deleteByPrimaryKey(Long id);
+
+    /**
      * 根据主键更新数据
      *
      * @param record 更新参数

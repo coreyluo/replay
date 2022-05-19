@@ -28,6 +28,8 @@ public interface CirculateInfoService {
      */
     CirculateInfo getById(Long id);
 
+    void deleteById(Long id);
+
     /**
      * 根据id更新一条数据
      *

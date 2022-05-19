@@ -69,7 +69,7 @@ public class BlockOpenReplayComponent {
     public void replay(String kbarDateFrom ,String kbarDateTo){
 
         List<BlockOpenReplayDTO> resultList = new ArrayList<>();
-        Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
+       // Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
         Map<String, List<RankDTO>> openAmountRankMap = getOpenAmountRank(kbarDateFrom,kbarDateTo);
 
         List<BlockInfo> blockInfos = blockInfoService.listByCondition(new BlockInfoQuery());
@@ -85,8 +85,7 @@ public class BlockOpenReplayComponent {
             blockNameMap.put(blockInfo.getBlockCode(),blockInfo.getBlockName());
         }
 
-        Map<String, Integer> blockPlankInfoMap = getPlankInfo(blockDetailMap);
-
+        Map<String, Integer> blockPlankInfoMap = getPlankInfo(blockDetailMap,kbarDateFrom,kbarDateTo);
 
         openAmountRankMap.forEach((kbarDate,list) -> {
             Date preTradeDate = commonComponent.preTradeDate(DateUtil.parseDate(kbarDate, DateUtil.yyyyMMdd));
@@ -150,7 +149,7 @@ public class BlockOpenReplayComponent {
                 exportDTO.setOpenAmount200(blockOpenAmountMap.get(blockCode));
                 exportDTO.setOpenAmountRank(blockOpenAmountRankMap.get(blockCode));
                 exportDTO.setTotalOpenAmount200(totalOpenAmount);
-                exportDTO.setShOpenRate(shOpenRateMap.get(kbarDate));
+               // exportDTO.setShOpenRate(shOpenRateMap.get(kbarDate));
                 BigDecimal totalOpenRate = rankList.stream().map(RankDTO::getOpenRate).reduce(BigDecimal::add).get();
                 BigDecimal totalPremium = rankList.stream().map(RankDTO::getPremium).reduce(BigDecimal::add).get();
                 exportDTO.setTotalOpenRate(totalOpenRate);
@@ -185,12 +184,13 @@ public class BlockOpenReplayComponent {
         ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板块竞价维度"+kbarDateFrom+"_"+kbarDateTo+".xls");
     }
 
-    private  Map<String,Integer>  getPlankInfo(Map<String, List<String>> blockDetailMap) {
+    private  Map<String,Integer>  getPlankInfo(Map<String, List<String>> blockDetailMap,String kbarDateFrom ,String kbarDateTo) {
 
         Map<String,Integer> resultMap = new HashMap<>();
 
         TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
-        tradeQuery.setTradeDateFrom(DateUtil.parseDate("20201201",DateUtil.yyyyMMdd));
+        tradeQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
+        tradeQuery.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
         tradeQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
         for (TradeDatePool tradeDatePool : tradeDatePools) {
@@ -343,13 +343,13 @@ public class BlockOpenReplayComponent {
                     StockKbar sellStockKbar = sellStockKbarList.get(1);
                     BigDecimal premium;
 
-                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                  /*  List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
                     if(CollectionUtils.isEmpty(list) || list.size()<20){
                         continue;
                     }
-                    ThirdSecondTransactionDataDTO buyDTO = list.get(10);
+                    ThirdSecondTransactionDataDTO buyDTO = list.get(10);*/
                     BigDecimal sellPrice = sellStockKbar.getOpenPrice().add(sellStockKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
-                    premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(buyDTO.getTradePrice()),buyDTO.getTradePrice());
+                    premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getOpenPrice()),stockKbar.getOpenPrice());
                    /* if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
 
                     }else {

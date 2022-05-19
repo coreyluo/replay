@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:sharding="http://shardingsphere.apache.org/schema/shardingsphere/sharding"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://shardingsphere.apache.org/schema/shardingsphere/sharding
+                        http://shardingsphere.apache.org/schema/shardingsphere/sharding/sharding.xsd">
+
+    <sharding:standard-strategy sharding-column="date_trade" id="tableShardingStrategy" precise-algorithm-ref="shStockOrderShardingAlgorithm"/>
+
+    <!-- 配置sharding-jdbc的数据源 -->
+    <sharding:data-source id="shardingDataSource">
+        <!--data-source-names数据源Bean列表，多个Bean以逗号分隔-->
+        <sharding:sharding-rule data-source-names="thsDataSource,dataSource" default-data-source-name="dataSource">
+            <!--table-rules表分片规则配置对象-->
+            <sharding:table-rules>
+                <!--logic-table逻辑表名称-->
+                <!--actual-data-nodes由数据源名 + 表名组成，以小数点分隔。多个表以逗号分隔，支持inline表达式。-->
+                <sharding:table-rule logic-table="sh_stock_order" actual-data-nodes="${shareding.table.rule1}"  table-strategy-ref="tableShardingStrategy" />
+            </sharding:table-rules>
+        </sharding:sharding-rule>
+        <sharding:props>
+            <prop key="sql.show">false</prop>
+        </sharding:props>
+    </sharding:data-source>
+
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="shardingDataSource"/>
+        <property name="configLocation" value="classpath:META-INF/mybatis/replay-configuration.xml"/>
+        <property name="mapperLocations" value="classpath*:META-INF/mybatis/mapper/*.xml"/>
+    </bean>
+</beans>

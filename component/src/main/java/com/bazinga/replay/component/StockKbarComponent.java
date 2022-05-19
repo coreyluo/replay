@@ -3,23 +3,17 @@ package com.bazinga.replay.component;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
-import com.bazinga.replay.convert.StockKbarConvert;
+import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.dto.AdjFactorDTO;
+import com.bazinga.replay.convert.StockKbarConvert;
+import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
-import com.bazinga.replay.model.CirculateInfo;
-import com.bazinga.replay.model.StockAverageLine;
-import com.bazinga.replay.model.StockKbar;
-import com.bazinga.replay.model.TradeDatePool;
-import com.bazinga.replay.query.CirculateInfoQuery;
-import com.bazinga.replay.query.StockAverageLineQuery;
-import com.bazinga.replay.query.StockKbarQuery;
-import com.bazinga.replay.query.TradeDatePoolQuery;
-import com.bazinga.replay.service.CirculateInfoService;
-import com.bazinga.replay.service.StockAverageLineService;
-import com.bazinga.replay.service.StockKbarService;
-import com.bazinga.replay.service.TradeDatePoolService;
+import com.bazinga.replay.model.*;
+import com.bazinga.replay.query.*;
+import com.bazinga.replay.service.*;
 import com.bazinga.util.DateFormatUtils;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
@@ -32,6 +26,7 @@ import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -71,8 +66,6 @@ public class StockKbarComponent {
 
     private static final ExecutorService AVGLINE_POOL = ThreadPoolUtils.create(8, 16, 512, "calAvgLinePool");
 
-    private ExecutorService THREAD_POOL = ThreadPoolUtils.create(4,8,8);
-
     public Map<String,Long> getCybMinQuantity(){
         Map<String,Long> resultMap = Maps.newHashMap();
         TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
@@ -98,7 +91,7 @@ public class StockKbarComponent {
     }
 
     public void batchInitAndSaveKbarDate(String stockCode,String stockName,int days){
-        int onceDays = 500;
+        int onceDays = 400;
         int index = (days / onceDays)+1;
         List<StockKbar> revers = Lists.newArrayList();
         for (int i=0;i<index;i++){
@@ -147,16 +140,8 @@ public class StockKbarComponent {
 
 
     public void initAndSaveKbarData(String stockCode, String stockName, int days) {
-        final List<StockKbar> stockKbarList = Lists.newArrayList();
-        if(days>500){
-            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, 500);
-            stockKbarList.addAll(StockKbarConvert.convert(dataTable, stockCode, stockName));
-            DataTable dataTableIn = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 500, days-500);
-            stockKbarList.addAll(StockKbarConvert.convert(dataTableIn, stockCode, stockName));
-        }else {
-            DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, days);
-            stockKbarList.addAll(StockKbarConvert.convert(dataTable, stockCode, stockName));
-        }
+        DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, stockCode, 0, days);
+        List<StockKbar> stockKbarList = StockKbarConvert.convert(dataTable, stockCode, stockName);
         if(CollectionUtils.isEmpty(stockKbarList)){
             return;
         }
@@ -165,19 +150,10 @@ public class StockKbarComponent {
             log.info("stockCode ={} http方式获取复权因子失败", stockCode);
             return;
         }
-        AdjFactorDTO adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate());
-        if(adjFactorDTO==null){
-            for(int i = 1;i<stockKbarList.size();i++) {
-                adjFactorDTO = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - i).getKbarDate());
-                if(adjFactorDTO!=null){
-                    break;
-                }
-            }
-        }
-        if(adjFactorDTO==null){
+        if(adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate())==null){
             return;
         }
-        BigDecimal maxAdjFactor =adjFactorDTO.getAdjFactor();
+        BigDecimal maxAdjFactor = adjFactorMap.get(stockKbarList.get(stockKbarList.size() - 1).getKbarDate()).getAdjFactor();
         transactionTemplate.execute((TransactionCallback<Void>) status -> {
             try {
                 stockKbarList.forEach(item -> {
@@ -326,7 +302,7 @@ public class StockKbarComponent {
             query.setStockCode(item.getStockCode());
             int count = stockKbarService.countByCondition(query);
             if (count == 0) {
-                initAndSaveKbarData(item.getStockCode(), item.getStockName(), 499);
+                batchInitAndSaveKbarDate(item.getStockCode(), item.getStockName(), 1100);
             }
         });
     }
@@ -337,23 +313,6 @@ public class StockKbarComponent {
         int count = stockKbarService.countByCondition(query);
         if (count == 0) {
             initAndSaveKbarData(stockCode, stockName, 105);
-        }
-    }
-
-    public void calCurrentDayAvgLine(Date date) {
-        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
-        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
-        int index = 0;
-        for (CirculateInfo item:circulateInfos) {
-            index = index + 1;
-            System.out.println(index + "=======================");
-            AVGLINE_POOL.execute(() -> {
-                StockAverageLine avgLine = stockAverageLineService.getByUniqueKey(item.getStockCode() + "" + DateUtil.format(date, DateUtil.yyyyMMdd)+ "" + 5);
-                if (avgLine == null) {
-                    calOneDayAvgLine(item.getStockCode(), item.getStockName(), 5,date);
-                }
-                System.out.println(item.getStockCode()+"结束");
-            });
         }
     }
 
@@ -457,6 +416,7 @@ public class StockKbarComponent {
         query.setLimit(days);
         query.addOrderBy("kbar_date", Sort.SortType.DESC);
         List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+
         if (CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size() < days) {
             return null;
         }
@@ -505,30 +465,70 @@ public class StockKbarComponent {
     public void batchcalAvgLine() {
         CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
-       // circulateInfos = circulateInfos.stream().filter(item->"000537".equals(item.getStockCode())).collect(Collectors.toList());
         int index = 0;
         for (CirculateInfo item:circulateInfos) {
             index = index + 1;
-           // AVGLINE_POOL.execute(() -> {
-                StockAverageLineQuery query = new StockAverageLineQuery();
-                query.setStockCode(item.getStockCode());
-                int count = stockAverageLineService.countByCondition(query);
-                if (count == 0) {
-                    //calAvgLine(item.getStock(), item.getStockName(), 60);
-                    /*for (int i = 5; i <=60 ; i++) {
-                        calAvgLine(item.getStockCode(), item.getStockName(), i);
-                    }*/
-                    //calAvgLine(item.getStock(), item.getStockName(), 10);
+            System.out.println(index + "=======================");
+            AVGLINE_POOL.execute(() -> {
+                calStockAvgLineOneTimes(item.getStockCode(),item.getStockName(),5);
+                System.out.println(item.getStockCode()+"结束");
+            });
+        }
+    }
 
-                    calAvgLine(item.getStockCode(), item.getStockName(), 5);
+    public void calCurrentDayAvgLine(Date date) {
+        CirculateInfoQuery circulateInfoQuery = new CirculateInfoQuery();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(circulateInfoQuery);
+        int index = 0;
+        for (CirculateInfo item:circulateInfos) {
+            index = index + 1;
+            System.out.println(index + "=======================");
+            //AVGLINE_POOL.execute(() -> {
+                StockAverageLine avgLine = stockAverageLineService.getByUniqueKey(item.getStockCode() + "" + DateUtil.format(date, DateUtil.yyyyMMdd)+ "" + 5);
+                if (avgLine == null) {
+                    calOneDayAvgLine(item.getStockCode(), item.getStockName(), 5,date);
                 }
                 System.out.println(item.getStockCode()+"结束");
            // });
         }
     }
 
-
-
+    public void calStockAvgLineOneTimes(String stockCode,String stockName,int days){
+        System.out.println(stockCode+"开始");
+        StockKbarQuery query = new StockKbarQuery();
+        query.setStockCode(stockCode);
+        query.addOrderBy("kbar_date", Sort.SortType.ASC);
+        List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+        if (CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size() < days) {
+            return;
+        }
+        StockAverageLineQuery stockAverageLineQuery = new StockAverageLineQuery();
+        stockAverageLineQuery.setStockCode(stockCode);
+        int count = stockAverageLineService.countByCondition(stockAverageLineQuery);
+        if (count > 0) {
+            return;
+        }
+        LimitQueue<StockKbar> limitQueue = new LimitQueue<>(days);
+        for (StockKbar stockKbar:stockKbarList){
+            limitQueue.offer(stockKbar);
+            if(limitQueue.size()<days){
+                continue;
+            }
+            ArrayList<StockKbar> list = Lists.newArrayList();
+            list.addAll(limitQueue);
+            Double avgPrice = list.stream().map(StockKbar::getAdjClosePrice).mapToDouble(BigDecimal::doubleValue).average().getAsDouble();
+            if (avgPrice != null) {
+                StockAverageLine stockAverageLine = new StockAverageLine();
+                stockAverageLine.setAveragePrice(new BigDecimal(avgPrice).setScale(2, RoundingMode.HALF_UP));
+                stockAverageLine.setDayType(days);
+                stockAverageLine.setKbarDate(stockKbar.getKbarDate());
+                stockAverageLine.setStockName(stockName);
+                stockAverageLine.setUniqueKey(stockCode + SymbolConstants.UNDERLINE + stockKbar.getKbarDate() + SymbolConstants.UNDERLINE + days);
+                stockAverageLine.setStockCode(stockCode);
+                stockAverageLineService.save(stockAverageLine);
+            }
+        }
+    }
 
     public Double avgLineResult(String stockCode, String kbarDate) {
         StockAverageLineQuery query = new StockAverageLineQuery();

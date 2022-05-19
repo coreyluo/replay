@@ -325,6 +325,25 @@
             <artifactId>xxl-excel</artifactId>
             <version>1.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId >org.python</groupId>
+            <artifactId>jython-standalone</artifactId>
+            <version>2.7.2</version>
+        </dependency>
+
+   <!--     <dependency>
+            <groupId>io.shardingsphere</groupId>
+            <artifactId>sharding-jdbc-core</artifactId>
+            <version>3.1.0</version>
+        </dependency>-->
+
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>sharding-jdbc-spring-namespace</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+
         <dependency>
             <groupId>com.bazinga</groupId>
             <artifactId>thsjdi</artifactId>
@@ -332,5 +351,6 @@
         </dependency>
 
     </dependencies>
+
 
 </project>

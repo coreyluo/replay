@@ -40,6 +40,10 @@ public class CirculateInfoDAOImpl extends SqlSessionDaoSupport implements Circul
     public CirculateInfo selectByPrimaryKey(Long id) {
         return this.getSqlSession().selectOne( MAPPER_NAME + ".selectByPrimaryKey", id);
     }
+     @Override
+     public void deleteByPrimaryKey(Long id) {
+         this.getSqlSession().delete( MAPPER_NAME + ".deleteByPrimaryKey", id);
+     }
 
     @Override
     public int updateByPrimaryKeySelective(CirculateInfo record) {

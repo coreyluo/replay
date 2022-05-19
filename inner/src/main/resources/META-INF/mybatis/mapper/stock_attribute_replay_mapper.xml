@@ -11,6 +11,7 @@
         <result column="avg_range_day10" jdbcType="DECIMAL" property="avgRangeDay10"/>
         <result column="avg_amount_day5" jdbcType="DECIMAL" property="avgAmountDay5"/>
         <result column="rate_day5" jdbcType="DECIMAL" property="rateDay5"/>
+        <result column="rate_day3" jdbcType="DECIMAL" property="rateDay3"/>
         <result column="market_new" jdbcType="TINYINT" property="marketNew"/>
         <result column="market_value" jdbcType="DECIMAL" property="marketValue"/>
         <result column="planks_day10" jdbcType="TINYINT" property="planksDay10"/>
@@ -33,6 +34,7 @@
             avg_range_day10,
             avg_amount_day5,
             rate_day5,
+            rate_day3,
             market_new,
             market_value,
             planks_day10,
@@ -79,6 +81,9 @@
             <if test="rateDay5 != null">
                 rate_day5 = #{rateDay5, jdbcType=DECIMAL},
             </if>
+            <if test="rateDay3 != null">
+                rate_day3 = #{rateDay3, jdbcType=DECIMAL},
+            </if>
             <if test="marketNew != null">
                 market_new = #{marketNew, jdbcType=TINYINT},
             </if>
@@ -120,6 +125,7 @@
             #{avgRangeDay10, jdbcType=DECIMAL},
             #{avgAmountDay5, jdbcType=DECIMAL},
         #{rateDay5, jdbcType=DECIMAL},
+        #{rateDay3, jdbcType=DECIMAL},
         #{marketNew, jdbcType=TINYINT},
         #{marketValue, jdbcType=DECIMAL},
         #{planksDay10, jdbcType=TINYINT},
@@ -154,6 +160,9 @@
                 <if test="rateDay5 != null">
                     rate_day5 = #{rateDay5, jdbcType=DECIMAL},
                 </if>
+            <if test="rateDay3 != null">
+                rate_day3 = #{rateDay3, jdbcType=DECIMAL},
+            </if>
                 <if test="marketNew != null">
                     market_new = #{marketNew, jdbcType=TINYINT},
                 </if>

@@ -53,6 +53,7 @@ public class StockAttributeReplayQuery extends PagingQuery implements Serializab
      * @是否索引   NO
      */
     private BigDecimal rateDay5;
+    private BigDecimal rateDay3;
 
     /**
      * 是不是新股 180天k线

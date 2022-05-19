@@ -20,6 +20,7 @@ import com.tradex.model.suport.DataTable;
 import com.tradex.util.TdxHqUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +49,9 @@ public class NewStockComponent {
             }
             List<CirculateInfoDTO> list = CiculateInfoDTOConvert.convert(dataTable);
             for (CirculateInfoDTO dto:list){
+                if(StringUtils.isBlank(dto.getStockName())||dto.getStockName().contains("ST")){
+                    continue;
+                }
                 if(dto.getStock().startsWith("60")||dto.getStock().startsWith("688")||dto.getStock().startsWith("689")){
                     isShangHaiNewStock(dto.getStock(),dto.getStockName());
                 }
@@ -65,6 +69,9 @@ public class NewStockComponent {
             }
             List<CirculateInfoDTO> list = CiculateInfoDTOConvert.convert(dataTable);
             for (CirculateInfoDTO dto:list){
+                if(StringUtils.isBlank(dto.getStockName())||dto.getStockName().contains("ST")){
+                    continue;
+                }
                 if(dto.getStock().startsWith("30")||dto.getStock().startsWith("00")){
                     isShengZhenNewStock(dto.getStock(),dto.getStockName());
                 }

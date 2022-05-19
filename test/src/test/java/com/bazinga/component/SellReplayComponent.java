@@ -21,6 +21,7 @@ import com.bazinga.util.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tradex.util.ExcelExportUtil;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +59,11 @@ public class SellReplayComponent {
     private CommonReplayComponent commonReplayComponent;
 
     public void replay300(){
-
-        List<Sell300ExportDTO> resultList = Lists.newArrayList();
-        File file = new File("E:/excelExport/威20220317.xlsx");
+       // Map<String, BigDecimal> shRateMap = commonReplayComponent.initShRateMap("10:00");
+        Map<String, BigDecimal> shRateMap = commonReplayComponent.initShRateMap("09:25");
+        List<PlankQueueTradeDTO> resultList = Lists.newArrayList();
+        File file = new File("E:/excelExport/盈亏表.xlsx");
+        File orderFile = new File("E:/excelExport/委托all_1.xlsx");
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         Map<String,CirculateInfo> circulateMap = new HashMap<>();
@@ -69,49 +72,107 @@ public class SellReplayComponent {
         }
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+            List<OrderCancelDTO> orderCancelList = new Excel2JavaPojoUtil(orderFile).excel2JavaPojo(OrderCancelDTO.class);
 
-         //   importList = importList.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
-       //     Map<String, OpenCompeteDTO> competeMap = commonReplayComponent.get300CompeteInfo();
+            Map<String,List<SellReplayImportDTO>> tempMap = new HashMap<>();
             for (SellReplayImportDTO importDTO : importList) {
-
-               /* if(importDTO.getSealType()==0){
-                    continue;
-                }*/
-
                 String kbarDate = DateUtil.format(importDTO.getKbarDate(),DateUtil.yyyyMMdd);
-                Date sellDate = commonComponent.afterTradeDate(importDTO.getKbarDate());
-                String uniqueKey = importDTO.getStockCode() + SymbolConstants.UNDERLINE + kbarDate;
-                StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
-                Sell300ExportDTO exportDTO = new Sell300ExportDTO();
-                exportDTO.setStockCode(importDTO.getStockCode());
-                exportDTO.setStockName(importDTO.getStockName());
-                if(stockKbar == null ){
-                    log.info("未获取到K线数据stockCode{} stockName{}",importDTO.getStockCode(),importDTO.getKbarDate());
-                    resultList.add(exportDTO);
-                    continue;
+                List<SellReplayImportDTO> list = tempMap.computeIfAbsent(kbarDate, k -> new ArrayList<>());
+                if(!"低吸".equals(importDTO.getBuyType())){
+                    list.add(importDTO);
                 }
-            //    OpenCompeteDTO openCompeteDTO = competeMap.get(uniqueKey);
+            }
+            Map<String ,BigDecimal> premiumMap = new HashMap<>();
+            Map<String , BigDecimal> afterHalfPremiumMap = new HashMap<>();
+            tempMap.forEach((key,list)->{
 
-                exportDTO.setStockCode(importDTO.getStockCode());
-                exportDTO.setStockName(importDTO.getStockName());
-                exportDTO.setKbarDate(kbarDate);
-               // exportDTO.setOrderTime(DateUtil.format(importDTO.getOrderTime(),DateUtil.HH_MM));
-                exportDTO.setSealType(importDTO.getSealType());
-//                exportDTO.setPremiumRate(importDTO.getPremiumRate().multiply(CommonConstant.DECIMAL_HUNDRED).setScale(2,BigDecimal.ROUND_HALF_UP));
+                Date competeDate = DateUtil.parseDate("1899-12-31 10:00:00", DateUtil.DEFAULT_FORMAT);
+                Date compete14Date = DateUtil.parseDate("1899-12-31 14:00:00", DateUtil.DEFAULT_FORMAT);
+                List<SellReplayImportDTO> afterHalfOrderList = list.stream().filter(item->item.getPremiumRate()!=null).filter(item -> item.getOrderTime().after(competeDate)).filter(item -> item.getOrderTime().before(compete14Date)).collect(Collectors.toList());
+                List<SellReplayImportDTO> allOrderList = list.stream().filter(item->item.getPremiumRate()!=null).filter(item -> item.getOrderTime().before(compete14Date)).collect(Collectors.toList());
+                if(!CollectionUtils.isEmpty(afterHalfOrderList) && !CollectionUtils.isEmpty(allOrderList)){
+                    BigDecimal afterHalfpremium = afterHalfOrderList.stream().map(SellReplayImportDTO::getPremiumRate).reduce(BigDecimal::add).get();
+                    BigDecimal premium = allOrderList.stream().map(SellReplayImportDTO::getPremiumRate).reduce(BigDecimal::add).get();
+                    premiumMap.put(key,premium);
+                    afterHalfPremiumMap.put(key, afterHalfpremium);
+                }
 
+            });
 
-              /*  List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(importDTO.getStockCode(), sellDate);
-                if(!CollectionUtils.isEmpty(list)){
-                    BigDecimal sellPrice = historyTransactionDataComponent
-                            .calMorningAvgPrice(importDTO.getStockCode(), DateUtil.format(sellDate, DateUtil.yyyyMMdd));
-                    exportDTO.setMonitorSellRate(PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice()));
-                }*/
-              exportDTO.setCirculateAmount(stockKbar.getHighPrice().multiply(new BigDecimal(circulateMap.get(exportDTO.getStockCode()).getCirculate().toString())));
-              exportDTO.setCirculateZAmount(stockKbar.getHighPrice().multiply(new BigDecimal(circulateMap.get(exportDTO.getStockCode()).getCirculateZ().toString())));
-                resultList.add(exportDTO);
+            Map<String,List<OrderCancelDTO>> cancelMap = new HashMap<>();
+            for (OrderCancelDTO orderCancelDTO : orderCancelList) {
+                String kbarDate = DateUtil.format(orderCancelDTO.getOrderDate(),DateUtil.yyyyMMdd);
+                List<OrderCancelDTO> orderCancelDTOList = cancelMap.computeIfAbsent(kbarDate, k -> new ArrayList<>());
+                orderCancelDTOList.add(orderCancelDTO);
             }
 
-            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\持仓市值字段增加.xls");
+            cancelMap.forEach((kbarDate,list)->{
+                Date afterTradeDate = commonComponent.afterTradeDate(DateUtil.parseDate(kbarDate, DateUtil.yyyyMMdd));
+                String afterKbarDate = DateUtil.format(afterTradeDate,DateUtil.yyyyMMdd);
+                Date tenClock = DateUtil.parseDate(kbarDate + " 10:00:00",DateUtil.DEFAULT_FORMAT);
+                int tradeCount =  0;
+                int queueCount = 0;
+               /* for (int i = 0; i < list.size(); i++) {
+                    OrderCancelDTO orderCancelDTO = list.get(i);
+
+                    if(orderCancelDTO.getStatus()==1){
+                        queueCount++;
+                    }else if(orderCancelDTO.getStatus()==3){
+                        if(orderCancelDTO.getCancelDate().after(tenClock)){
+                            queueCount++;
+                        }
+                    }else if(orderCancelDTO.getStatus()==4){
+                        if(orderCancelDTO.getCancelDate().before(tenClock)){
+                            tradeCount++;
+                        }else {
+                            queueCount++;
+                        }
+                    }
+                }*/
+                List<SellReplayImportDTO> dealList = tempMap.get(kbarDate);
+
+                List<String> dealStockList = new ArrayList<>();
+                if(!CollectionUtils.isEmpty(dealList)){
+                    dealStockList = dealList.stream().filter(item->item.getPremiumRate()!=null).map(SellReplayImportDTO::getStockCode).collect(Collectors.toList());
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    OrderCancelDTO orderCancelDTO = list.get(i);
+                    if(orderCancelDTO.getStatus()==1){
+                        queueCount++;
+                        if("20220511".equals(kbarDate)){
+                            log.info("排队stockCode{} ",orderCancelDTO.getStockCode());
+                        }
+                    }else if(orderCancelDTO.getStatus()==4){
+                        tradeCount++;
+                    }else if(orderCancelDTO.getStatus()==3 && !dealStockList.contains(orderCancelDTO.getStockCode()) ){
+                        Date date1457 = DateUtil.parseDate(kbarDate + "025700",DateUtil.yyyyMMddHHmmss);
+                        Date date1500 = DateUtil.parseDate(kbarDate + "030000",DateUtil.yyyyMMddHHmmss);
+                        if(orderCancelDTO.getCancelDate().before(date1500)&& orderCancelDTO.getCancelDate().after(date1457)){
+                            queueCount++;
+                            if("20220511".equals(kbarDate)){
+                                log.info("排队stockCode{} ",orderCancelDTO.getStockCode());
+                            }
+                        }
+                    }
+                }
+
+              //  log.info("kbarDate{} queueCount{} tradeCount{} premium{}",kbarDate,queueCount,tradeCount,afterHalfPremiumMap.get(kbarDate));
+                PlankQueueTradeDTO exportDTO = new PlankQueueTradeDTO();
+                exportDTO.setKbarDate(kbarDate);
+              /*  if(afterHalfPremiumMap.get(kbarDate)!=null){
+                    exportDTO.setPremium(afterHalfPremiumMap.get(kbarDate).multiply(CommonConstant.DECIMAL_HUNDRED).setScale(4,BigDecimal.ROUND_HALF_UP));
+                }*/
+                if(premiumMap.get(afterKbarDate)!=null){
+                    exportDTO.setPremium(premiumMap.get(afterKbarDate).multiply(CommonConstant.DECIMAL_HUNDRED).setScale(4,BigDecimal.ROUND_HALF_UP));
+                }
+                exportDTO.setQueueCount(queueCount);
+                exportDTO.setShRate(shRateMap.get(afterKbarDate));
+                exportDTO.setTradeCount(tradeCount);
+                resultList.add(exportDTO);
+            });
+            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板票排队成交快照15点.xls");
+
+
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
@@ -151,7 +212,7 @@ public class SellReplayComponent {
                 log.info("满足炸板条件 stockCode{} kbarDate{}",buyStockKbar.getStockCode(),buyStockKbar.getKbarDate());
                 SellReplayImportDTO importDTO = new SellReplayImportDTO();
                 importDTO.setKbarDate(DateUtil.parseDate(buyStockKbar.getKbarDate(),DateUtil.yyyyMMdd));
-                importDTO.setSealType(0);
+
                 importDTO.setStockCode(buyStockKbar.getStockCode());
                 importDTO.setStockName(buyStockKbar.getStockName());
                 importList.add(importDTO);
@@ -190,9 +251,9 @@ public class SellReplayComponent {
         List<Map> dataList = new ArrayList<>();
         try {
             out:for (SellReplayImportDTO sellReplayImportDTO : importList) {
-                if(sellReplayImportDTO.getSealType()!=0){
+              /*  if(sellReplayImportDTO.getSealType()!=0){
                     continue;
-                }
+                }*/
                 String currentKbarString = DateUtil.format(sellReplayImportDTO.getKbarDate(),DateUtil.yyyyMMdd);
                 String uniqueKey =  sellReplayImportDTO.getStockCode() + SymbolConstants.UNDERLINE + currentKbarString;
                 StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
