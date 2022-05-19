@@ -1,9 +1,12 @@
 package com.bazinga.component;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
+import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.BigExchangeTestBuyDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockKbar;
@@ -62,28 +65,77 @@ public class BlockIndustryReplayComponent {
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
 
-    public void replay(){
+
+    public void printShRateRelaticeFixTime(){
+        TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
+        tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20210518",DateUtil.yyyyMMdd));
+        tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
+
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+            List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData("999999", tradeDatePool.getTradeDate());
+            Date date = DateUtil.parseDate("20210818093000", DateUtil.yyyyMMddHHmmss);
+            int count = 0;
+
+            List<String> headList = new ArrayList<>();
+            while (count< 8){
+                date = DateUtil.addMinutes(date, 1);
+                count++;
+                headList.add(DateUtil.format(date,"HH:mm"));
+
+            }
+            List<BigDecimal> rateList = new ArrayList<>();
+            ThirdSecondTransactionDataDTO close = list.get(list.size() - 1);
+            for (String timeStr : headList) {
+                if("20220518".equals(DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd))){
+                    tradeDatePool.getTradeDate();
+                }
+                ThirdSecondTransactionDataDTO fixTimeData = historyTransactionDataComponent.getFixTimeDataOne(list, timeStr);
+                BigDecimal rate = PriceUtil.getPricePercentRate(close.getTradePrice().subtract(fixTimeData.getTradePrice()), fixTimeData.getTradePrice());
+                rateList.add(rate);
+            }
+            log.info("kbarDate{} 收益{}",DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd),JSONObject.toJSONString(rateList));
+        }
+
+
+
+
+    }
+
+
+    public void replay(String kbarDateFrom , String kbarDateTo){
         Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
         ExcelExportUtil excelExportUtil = new ExcelExportUtil();
         excelExportUtil.setWorkbook(workbook);
         excelExportUtil.setTitle("");
         excelExportUtil.setSheet(workbook.createSheet("sheet1"));
-        List<Map> dataList = Lists.newArrayList();
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
+
+        Map<String, CirculateInfo> circulateInfoMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            circulateInfoMap.put(circulateInfo.getStockCode(),circulateInfo);
+        }
+
 
         List<ThsBlockIndustryDetail> thsBlockIndustryDetails = thsBlockIndustryDetailService.listByCondition(new ThsBlockIndustryDetailQuery());
         Map<String,List<String>> blockIndustryMap = new HashMap<>();
         for (ThsBlockIndustryDetail thsBlockIndustryDetail : thsBlockIndustryDetails) {
+            if(thsBlockIndustryDetail.getBlockName() == null){
+                continue;
+            }
             List<String> list = blockIndustryMap.computeIfAbsent(thsBlockIndustryDetail.getBlockName(), k -> new ArrayList<>());
             list.add(thsBlockIndustryDetail.getStockCode().substring(2,8));
         }
 
         TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
-        tradeDateQuery.setTradeDateFrom(DateUtil.parseDate("20210501",DateUtil.yyyy_MM_dd));
+        tradeDateQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
+        tradeDateQuery.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
         tradeDateQuery.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeDateQuery);
+        List<Map> exportList = Lists.newArrayList();
 
         for (int i = 1; i < tradeDatePools.size()-1; i++) {
             TradeDatePool preTradeDatePool = tradeDatePools.get(i-1);
@@ -91,22 +143,84 @@ public class BlockIndustryReplayComponent {
             TradeDatePool aftertradeDatePool = tradeDatePools.get(i+1);
 
             blockIndustryMap.forEach((blockName,stockList)->{
+                List<Map> dataList = Lists.newArrayList();
+                int buyCount =0;
+                BigDecimal premium = BigDecimal.ZERO;
+                for (String stockCode : stockList) {
+                    StockKbarQuery query = new StockKbarQuery();
+                    query.setStockCode(stockCode);
+                    query.setKbarDateTo(DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd));
+                    query.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    query.setLimit(7);
+                    List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+                    if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<7){
+                        continue;
+                    }
+                    StockKbar stockKbar = stockKbarList.get(0);
+                    StockKbar preStockKbar = stockKbarList.get(1);
+                    if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
+                        continue;
+                    }
 
+                    if(stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())==0){
+                        continue;
+                    }
+
+                    int plank = calSerialsPlank(stockKbarList);
+                    if(plank!=1){
+                        continue;
+                    }
+                    String uniqueKey = stockCode + SymbolConstants.UNDERLINE + DateUtil.format(aftertradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+                    StockKbar sellStockKbar = stockKbarService.getByUniqueKey(uniqueKey);
+                    if(sellStockKbar == null || sellStockKbar.getTradeQuantity()==0){
+                        log.info("停牌 stockCode{} kbarDate{}",stockCode,DateUtil.format(aftertradeDatePool.getTradeDate(),DateUtil.yyyyMMdd));
+                        continue;
+                    }
+                    buyCount++;
+                    BigDecimal sellPrice = historyTransactionDataComponent.calAvgPrice(stockCode, aftertradeDatePool.getTradeDate());
+                    if(sellPrice!=null){
+                        BigDecimal sellRate = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getHighPrice()),stockKbar.getHighPrice());
+                        premium = premium.add(sellRate);
+                    }
+                }
                 List<String> groupByList = new ArrayList<>();
                 Map<String,BigDecimal> preAmountMap = new HashMap<>();
                 for (String stockCode : stockList) {
                     String uniqueKey = stockCode + SymbolConstants.UNDERLINE + DateUtil.format(preTradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
                     StockKbar preStockKbar = stockKbarService.getByUniqueKey(uniqueKey);
-                    if(preStockKbar!=null){
+                    CirculateInfo circulateInfo = circulateInfoMap.get(stockCode);
+                    if(preStockKbar!=null && circulateInfo!=null &&  preStockKbar.getClosePrice().floatValue() * circulateInfo.getCirculate()  < 300 * CommonConstant.ONE_BILLION){
                         preAmountMap.put(preStockKbar.getStockCode(),preStockKbar.getTradeAmount());
                     }
                 }
                 Map<String, BigDecimal> sortMap = SortUtil.sortByValue(preAmountMap);
+                int count = 0;
+                for (Map.Entry<String, BigDecimal> entry : sortMap.entrySet()) {
+                    if(count<10){
+                        groupByList.add(entry.getKey());
+                    }
+                    count++;
+                }
+                String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
+                String preKbarDate = DateUtil.format(preTradeDatePool.getTradeDate(), DateUtil.yyyyMMdd);
+                Map<String,Object> exportMap = new HashMap<>();
+                exportMap.put("kbarDate",kbarDate);
+                exportMap.put("blockName",blockName);
+                exportMap.put("shOpenRate",shOpenRateMap.get(kbarDate));
+                exportMap.put("canBuyCount",buyCount);
+                exportMap.put("totalPremium",premium);
+                BigDecimal preTradeAmount = BigDecimal.ZERO;
+                if("汽车零部件".equals(blockName) && "20220513".equals(kbarDate)){
+                    log.info("汽车零部件{}", JSONObject.toJSONString(groupByList));
+                }
 
                 for (String stockCode : groupByList) {
-                    String uniqueKey = stockCode + SymbolConstants.UNDERLINE + DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+                    preTradeAmount = preTradeAmount.add(preAmountMap.get(stockCode));
+                    String uniqueKey = stockCode + SymbolConstants.UNDERLINE + kbarDate;
+                    String preUniqueKey = stockCode + SymbolConstants.UNDERLINE + preKbarDate;
                     StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
-                    if(stockKbar == null){
+                    StockKbar preStockKbar = stockKbarService.getByUniqueKey(preUniqueKey);
+                    if(stockKbar == null || preStockKbar == null){
                         continue;
                     }
                     List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
@@ -119,96 +233,51 @@ public class BlockIndustryReplayComponent {
                         continue;
                     }
                     Map<String, Object> map = new HashMap<>();
-                    map.put("blockName",blockName);
-                    map.put("preTradeAmount",preAmountMap.get(stockCode));
-                    map.put("kbarDate",stockKbar.getKbarDate());
+
                     Map<String,List<ThirdSecondTransactionDataDTO>> tempMap = new HashMap<>();
-                    BigDecimal sellUpperPrice = PriceUtil.calUpperPrice(stockKbar.getStockCode(),stockKbar.getClosePrice());
+                    BigDecimal openAmount = BigDecimal.ZERO;
                     for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
-                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(stockKbar.getClosePrice()), stockKbar.getClosePrice());
+                        BigDecimal rate = PriceUtil.getPricePercentRate(transactionDataDTO.getTradePrice().subtract(preStockKbar.getClosePrice()), preStockKbar.getClosePrice());
                         if("09:25".equals(transactionDataDTO.getTradeTime())){
-                            map.put("openAmount",transactionDataDTO.getTradePrice().multiply(new BigDecimal(String.valueOf(transactionDataDTO.getTradeQuantity()*100))));
+                            openAmount = openAmount.add(transactionDataDTO.getTradePrice().multiply(new BigDecimal(String.valueOf(transactionDataDTO.getTradeQuantity()*100))));
                         }
                         map.put(transactionDataDTO.getTradeTime(),rate);
                     }
+                    map.put("openAmount",openAmount);
 
                     dataList.add(map);
-
                 }
+                exportMap.put("preTradeAmount",preTradeAmount);
+                BigDecimal openAmount = BigDecimal.ZERO;
+                for (Map itemMap : dataList) {
+                    if(itemMap.get("openAmount")!=null){
+                        openAmount = openAmount.add(new BigDecimal(itemMap.get("openAmount").toString()));
+                    }
+                }
+
+                for (int j = 7; j < headList.length; j++) {
+                    String attrKey = headList[j];
+                    BigDecimal preRate = BigDecimal.ZERO;
+                    BigDecimal totalRate = BigDecimal.ZERO;
+                    for (Map itemMap : dataList) {
+                        BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
+                        if(itemMap.get(attrKey) != null){
+                            preRate = new BigDecimal(itemMap.get(attrKey).toString());
+                        }
+                        totalRate = totalRate.add(rate);
+                    }
+                    exportMap.put(attrKey,totalRate);
+                }
+                exportMap.put("openAmount",openAmount);
+                exportList.add(exportMap);
             });
-
         }
-
-
-
-
-        Map<String,List<Map>> groupByMap = new HashMap<>();
-
-        for (Map map : dataList) {
-            List<Map> mapList = groupByMap.get(map.get("kbarDate").toString());
-            if(mapList == null){
-                mapList = new ArrayList<>();
-            }
-            mapList.add(map);
-            groupByMap.put(map.get("kbarDate").toString(),mapList);
-        }
-        List<Map> exportList = Lists.newArrayList();
-        groupByMap.forEach((key,list)->{
-            Map map = new HashMap<>();
-            map.put("kbarDate",key);
-            map.put("count",list.size());
-            Map<String,BigDecimal> openRateMap = new HashMap<>();
-            BigDecimal preTradeAmount = BigDecimal.ZERO;
-            BigDecimal openAmount = BigDecimal.ZERO;
-            for (Map itemMap : list) {
-                preTradeAmount = preTradeAmount.add(new BigDecimal(itemMap.get("preTradeAmount").toString()));
-                String  openAmountString = itemMap.get("openAmount") == null ? "0":itemMap.get("openAmount").toString();
-                openAmount = openAmount.add(new BigDecimal(openAmountString));
-            }
-            map.put("preTradeAmount",preTradeAmount);
-            map.put("openAmount",openAmount);
-            map.put("shOpenRate",shOpenRateMap.get(key));
-            for (int i = 5; i < headList.length; i++) {
-                String attrKey = headList[i];
-                BigDecimal totalRate = BigDecimal.ZERO;
-                BigDecimal preRate = BigDecimal.ZERO;
-                BigDecimal minRate = new BigDecimal("20");
-                BigDecimal maxRate = new BigDecimal("-20");
-                List<BigDecimal> rateList = Lists.newArrayList();
-                int overOpenCount = 0;
-                for (Map itemMap : list) {
-                    String stockCode = itemMap.get("stockCode").toString();
-                    BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
-                    if(i==5){
-                        openRateMap.put(stockCode,rate);
-                    }
-                    if(itemMap.get(attrKey) != null){
-                        preRate = new BigDecimal(itemMap.get(attrKey).toString());
-                    }
-                    BigDecimal relativeOpenRate = rate.subtract(openRateMap.get(stockCode));
-                    if(relativeOpenRate.compareTo(BigDecimal.ZERO) > 0){
-                        overOpenCount = overOpenCount + 1;
-                    }
-                    totalRate = totalRate.add(rate);
-                    if(rate.compareTo(minRate)<0){
-                        minRate = rate;
-                    }
-                    // rateList.add(rate);
-                }
-              /*  if(i>11 && i<18){
-                    map.put("overOpen"+ attrKey,""+ overOpenCount +"/"+ list.size());
-                }*/
-                map.put(attrKey,totalRate);
-            }
-            exportList.add(map);
-        });
-
         excelExportUtil.setData(exportList);
         excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\同花顺行业走势.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\同花顺行业"+kbarDateFrom+"_"+kbarDateTo+"走势去300亿.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
@@ -219,13 +288,13 @@ public class BlockIndustryReplayComponent {
 
     private  String[] getHeadList(){
         List<String> headList = Lists.newArrayList();
-        //  headList.add("stockCode");
-        //  headList.add("stockName");
         headList.add("kbarDate");
         headList.add("blockName");
         headList.add("preTradeAmount");
         headList.add("openAmount");
         headList.add("shOpenRate");
+        headList.add("canBuyCount");
+        headList.add("totalPremium");
 
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210818092900", DateUtil.yyyyMMddHHmmss);
@@ -241,20 +310,14 @@ public class BlockIndustryReplayComponent {
 
     private int calSerialsPlank(List<StockKbar> stockKbarList) {
         int planks = 1;
-        int unPlanks = 0;
         for (int i = stockKbarList.size() - 1; i > 1; i--) {
             StockKbar stockKbar = stockKbarList.get(i-1);
             StockKbar preStockKbar = stockKbarList.get(i - 2);
             if (StockKbarUtil.isUpperPrice(stockKbar, preStockKbar)) {
                 planks++;
-                continue;
             } else {
-                //unPlanks++;
                 return planks;
             }
-          /*  if(unPlanks>=2){
-                return planks;
-            }*/
         }
         return planks;
     }

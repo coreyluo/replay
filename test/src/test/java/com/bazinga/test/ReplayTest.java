@@ -129,8 +129,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invoke();
-       // middlePlankReplayComponent.invokeSecond();
+      //  middlePlankReplayComponent.invoke();
+        middlePlankReplayComponent.prePlankGroupBy();
     }
 
     @Test
@@ -305,6 +305,20 @@ public class ReplayTest extends BaseTestCase {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
-        blockIndustryReplayComponent.replay();
+        THREAD_POOL.execute(()->{
+            blockIndustryReplayComponent.replay("20210501","20211230");
+        });
+        THREAD_POOL.execute(()->{
+            blockIndustryReplayComponent.replay("20220101","20220517");
+        });
+
+            try {
+            TimeUnit.HOURS.sleep(24);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+      // blockIndustryReplayComponent.printShRateRelaticeFixTime();
+
     }
 }
