@@ -57,7 +57,7 @@ public class ThsDataComponent {
     public int thsLogin(){
         try {
             System.load("E://iFinDJava.dll");
-            int ret = JDIBridge.THS_iFinDLogin("ylz200", "620865");
+            int ret = JDIBridge.THS_iFinDLogin("ylz203", "182883");
             return ret;
         }catch (Exception e){
             log.error("同花顺登录失败",e);

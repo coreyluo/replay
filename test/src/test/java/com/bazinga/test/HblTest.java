@@ -225,7 +225,7 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
-        raiseDropComponent.raiseDrop();
+       // raiseDropComponent.raiseDrop();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
         System.out.println(JSONObject.toJSONString(data));*/
 
