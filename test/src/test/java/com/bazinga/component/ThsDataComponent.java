@@ -48,7 +48,7 @@ public class ThsDataComponent {
     }
 
     public void quoteInfo(){
-        String quote_str = JDIBridge.THS_Snapshot("301088.SZ","bid1;bid2;ask1;bidSize1;bidSize2;askSize1;amt;tradeTime;tradeDate;latest","","2022-04-21 09:15:00","2022-04-21 09:29:00");
+        String quote_str = JDIBridge.THS_HistoryQuotes("000001.SZ","open,high,low,close","","2022-05-18","2022-05-19");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             System.out.println(JSONObject.toJSONString(jsonObject));
@@ -102,7 +102,7 @@ public class ThsDataComponent {
             while(true)
             {
                // System.out.print(++a);
-                ret = JDIBridge.THS_iFinDLogin("ylz200", "620865");
+                ret = JDIBridge.THS_iFinDLogin("ylz203", "182883");
                 //System.out.println("THS_iFinDLogin ==> ");
 
 
