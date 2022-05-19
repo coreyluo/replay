@@ -137,10 +137,14 @@ public class HblTest extends BaseTestCase {
     private PlankTimeLevelComponent plankTimeLevelComponent;
     @Autowired
     private HighPlankBuyComponent highPlankBuyComponent;
+    @Autowired
+    private RelationWithSZComponent relationWithSZComponent;
 
     @Test
     public void test(){
-        highPlankBuyComponent.plankExchangeAmountInfo();
+        //relationWithSZComponent.getUpperInfo();
+        relationWithSZComponent.relativeWithSZInfo();
+        //highPlankBuyComponent.plankExchangeAmountInfo();
         //plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
@@ -194,9 +198,9 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.hotBlockDrop();
         //hotBlockDropBuyScoreComponent.hotDrop();
         //fastPlankComponent.fastPlank();
-        //synExcelComponent.zhuanZaiQuoteInfo();
-        thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
-        //synExcelComponent.zhuanZaiQuoteInfo();
+        synExcelComponent.tableNameInfo();
+        //thsDataUtilComponent.quoteInfo("127017","万青转债","2020-07-01");
+        synExcelComponent.zhuanZaiQuoteInfo();
 
 
 
@@ -221,7 +225,7 @@ public class HblTest extends BaseTestCase {
         //synExcelComponent.zhuanZaiChenWeiInfo();
         //blockDropOpenHighComponent.chaoDie();
         //blockDropNextOpenHighComponent.chaoDie();
-        raiseDropComponent.raiseDrop();
+       // raiseDropComponent.raiseDrop();
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
         System.out.println(JSONObject.toJSONString(data));*/
 

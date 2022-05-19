@@ -5,6 +5,7 @@ import com.bazinga.base.Sort;
 import com.bazinga.enums.PlankTypeEnum;
 import com.bazinga.queue.LimitQueue;
 import com.bazinga.replay.component.*;
+import com.bazinga.replay.convert.StockKbarConvert;
 import com.bazinga.replay.dto.AdjFactorDTO;
 import com.bazinga.replay.dto.CirculateDetailDTO;
 import com.bazinga.replay.dto.PlankTypeDTO;
@@ -237,6 +238,11 @@ public class BaseTestCase {
 
     @Test
     public void test3() {
+        //stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",1500);
+        DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.MIN5, "002642", 0, 100);
+        List<StockKbar> kbars = StockKbarConvert.convert(dataTable, "002642", "荣联科技");
+
+
         stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",1500);
         //stockKbarComponent.calCurrentDayAvgLine(DateUtil.parseDate("2022-04-18 15:30:30",DateUtil.DEFAULT_FORMAT));
         /*DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.DAY, "000001", 0, 800);
