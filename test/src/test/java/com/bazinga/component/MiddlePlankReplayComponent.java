@@ -445,9 +445,10 @@ public class MiddlePlankReplayComponent {
 
     }
 
-    public void invokejiaQuan(){
-
-        Map<String, Integer> plankHighCountMap = commonReplayComponent.getPlankHighCountMap();
+    /**
+     * 昨日碰涨停聚合走势
+     */
+    public void prePlankGroupBy(){
 
         Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");
@@ -456,85 +457,43 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.setTitle("");
         excelExportUtil.setSheet(workbook.createSheet("sheet1"));
         List<Map> dataList = Lists.newArrayList();
-        // excelExportUtil.set
         String[] headList = getJiaQuanHeadList();
         excelExportUtil.setHeadKey(headList);
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
         circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
-        TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
         for (CirculateInfo circulateInfo : circulateInfos) {
-      /*  if(!"002011".equals(circulateInfo.getStockCode())){
-            continue;
-        }*/
+
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20200415");
-          //  query.setKbarDateFrom("20220301");
+            query.setKbarDateFrom("20210415");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
-
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
                 continue;
             }
             for (int i = 15; i < stockKbars.size()-1; i++) {
 
-                // StockKbar aftstockKbar = stockKbars.get(i+1);
                 StockKbar stockKbar = stockKbars.get(i);
                 StockKbar preStockKbar = stockKbars.get(i-1);
                 StockKbar sellStockKbar = stockKbars.get(i+1);
                 List<StockKbar> kbarList = stockKbars.subList(i - 7, i + 1);
                 List<StockKbar> kbar15List = stockKbars.subList(i - 15, i + 1);
                 List<StockKbar> kbar10List = stockKbars.subList(i - 10, i + 1);
-                int plank = calSerialsPlank(kbarList);
 
-                /* if(plank<2 *//*|| plank > 4*//* ){
-                continue;
-            }*/
-
-          /*  PlankHighDTO plankHighDTO = PlankHighUtil.calTodayPlank(kbarList);
-            if(plankHighDTO.getPlankHigh()<2 || plankHighDTO.getPlankHigh() > 4 ){
-                continue;
-            }*/
                 if(!StockKbarUtil.isHighUpperPrice(stockKbar,preStockKbar)){
                     continue;
                 }
-                BigDecimal day10Rate = calDay10Rate(kbar10List);
-          /*  boolean isUpperS = false;
-
-            List<ThirdSecondTransactionDataDTO> plankList = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
-            for (ThirdSecondTransactionDataDTO transactionDataDTO : plankList) {
-                if(transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) ==0 && transactionDataDTO.getTradeType()==1){
-                   // log.info("判断有涨停s stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                   // stockKbar.setClosePrice(stockKbar.getHighPrice());
-                    isUpperS = true;
-                    break;
-                }
-            }*/
-
-           /* if(!isUpperS){
-                log.info("没有出现涨停S stockCode{},kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                continue;
-            }*/
-                Integer oneLinePlank = PlankHighUtil.calOneLinePlank(kbarList);
-                if(plank == oneLinePlank){
-                    log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                    continue;
-                }
-            /*if(oneLinePlank >= 2){
-                log.info("纯一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
-                continue;
-            }*/
                 if(commonComponent.isNewStock(stockKbar.getStockCode(),stockKbar.getKbarDate())){
                     log.info("新股判定 stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
                     continue;
                 }
-                BigDecimal highLowRatio = getHighLowRatio(kbar15List,stockKbar.getAdjHighPrice());
-                if(highLowRatio.compareTo(new BigDecimal("1.80"))>0){
-                    log.info("满足大于1.8系数 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
+                log.info("满足做题碰涨停条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
+
+                BigDecimal openRate = PriceUtil.getPricePercentRate(sellStockKbar.getOpenPrice().subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice());
+                if(openRate.compareTo(new BigDecimal("3")) <0 || openRate.compareTo(new BigDecimal("8"))>0){
                     continue;
                 }
-                log.info("满足中位股条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
                 List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
                 if(CollectionUtils.isEmpty(list)){
                     continue;
@@ -569,10 +528,7 @@ public class MiddlePlankReplayComponent {
             }
         }
 
-        getDiTianInfo();
-
         Map<String,List<Map>> groupByMap = new HashMap<>();
-
         for (Map map : dataList) {
             List<Map> mapList = groupByMap.get(map.get("kbarDate").toString());
             if(mapList == null){
@@ -622,13 +578,13 @@ public class MiddlePlankReplayComponent {
                         overOpenCount = overOpenCount + 1;
                     }
                     // totalRate = totalRate.add(rate);
-                    totalRate = totalRate.add(rate.multiply(new BigDecimal(itemMap.get("preTradeAmount").toString())));
+                    totalRate = totalRate.add(rate);
                     totalTrade = totalTrade.add(trade);
                     if(rate.compareTo(minRate)<0){
                         minRate = rate;
                     }
                 }
-                map.put(attrKey,totalRate.divide(preTradeAmount,2,BigDecimal.ROUND_HALF_UP));
+                map.put(attrKey,totalRate);
                 map.put(attrKey+"_trade",totalTrade);
             }
             exportList.add(map);
@@ -639,7 +595,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\触及涨停含未封住相对打板价加权去一字连板去新股含1.8成交量.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\触及涨停开3到8去新股聚合走势.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

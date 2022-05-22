@@ -117,6 +117,10 @@ public class ReplayTest extends BaseTestCase {
 
     @Autowired
     private One2TwoReplayComponent one2TwoReplayComponent;
+
+    @Autowired
+    private BlockIndustryReplayComponent blockIndustryReplayComponent;
+
     @Test
     public void test(){
         //blockHeadReplayComponent.invokeStrategy();
@@ -125,8 +129,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invoke();
-       // middlePlankReplayComponent.invokeSecond();
+      //  middlePlankReplayComponent.invoke();
+        middlePlankReplayComponent.prePlankGroupBy();
     }
 
     @Test
@@ -296,10 +300,25 @@ public class ReplayTest extends BaseTestCase {
 
        // zuangReplayComponent.replay20220320();
       //  manyCannonReplayComponent.replay();
-        try {
+       /* try {
             bollingReplayComponent.replay();
         } catch (Exception e) {
             e.printStackTrace();
+        }*/
+        THREAD_POOL.execute(()->{
+            blockIndustryReplayComponent.replay("20210501","20211230");
+        });
+        THREAD_POOL.execute(()->{
+            blockIndustryReplayComponent.replay("20220101","20220517");
+        });
+
+            try {
+            TimeUnit.HOURS.sleep(24);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+
+      // blockIndustryReplayComponent.printShRateRelaticeFixTime();
+
     }
 }

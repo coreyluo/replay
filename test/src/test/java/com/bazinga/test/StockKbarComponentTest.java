@@ -36,7 +36,7 @@ public class StockKbarComponentTest extends BaseTestCase {
 
         stockKbarComponent.batchUpdateDaily();
         stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",500);
-        //stockCommonReplayComponent.saveCommonReplay(new Date());
+       // stockKbarComponent.initAndSaveIndexGlobal();
     }
 
     @Test
@@ -47,8 +47,10 @@ public class StockKbarComponentTest extends BaseTestCase {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }*/
-        stockBollingComponent.calCurrentDayBoll(new Date());
-       // stockKbarComponent.calCurrentDayAvgLine(new Date());
+       // stockBollingComponent.calCurrentDayBoll(new Date());
+        stockKbarComponent.initSpecialStockAndSaveMin5KbarData("999999","上证指数",500);
+
+        // stockKbarComponent.calCurrentDayAvgLine(new Date());
         //stockBollingComponent.batchInitBoll();
     }
 
