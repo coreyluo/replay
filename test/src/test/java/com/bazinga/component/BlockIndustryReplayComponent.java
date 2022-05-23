@@ -189,7 +189,7 @@ public class BlockIndustryReplayComponent {
                     String uniqueKey = stockCode + SymbolConstants.UNDERLINE + DateUtil.format(preTradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
                     StockKbar preStockKbar = stockKbarService.getByUniqueKey(uniqueKey);
                     CirculateInfo circulateInfo = circulateInfoMap.get(stockCode);
-                    if(preStockKbar!=null && circulateInfo!=null &&  preStockKbar.getClosePrice().floatValue() * circulateInfo.getCirculate()  < 300 * CommonConstant.ONE_BILLION){
+                    if(preStockKbar!=null && circulateInfo!=null /*&&  preStockKbar.getClosePrice().floatValue() * circulateInfo.getCirculate()  < 300 * CommonConstant.ONE_BILLION*/){
                         preAmountMap.put(preStockKbar.getStockCode(),preStockKbar.getTradeAmount());
                     }
                 }
@@ -277,7 +277,7 @@ public class BlockIndustryReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\同花顺行业"+kbarDateFrom+"_"+kbarDateTo+"走势去300亿.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\同花顺行业"+kbarDateFrom+"_"+kbarDateTo+"走势.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {

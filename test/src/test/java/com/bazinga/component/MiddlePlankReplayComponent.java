@@ -1,6 +1,7 @@
 package com.bazinga.component;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.BlockCompeteDTO;
@@ -622,7 +623,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.setHeadKey(headList);
 
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-        circulateInfos = circulateInfos.stream().filter(item->item.getStockCode().startsWith("0")).collect(Collectors.toList());
+        circulateInfos = circulateInfos.stream().filter(item->!item.getStockCode().startsWith("3")).collect(Collectors.toList());
         TradeDatePoolQuery tradeDateQuery = new TradeDatePoolQuery();
         for (CirculateInfo circulateInfo : circulateInfos) {
           /*  if(!"002011".equals(circulateInfo.getStockCode())){
@@ -631,7 +632,7 @@ public class MiddlePlankReplayComponent {
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            query.setKbarDateFrom("20200415");
+            query.setKbarDateFrom("20210415");
             List<StockKbar> stockKbars = stockKbarService.listByCondition(query);
 
             if(CollectionUtils.isEmpty(stockKbars) || stockKbars.size()<8){
@@ -690,8 +691,11 @@ public class MiddlePlankReplayComponent {
                     continue;
                 }
                 BigDecimal highLowRatio = getHighLowRatio(kbar15List,stockKbar.getAdjHighPrice());
-                if(highLowRatio.compareTo(new BigDecimal("1.80"))>0){
-                    log.info("满足大于1.8系数 stockCode{} kbarDate{}", stockKbar.getStockCode(),stockKbar.getKbarDate());
+                if("20220520".equals(sellStockKbar.getKbarDate()) && "000779".equals(stockKbar.getStockCode())){
+                    log.info("highLowRatio{}", JSONObject.toJSONString(highLowRatio));
+                }
+                if(highLowRatio.compareTo(new BigDecimal("1.80"))>=0){
+                    log.info("满足大于1.8系数 stockCode{} kbarDate{} highLowRatio{}", stockKbar.getStockCode(),stockKbar.getKbarDate(),highLowRatio);
                     continue;
                 }
                 log.info("满足中位股条件 stockCode{} sellKbarDate{}", stockKbar.getStockCode(),sellStockKbar.getKbarDate());
@@ -740,9 +744,11 @@ public class MiddlePlankReplayComponent {
         }
         List<Map> exportList = Lists.newArrayList();
         groupByMap.forEach((key,list)->{
+
             Map map = new HashMap<>();
             map.put("kbarDate",key);
             map.put("count",list.size());
+
             Map<String,BigDecimal> openRateMap = new HashMap<>();
             BigDecimal preTradeAmount = BigDecimal.ZERO;
             BigDecimal openAmount = BigDecimal.ZERO;
@@ -762,8 +768,10 @@ public class MiddlePlankReplayComponent {
                 BigDecimal maxRate = new BigDecimal("-20");
                 List<BigDecimal> rateList = Lists.newArrayList();
                 int overOpenCount = 0;
+                List<String> stockCodeList = new ArrayList<>();
                 for (Map itemMap : list) {
                     String stockCode = itemMap.get("stockCode").toString();
+                    stockCodeList.add(stockCode);
                     BigDecimal rate = itemMap.get(attrKey) == null ? preRate:new BigDecimal(itemMap.get(attrKey).toString());
                     if(i==5){
                         openRateMap.put(stockCode,rate);
@@ -781,6 +789,9 @@ public class MiddlePlankReplayComponent {
                     }
                    // rateList.add(rate);
                 }
+                if("20220520".equals(key)){
+                    log.info("list{}", JSONObject.toJSONString(stockCodeList));
+                }
               /*  if(i>11 && i<18){
                     map.put("overOpen"+ attrKey,""+ overOpenCount +"/"+ list.size());
                 }*/
@@ -794,7 +805,7 @@ public class MiddlePlankReplayComponent {
         excelExportUtil.writeMainData(1);
 
         try {
-            FileOutputStream output=new FileOutputStream("E:\\excelExport\\深触及涨停含未封住相对打板价加权去一字连板去新股含1.8.xls");
+            FileOutputStream output=new FileOutputStream("E:\\excelExport\\触及涨停含未封住去一字连板去新股含1.8.xls");
             workbook.write(output);
             output.flush();
         } catch (IOException e) {
@@ -855,7 +866,7 @@ public class MiddlePlankReplayComponent {
     private BigDecimal getHighLowRatio(List<StockKbar> kbar15List,BigDecimal adjHighPrice) {
         BigDecimal lowestPrice= kbar15List.get(0).getAdjLowPrice();
         for (StockKbar stockKbar : kbar15List) {
-            if(stockKbar.getAdjLowPrice().compareTo(BigDecimal.ZERO)<0){
+            if(stockKbar.getAdjLowPrice().compareTo(lowestPrice)<0){
                 lowestPrice = stockKbar.getAdjLowPrice();
             }
         }
