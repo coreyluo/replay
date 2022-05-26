@@ -86,6 +86,50 @@ public class ThsDataUtilComponent {
         }*/
     }
 
+    public void quoteQiHuo(String stockCode,String stockName,String tradeDate){
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
+        String quote_str = JDIBridge.THS_Snapshot("ICZL.CFE","bid1;ask1;latest;amt;vol;bidSize1;askSize1","",tradeDate+" 09:25:00",tradeDate+" 15:10:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> amts = tableInfo.getJSONArray("amt").toJavaList(BigDecimal.class);
+            List<BigDecimal> vols = tableInfo.getJSONArray("vol").toJavaList(BigDecimal.class);
+            List<BigDecimal> latests = tableInfo.getJSONArray("latest").toJavaList(BigDecimal.class);
+            List<BigDecimal> bid1s = tableInfo.getJSONArray("bid1").toJavaList(BigDecimal.class);
+            List<BigDecimal> ask1s = tableInfo.getJSONArray("ask1").toJavaList(BigDecimal.class);
+            List<BigDecimal> bidSize1s = tableInfo.getJSONArray("bidSize1").toJavaList(BigDecimal.class);
+            List<BigDecimal> askSize1s = tableInfo.getJSONArray("askSize1").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.DEFAULT_FORMAT);
+                ThsQuoteInfo quote = new ThsQuoteInfo();
+                quote.setStockCode("ICZL");
+                quote.setStockName("中证500股指期货");
+                quote.setQuoteDate(DateUtil.format(date,DateUtil.yyyyMMdd));
+                quote.setQuoteTime(DateUtil.format(date,DateUtil.HHMMSS));
+                quote.setCurrentPrice(latests.get(i));
+                quote.setBid1(bid1s.get(i));
+                quote.setAsk1(ask1s.get(i));
+                quote.setBidSize1(bidSize1s.get(i).longValue());
+                quote.setAskSize1(askSize1s.get(i).longValue());
+                quote.setAmt(amts.get(i));
+                quote.setVol(vols.get(i).longValue());
+                thsQuoteInfoService.save(quote);
+                i++;
+            }
+        }
+    }
+
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
         System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
         String stockKey = getStockKey(stockCode);
