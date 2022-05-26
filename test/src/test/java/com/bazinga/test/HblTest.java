@@ -208,7 +208,7 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test3(){
-        thsDataComponent.zhuanZaiStocks();
+        //thsDataComponent.zhuanZaiStocks();
         //yesterdayPlankRateComponent.yesterdayPlankRate();
         //zhongZheng500Component.zz500Buy();
         /*zhongZheng500TwoComponent.zz500BuyTwo();
@@ -229,7 +229,7 @@ public class HblTest extends BaseTestCase {
         /*List<ThirdSecondTransactionDataDTO> data = historyTransactionDataComponent.getData("000001", "20211220");
         System.out.println(JSONObject.toJSONString(data));*/
 
-            /*for (int i=2000;i>=0;i--) {
+            for (int i=2000;i>=0;i--) {
                 DataTable securityBars = TdxHqUtil.getBlockSecurityBars(KCate.DAY, "999999", i, 1);
                 KBarDTO kbar = KBarDTOConvert.convertSZKBar(securityBars);
                 TradeDatePool tradeDatePool = new TradeDatePool();
@@ -237,7 +237,7 @@ public class HblTest extends BaseTestCase {
                 tradeDatePool.setTradeDate(DateUtil.parseDate(format+" 09:09:09",DateUtil.DEFAULT_FORMAT));
                 tradeDatePool.setCreateTime(new Date());
                 tradeDatePoolService.save(tradeDatePool);
-            }*/
+            }
 
 
 

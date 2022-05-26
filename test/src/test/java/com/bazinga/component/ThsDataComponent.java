@@ -112,6 +112,7 @@ public class ThsDataComponent {
 
                /* String change = JDIBridge.THS_HistoryQuotes("113528.SH", "change", "PriceType:1", "2021-10-29", "2021-11-09");
                 System.out.println("quote ==>"+change);*/
+
                 String s    = JDIBridge.THS_HistoryQuotes("000001.SZ","open,high,low,close","","2022-05-18","2022-05-19");
                 System.out.println(s);
 

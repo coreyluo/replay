@@ -14,6 +14,7 @@ import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.*;
 import com.bazinga.replay.query.*;
 import com.bazinga.replay.service.*;
+import com.bazinga.replay.util.TuShareUtil;
 import com.bazinga.util.DateFormatUtils;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.PriceUtil;
@@ -202,6 +203,34 @@ public class StockKbarComponent {
             log.info("跑昨日涨停数据异常",e);
         }
     }
+
+
+    public void initSpecialStockAndSaveMin5KbarData(String stockCode, String stockName, int days) {
+        try {
+            for(int i=0;i<days;i++) {
+                DataTable dataTable = TdxHqUtil.getSecurityBars(KCate.MIN5, stockCode, i, 1);
+                List<StockKbar> stockKbarList = StockKbarConvert.convertSpecial(dataTable, stockCode, stockName);
+                if (CollectionUtils.isEmpty(stockKbarList)) {
+                    return;
+                }
+                for (StockKbar stockKbar : stockKbarList) {
+                    stockKbar.setStockCode(stockCode+ SymbolConstants.UNDERLINE + 5);
+                    stockKbar.setAdjClosePrice(stockKbar.getClosePrice());
+                    stockKbar.setAdjOpenPrice(stockKbar.getOpenPrice());
+                    stockKbar.setAdjHighPrice(stockKbar.getHighPrice());
+                    stockKbar.setAdjLowPrice(stockKbar.getLowPrice());
+                    StockKbar byUniqueKey = stockKbarService.getByUniqueKey(stockKbar.getUniqueKey());
+                    if (byUniqueKey == null) {
+                        stockKbarService.save(stockKbar);
+                    }
+
+                }
+            }
+        }catch (Exception e){
+            log.info("跑昨日涨停数据异常",e);
+        }
+    }
+
 
 
     public void updateKbarDataDaily(String stockCode, String stockName) {
@@ -644,6 +673,16 @@ public class StockKbarComponent {
             return result;
         }
         return list;
+    }
+
+
+    public void initAndSaveIndexGlobal(){
+
+        List<StockKbar> globalIndexKbarList = TuShareUtil.getGlobalIndexKbar("IXIC", "纳斯达克", "20180101");
+        for (StockKbar stockKbar : globalIndexKbarList) {
+            stockKbarService.save(stockKbar);
+        }
+
     }
 
 
