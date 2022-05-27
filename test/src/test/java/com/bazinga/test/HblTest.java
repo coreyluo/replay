@@ -142,8 +142,9 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
-        //relationWithSZComponent.getUpperInfo();
-        relationWithSZComponent.relativeWithSZInfo();
+        thsDataUtilComponent.quoteQiHuo("","","2022-05-24");
+        relationWithSZComponent.getUpperInfo();
+       //relationWithSZComponent.relativeWithSZInfo();
         //highPlankBuyComponent.plankExchangeAmountInfo();
         //plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
