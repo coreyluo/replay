@@ -114,7 +114,6 @@ public class CommonReplayComponent {
     public Map<String, Integer> endPlanksMap(List<CirculateInfo> circulateInfos){
         Map<String, Integer> map = new HashMap<>();
         for (CirculateInfo circulateInfo:circulateInfos){
-            System.out.println(circulateInfo.getStockCode());
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             //query.addOrderBy("kbar_date", Sort.SortType.ASC);

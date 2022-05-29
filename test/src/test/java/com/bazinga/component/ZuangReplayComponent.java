@@ -4,6 +4,7 @@ import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
 import com.bazinga.dto.SellReplayImportDTO;
 import com.bazinga.dto.ZuangExportDTO;
+import com.bazinga.dto.ZuangLowAmountDTO;
 import com.bazinga.dto.ZuangTradeDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
@@ -48,6 +49,128 @@ public class ZuangReplayComponent {
 
     @Autowired
     private CommonReplayComponent commonReplayComponent;
+
+    public  void replayLowAmount(){
+        File file = new File("E:/excelExport/盈亏表.xlsx");
+
+        try {
+            List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+            Map<String, SellReplayImportDTO> realMap = new HashMap<>();
+            for (SellReplayImportDTO importDTO : importList) {
+                if("打板".equals(importDTO.getBuyType())){
+                    realMap.put(importDTO.getStockCode() + DateUtil.format(importDTO.getKbarDate(),DateUtil.yyyyMMdd),importDTO);
+                }
+            }
+            Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
+            List<ZuangLowAmountDTO> resultList = new ArrayList<>();
+            List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+            for (CirculateInfo circulateInfo : circulateInfos) {
+
+                StockKbarQuery query = new StockKbarQuery();
+                query.setStockCode(circulateInfo.getStockCode());
+                query.setKbarDateFrom("20210418");
+                query.addOrderBy("kbar_date", Sort.SortType.ASC);
+                List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+
+                for (int i = 1; i < stockKbarList.size() ; i++) {
+                    StockKbar stockKbar = stockKbarList.get(i);
+                    // StockKbar sellStockKbar = stockKbarList.get(i + 1);
+                    StockKbar preStockKbar = stockKbarList.get(i - 1);
+                    String uniqueKey = stockKbar.getStockCode() + stockKbar.getKbarDate();
+                    if(!realMap.keySet().contains(uniqueKey)){
+                        continue;
+                    }
+                    if (!StockKbarUtil.isHighUpperPrice(stockKbar, preStockKbar)) {
+                        continue;
+                    }
+
+                    BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice());
+
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                    if (CollectionUtils.isEmpty(list)) {
+                        continue;
+                    }
+                    ThirdSecondTransactionDataDTO open = list.get(0);
+
+                    BigDecimal openAmount = open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity().toString())).multiply(CommonConstant.DECIMAL_HUNDRED);
+
+                    if (open.getTradePrice().compareTo(stockKbar.getHighPrice()) == 0) {
+                        open.setTradeType(1);
+                    }
+                    boolean signFlag = false;
+                    BigDecimal tradeAmount = BigDecimal.ZERO;
+                    String plankTime = "";
+                    String tradeTime = "";
+                    int plankIndex =-1;
+
+                    for (int j = 1; j < list.size(); j++) {
+                        ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                        ThirdSecondTransactionDataDTO preTransactionDataDTO = list.get(j - 1);
+                        if (transactionDataDTO.getTradeType() == 1 && stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice()) == 0) {
+                            if (preTransactionDataDTO.getTradeType() != 1 || stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice()) < 0) {
+                                log.info("判断为刚上板 stockCode{} kbarDate{}", stockKbar.getStockCode(), stockKbar.getKbarDate());
+                                plankTime = transactionDataDTO.getTradeTime();
+                                plankIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    if(plankIndex <0 && plankIndex-5 <1 ){
+                        continue;
+                    }
+
+                    BigDecimal maxTradeAmount = BigDecimal.ZERO;
+                    for (int j = 1; j < plankIndex-5 ; j++) {
+
+                        ThirdSecondTransactionDataDTO transactionDataDTO = list.get(j);
+                        tradeAmount = transactionDataDTO.getTradePrice().multiply(new BigDecimal(transactionDataDTO.getTradeQuantity().toString())).multiply(CommonConstant.DECIMAL_HUNDRED);
+                        if(transactionDataDTO.getTradeType() == 0 && maxTradeAmount.compareTo(tradeAmount) <0){
+                            maxTradeAmount = tradeAmount;
+                            tradeTime = transactionDataDTO.getTradeTime();
+                        }
+
+                    }
+
+
+
+                    if (maxTradeAmount.compareTo(new BigDecimal("1000000")) <0) {
+                        //String uniqueKey = stockKbar.getStockCode() + stockKbar.getKbarDate();
+                        SellReplayImportDTO importDTO = realMap.get(uniqueKey);
+                        if(importDTO==null){
+                            continue;
+                        }
+                        ZuangLowAmountDTO exportDTO = new ZuangLowAmountDTO();
+                        exportDTO.setStockCode(stockKbar.getStockCode());
+                        exportDTO.setStockName(stockKbar.getStockName());
+                        exportDTO.setKbarDate(stockKbar.getKbarDate());
+                        exportDTO.setPlankTime(plankTime);
+                        exportDTO.setTradeAmount(maxTradeAmount);
+                        exportDTO.setTradeTime(tradeTime);
+                        exportDTO.setShOpenRate(shOpenRateMap.get(stockKbar.getKbarDate()));
+                        exportDTO.setOpenRate(openRate);
+                        exportDTO.setOpenAmount(openAmount);
+                        exportDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                        Integer sealType = stockKbar.getClosePrice().compareTo(stockKbar.getHighPrice()) == 0 ? 1 : 0;
+                        exportDTO.setSealType(sealType);
+                        // BigDecimal avgPrice = historyTransactionDataComponent.calAvgPrice(sellStockKbar.getStockCode(), sellStockKbar.getKbarDate());
+                        // exportDTO.setPremium(PriceUtil.getPricePercentRate(avgPrice.subtract(stockKbar.getHighPrice()), stockKbar.getClosePrice()));
+                        exportDTO.setPremium(importDTO.getPremiumRate());
+                        exportDTO.setPlankHigh(importDTO.getPlankHigh());
+                        exportDTO.setOrderTime(DateUtil.format(importDTO.getOrderTime(),DateUtil.HH_MM_SS));
+                        resultList.add(exportDTO);
+                    }
+                }
+            }
+            ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\板前低成交额.xls");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
+
 
     public void replayOverRate() {
         File file = new File("E:/excelExport/盈亏表.xlsx");
@@ -104,7 +227,7 @@ public class ZuangReplayComponent {
                                 break;
                             }
                         }
-                        if (signFlag && !StringUtils.isEmpty(plankTime)) {
+                        if (signFlag) {
                             continue;
                         }
                         if (transactionDataDTO.getTradePrice().compareTo(stockKbar.getHighPrice()) < 0) {

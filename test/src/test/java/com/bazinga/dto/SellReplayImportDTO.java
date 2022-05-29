@@ -39,6 +39,10 @@ public class SellReplayImportDTO {
     @ExcelElement("成交时间")
     private Date tradeTime;
 
+
+    @ExcelElement("连板情况")
+    private String plankHigh;
+
     @ExcelElement("买入方式")
     private String buyType;
 

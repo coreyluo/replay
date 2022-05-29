@@ -124,6 +124,8 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private IndexKbarComponent indexKbarComponent;
 
+    @Autowired
+    private ShIndexReplayComponent shIndexReplayComponent;
 
 
     @Test
@@ -131,7 +133,8 @@ public class ReplayTest extends BaseTestCase {
         //blockHeadReplayComponent.invokeStrategy();
        // sellReplayComponent.replay300();
        // indexKbarComponent.replay("999999");
-        zuangReplayComponent.replayOverRate();
+       // zuangReplayComponent.replayLowAmount();
+        sellReplayComponent.addProperty();
     }
 
     @Test
@@ -307,31 +310,36 @@ public class ReplayTest extends BaseTestCase {
 
        // zuangReplayComponent.replay20220320();
       //  manyCannonReplayComponent.replay();
-       /* try {
-            bollingReplayComponent.replay();
+        try {
+            bollingReplayComponent.replay2();
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
       /*  THREAD_POOL.execute(()->{
             blockIndustryReplayComponent.replay("20180101","20181230");
         });*/
       /*  THREAD_POOL.execute(()->{
             blockIndustryReplayComponent.replay("20190101","20191230");
-        });*/
+        });
         THREAD_POOL.execute(()->{
             blockIndustryReplayComponent.replay("20200101","20201230");
         });
-       /* THREAD_POOL.execute(()->{
+        THREAD_POOL.execute(()->{
             blockIndustryReplayComponent.replay("20210101","20211230");
         });*/
 
-            try {
+        /*    try {
             TimeUnit.HOURS.sleep(24);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
 
       // blockIndustryReplayComponent.printShRateRelaticeFixTime();
 
+    }
+
+    @Test
+    public void test13(){
+        shIndexReplayComponent.replay();
     }
 }

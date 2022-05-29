@@ -58,6 +58,45 @@ public class SellReplayComponent {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
+    public void addProperty(){
+
+
+        File file = new File("E:/excelExport/陈.xlsx");
+        try {
+            List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+            Map<String,CirculateInfo> circulateInfoMap = new HashMap<>();
+            for (CirculateInfo circulateInfo : circulateInfos) {
+                circulateInfoMap.put(circulateInfo.getStockCode(),circulateInfo);
+            }
+
+            List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+            for (SellReplayImportDTO sellReplayImportDTO : importList) {
+
+                String currentKbarString = DateUtil.format(sellReplayImportDTO.getKbarDate(),DateUtil.yyyyMMdd);
+                String uniqueKey =  sellReplayImportDTO.getStockCode() + SymbolConstants.UNDERLINE + currentKbarString;
+                StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
+                if(stockKbar== null){
+                    log.info("uniqueKey{}",uniqueKey);
+                }
+                CirculateInfo circulateInfo = circulateInfoMap.get(sellReplayImportDTO.getStockCode());
+                if(stockKbar!=null &&  circulateInfo!=null){
+                    sellReplayImportDTO.setCirculateZ(circulateInfo.getCirculateZ());
+                    sellReplayImportDTO.setBuyPrice(stockKbar.getHighPrice());
+                    sellReplayImportDTO.setTotalQty(circulateInfo.getCirculate());
+                }
+            }
+
+            com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(importList, "E:\\trendData\\陈加属性.xls");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
     public void replay300(){
        // Map<String, BigDecimal> shRateMap = commonReplayComponent.initShRateMap("10:00");
         Map<String, BigDecimal> shRateMap = commonReplayComponent.initShRateMap("09:25");
