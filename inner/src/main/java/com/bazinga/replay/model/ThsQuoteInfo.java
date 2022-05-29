@@ -72,6 +72,8 @@ public class ThsQuoteInfo implements Serializable {
      */
     private String quoteTime;
 
+
+
     /**
      * 当前价格
      *
