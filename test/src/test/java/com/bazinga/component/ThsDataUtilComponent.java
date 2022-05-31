@@ -192,6 +192,54 @@ public class ThsDataUtilComponent {
         thsLoginOut();
     }
 
+    /**
+     * 指数kbar
+     * @param stockCode
+     * @param stockName
+     * @param tradeDate
+     */
+    public void indexKbar(String stockCode,String stockName,String tradeDate){
+        int ret = thsLogin();
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("000905.SH","open;close;high;low","Fill:Original",tradeDate+" 09:15:00",tradeDate+" 15:00:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.noSecondFormat);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode("888888");
+                stockKbar.setStockName("中证500指数");
+                stockKbar.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMddHHmmss));
+                stockKbar.setUniqueKey(stockKbar.getStockCode()+"_"+stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                stockKbar.setTradeAmount(BigDecimal.ZERO);
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+        thsLoginOut();
+    }
+
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
         System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
         String stockKey = getStockKey(stockCode);

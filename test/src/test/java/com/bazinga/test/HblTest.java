@@ -153,11 +153,11 @@ public class HblTest extends BaseTestCase {
             if(format.equals("2021-01-04")){
                 flag  = true;
             }
-            if(format.equals("2022-01-04")){
+            if(format.equals("2022-05-27")){
                 flag  = false;
             }
             if(flag){
-                thsDataUtilComponent.quoteQiHuo("","",format);
+                thsDataUtilComponent.indexKbar("","",format);
                 //thsDataUtilComponent.qiHuoKbar("","",format);
             }
         }
