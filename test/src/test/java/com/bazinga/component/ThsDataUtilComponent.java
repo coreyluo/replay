@@ -191,6 +191,97 @@ public class ThsDataUtilComponent {
         }
         thsLoginOut();
     }
+    public void beiXiang(){
+        thsLogin();
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        boolean flag = false;
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2022-05-31")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-02")){
+                flag  = false;
+            }
+            if(flag){
+                northMoneyFlowKbar(format);
+            }
+        }
+        thsLoginOut();
+    }
+
+    /**
+     * 北向资金净流入kbar
+     * @param tradeDate
+     */
+    public void northMoneyFlowKbar(String tradeDate){
+
+        System.out.println(tradeDate+ Thread.currentThread().getName());
+
+        String quote_str = JDIBridge.THS_DataPool("balanceOfSHSZHK",tradeDate+";"+tradeDate+";全部","tradeDate:Y,updateTime:Y,type:Y,netBuyAmount:Y,netInflowAmount:Y");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<String> types = tableInfo.getJSONArray("type").toJavaList(String.class);
+            List<String> times = tableInfo.getJSONArray("updateTime").toJavaList(String.class);
+            List<BigDecimal> amounts = tableInfo.getJSONArray("netBuyAmount").toJavaList(BigDecimal.class);
+            int i = 0;
+            Date date = DateUtil.parseDate(tradeDate+" 09:25", DateUtil.noSecondFormat);
+            for (String time:times){
+                String dateStamp = tradeDate + " " + time;
+                Date timeDate = DateUtil.parseDate(dateStamp, DateUtil.noSecondFormat);
+                String type = types.get(i);
+                StockKbar stockKbar = new StockKbar();
+                if(type.equals("沪股通")) {
+                    if(!timeDate.before(date)) {
+                        stockKbar.setStockCode("188888");
+                        stockKbar.setStockName("沪股通");
+                        stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                        stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                        stockKbar.setOpenPrice(BigDecimal.ZERO);
+                        stockKbar.setClosePrice(BigDecimal.ZERO);
+                        stockKbar.setHighPrice(BigDecimal.ZERO);
+                        stockKbar.setLowPrice(BigDecimal.ZERO);
+                        if(amounts.get(i)==null){
+                            stockKbar.setTradeAmount(BigDecimal.ZERO);
+                        }else {
+                            stockKbar.setTradeAmount(amounts.get(i));
+                        }
+                        stockKbar.setTradeQuantity(0l);
+                        stockKbarService.save(stockKbar);
+                    }
+                }
+                if(type.equals("深股通")) {
+                    if(!timeDate.before(date)) {
+                        stockKbar.setStockCode("188889");
+                        stockKbar.setStockName("深股通");
+                        stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                        stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                        stockKbar.setOpenPrice(BigDecimal.ZERO);
+                        stockKbar.setClosePrice(BigDecimal.ZERO);
+                        stockKbar.setHighPrice(BigDecimal.ZERO);
+                        stockKbar.setLowPrice(BigDecimal.ZERO);
+                        if(amounts.get(i)==null){
+                            stockKbar.setTradeAmount(BigDecimal.ZERO);
+                        }else {
+                            stockKbar.setTradeAmount(amounts.get(i));
+                        }
+                        stockKbar.setTradeQuantity(0l);
+                        stockKbarService.save(stockKbar);
+                    }
+                }
+                i++;
+            }
+        }
+
+    }
 
     /**
      * 指数kbar

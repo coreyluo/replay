@@ -144,23 +144,25 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
-        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        thsDataUtilComponent.beiXiang();
+       /* TradeDatePoolQuery query = new TradeDatePoolQuery();
         query.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
         boolean flag = false;
         for (TradeDatePool tradeDatePool:tradeDatePools){
             String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
-            if(format.equals("2021-01-04")){
+            if(format.equals("2022-06-02")){
                 flag  = true;
             }
-            if(format.equals("2022-05-27")){
+            if(format.equals("2022-06-06")){
                 flag  = false;
             }
             if(flag){
-                thsDataUtilComponent.indexKbar("","",format);
+                //thsDataUtilComponent.indexKbar("","",format);
                 //thsDataUtilComponent.qiHuoKbar("","",format);
+                thsDataUtilComponent.northMoneyFlowKbar(format);
             }
-        }
+        }*/
 
         //relationWithSZComponent.getUpperInfo();
        //relationWithSZComponent.relativeWithSZInfo();
