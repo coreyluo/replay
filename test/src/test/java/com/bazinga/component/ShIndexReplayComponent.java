@@ -2,6 +2,7 @@ package com.bazinga.component;
 
 import com.bazinga.base.Sort;
 import com.bazinga.dto.SHIndexReplayDTO;
+import com.bazinga.dto.ShIndexReplayJumpDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.TradeDatePool;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,6 +31,92 @@ public class ShIndexReplayComponent {
 
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+
+    @Autowired
+    private CommonReplayComponent commonReplayComponent;
+
+
+
+
+    public void replayUpDown(){
+        Map<String, BigDecimal> shOpenRateMap = commonReplayComponent.initShOpenRateMap();
+        TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
+        tradeQuery.setTradeDateFrom(DateUtil.parseDate("20190226",DateUtil.yyyyMMdd));
+        tradeQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
+
+        List<ShIndexReplayJumpDTO>  resultList = new ArrayList<>();
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+            String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+            List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData("999999", tradeDatePool.getTradeDate());
+            if(CollectionUtils.isEmpty(list)){
+                continue;
+            }
+            ThirdSecondTransactionDataDTO open = list.get(0);
+            ThirdSecondTransactionDataDTO close = list.get(list.size() - 1);
+            List<ThirdSecondTransactionDataDTO> fixList = historyTransactionDataComponent.getFixTimeData(list, "10:00");
+            log.info("kbarDate{} fixSize{}",kbarDate,fixList.size());
+            ThirdSecondTransactionDataDTO buy = historyTransactionDataComponent.getFixTimeDataOne(list, "10:00");
+            Map<String,List<SHIndexReplayDTO>> changeMap = new HashMap<>();
+
+            String lastDirection = "";
+            for (int i = 1; i < fixList.size(); i++) {
+                ThirdSecondTransactionDataDTO transactionDataDTO = fixList.get(i);
+                ThirdSecondTransactionDataDTO preTransactionDataDTO = fixList.get(i-1);
+                String currentDirection = "";
+                if(transactionDataDTO.getTradePrice().compareTo(preTransactionDataDTO.getTradePrice())>=0){
+                    currentDirection = "上涨";
+                }
+                if(transactionDataDTO.getTradePrice().compareTo(preTransactionDataDTO.getTradePrice())<0){
+                    currentDirection = "下跌";
+                }
+
+                BigDecimal changePoint = transactionDataDTO.getTradePrice().subtract(preTransactionDataDTO.getTradePrice());
+                Long changeAmount = transactionDataDTO.getTradeQuantity()*100L;
+                List<SHIndexReplayDTO> shIndexReplayDTOS = changeMap.computeIfAbsent(currentDirection, k -> new ArrayList<>());
+                SHIndexReplayDTO shIndexReplayDTO = new SHIndexReplayDTO();
+                shIndexReplayDTO.setDirection(currentDirection);
+                shIndexReplayDTO.setChangeAmount(changeAmount);
+                shIndexReplayDTO.setChangePoint(changePoint);
+                shIndexReplayDTOS.add(shIndexReplayDTO);
+
+            }
+            ShIndexReplayJumpDTO exportDTO = new ShIndexReplayJumpDTO();
+            exportDTO.setKbarDate(kbarDate);
+            exportDTO.setFirstAmount(open.getTradeQuantity() *100L);
+            if(shOpenRateMap.get(kbarDate)!=null){
+                exportDTO.setOpenRate(shOpenRateMap.get(kbarDate));
+            }
+            exportDTO.setClosePoint(close.getTradePrice());
+            exportDTO.setBuyPoint(buy.getTradePrice());
+            changeMap.forEach((direction,groupByList)->{
+                BigDecimal totalChangePoint = BigDecimal.ZERO;
+                Long totalChangeAmount = 0L;
+                for (SHIndexReplayDTO shIndexReplayDTO : groupByList) {
+                    totalChangeAmount = totalChangeAmount + shIndexReplayDTO.getChangeAmount();
+                    totalChangePoint = totalChangePoint.add(shIndexReplayDTO.getChangePoint());
+                }
+                if("上涨".equals(direction)){
+                    exportDTO.setUp(direction);
+                    exportDTO.setUpCount(groupByList.size());
+                    exportDTO.setUpChangePoint(totalChangePoint);
+                    exportDTO.setUpAmount(totalChangeAmount);
+                }
+
+                if("下跌".equals(direction)){
+                    exportDTO.setDown(direction);
+                    exportDTO.setDownCount(groupByList.size());
+                    exportDTO.setDownChangePoint(totalChangePoint);
+                    exportDTO.setDownAmount(totalChangeAmount);
+                }
+            });
+            resultList.add(exportDTO);
+        }
+
+        ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\上证分时上涨下跌聚合1000.xls");
+
+    }
+
 
 
     public void replay(){

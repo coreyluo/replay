@@ -35,20 +35,21 @@ public class StockKbarComponentTest extends BaseTestCase {
     public void test(){
 
         stockKbarComponent.batchUpdateDaily();
-        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",500);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",999);
        // stockKbarComponent.initAndSaveIndexGlobal();
     }
 
     @Test
     public void test2(){
       //  stockKbarComponent.calCurrentDayAvgLine(new Date());
-       /* try {
+        stockKbarComponent.batchcalAvgLine();
+        try {
             TimeUnit.HOURS.sleep(2);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
        // stockBollingComponent.calCurrentDayBoll(new Date());
-        stockKbarComponent.initSpecialStockAndSaveMin5KbarData("999999","上证指数",500);
+       // stockKbarComponent.initSpecialStockAndSaveMin5KbarData("999999","上证指数",500);
 
         // stockKbarComponent.calCurrentDayAvgLine(new Date());
         //stockBollingComponent.batchInitBoll();
@@ -56,7 +57,7 @@ public class StockKbarComponentTest extends BaseTestCase {
 
     @Test
     public void test3(){
-        //stockBollingComponent.batchInitBoll();
+        stockBollingComponent.batchInitBoll();
       //  stockKbarComponent.calCurrentDayAvgLine(new Date());
        /* try {
             TimeUnit.HOURS.sleep(2);
@@ -64,7 +65,7 @@ public class StockKbarComponentTest extends BaseTestCase {
             e.printStackTrace();
         }*/
 
-        stockBollingComponent.calCurrentDayBoll(new Date());
+        //stockBollingComponent.calCurrentDayBoll(new Date());
     }
 
     @Test

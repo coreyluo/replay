@@ -59,6 +59,15 @@ public class CommonReplayComponent {
     @Autowired
     private RedisMoniorService redisMoniorService;
 
+    public Map<String,BigDecimal> getShFixTimeMap(){
+        Map<String,BigDecimal> resultMap = new HashMap<>();
+
+
+
+        return  resultMap;
+
+    }
+
 
     public Map<String,BigDecimal> initShRateMap(String fixTime){
         Map<String,BigDecimal> resultMap = new HashMap<>();
@@ -265,7 +274,7 @@ public class CommonReplayComponent {
 
         StockKbarQuery query = new StockKbarQuery();
         query.setStockCode("999999");
-        query.setKbarDateFrom("20191115");
+        query.setKbarDateFrom("20171115");
         query.addOrderBy("kbar_date", Sort.SortType.ASC);
         List<StockKbar> kbarList = stockKbarService.listByCondition(query);
         for (int i = 1; i < kbarList.size(); i++) {

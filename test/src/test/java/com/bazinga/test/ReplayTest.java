@@ -340,6 +340,6 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test13(){
-        shIndexReplayComponent.replay();
+        shIndexReplayComponent.replayUpDown();
     }
 }
