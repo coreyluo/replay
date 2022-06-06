@@ -199,14 +199,15 @@ public class ThsDataUtilComponent {
         boolean flag = false;
         for (TradeDatePool tradeDatePool:tradeDatePools){
             String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
-            if(format.equals("2022-05-31")){
+            if(format.equals("2018-01-02")){
                 flag  = true;
             }
-            if(format.equals("2022-06-02")){
+            if(format.equals("2022-05-31")){
                 flag  = false;
             }
             if(flag){
-                northMoneyFlowKbar(format);
+                northMoneyFlowKbar(format,"沪股通");
+                northMoneyFlowKbar(format,"深股通");
             }
         }
         thsLoginOut();
@@ -216,11 +217,11 @@ public class ThsDataUtilComponent {
      * 北向资金净流入kbar
      * @param tradeDate
      */
-    public void northMoneyFlowKbar(String tradeDate){
+    public void northMoneyFlowKbar(String tradeDate,String typeStr){
 
         System.out.println(tradeDate+ Thread.currentThread().getName());
 
-        String quote_str = JDIBridge.THS_DataPool("balanceOfSHSZHK",tradeDate+";"+tradeDate+";全部","tradeDate:Y,updateTime:Y,type:Y,netBuyAmount:Y,netInflowAmount:Y");
+        String quote_str = JDIBridge.THS_DataPool("balanceOfSHSZHK",tradeDate+";"+tradeDate+";"+typeStr,"tradeDate:Y,updateTime:Y,type:Y,netBuyAmount:Y");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             JSONArray tables = jsonObject.getJSONArray("tables");
@@ -277,6 +278,55 @@ public class ThsDataUtilComponent {
                         stockKbarService.save(stockKbar);
                     }
                 }
+                i++;
+            }
+        }
+
+    }
+
+
+    /**
+     * 恒生科技10minkbar
+     * @param tradeDate
+     */
+    public void hkTecKbar(String tradeDate){
+
+        System.out.println(tradeDate+ Thread.currentThread().getName());
+
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("HSTECH.HK","open;high;low;close;volume;amount","Fill:Original,Interval:10","2022-06-06 09:15:00","2022-06-06 15:15:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<String> times = tableInfo.getJSONArray("time").toJavaList(String.class);
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            List<BigDecimal> amounts = tableInfo.getJSONArray("amount").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date timeDate = DateUtil.parseDate(time, DateUtil.noSecondFormat);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode("HSTECH");
+                stockKbar.setStockName("恒生科技");
+                stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                if(amounts.get(i)==null){
+                    stockKbar.setTradeAmount(BigDecimal.ZERO);
+                }else {
+                    stockKbar.setTradeAmount(amounts.get(i));
+                }
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
                 i++;
             }
         }

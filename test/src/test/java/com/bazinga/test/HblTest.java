@@ -166,7 +166,7 @@ public class HblTest extends BaseTestCase {
 
         //relationWithSZComponent.getUpperInfo();
        //relationWithSZComponent.relativeWithSZInfo();
-        //highPlankBuyComponent.plankExchangeAmountInfo();
+       // highPlankBuyComponent.plankExchangeAmountInfo();
         //plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
