@@ -284,6 +284,27 @@ public class ThsDataUtilComponent {
 
     }
 
+    public void hsTech(){
+        thsLogin();
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        boolean flag = false;
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2018-01-02")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-02")){
+                flag  = false;
+            }
+            if(flag){
+                hkTecKbar(format);
+            }
+        }
+        thsLoginOut();
+    }
+
 
     /**
      * 恒生科技10minkbar
@@ -293,7 +314,7 @@ public class ThsDataUtilComponent {
 
         System.out.println(tradeDate+ Thread.currentThread().getName());
 
-        String quote_str = JDIBridge.THS_HighFrequenceSequence("HSTECH.HK","open;high;low;close;volume;amount","Fill:Original,Interval:10","2022-06-06 09:15:00","2022-06-06 15:15:00");
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("000001.SH","open;high;low;close;volume;amount","Fill:Original,Interval:10",tradeDate+" 09:15:00",tradeDate+" 15:15:00");
         if(!StringUtils.isEmpty(quote_str)){
             JSONObject jsonObject = JSONObject.parseObject(quote_str);
             JSONArray tables = jsonObject.getJSONArray("tables");
@@ -301,8 +322,12 @@ public class ThsDataUtilComponent {
                 return;
             }
             JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
             JSONObject tableInfo = tableJson.getJSONObject("table");
-            List<String> times = tableInfo.getJSONArray("time").toJavaList(String.class);
             List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
             List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
             List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
@@ -312,8 +337,8 @@ public class ThsDataUtilComponent {
             for (String time:times){
                 Date timeDate = DateUtil.parseDate(time, DateUtil.noSecondFormat);
                 StockKbar stockKbar = new StockKbar();
-                stockKbar.setStockCode("HSTECH");
-                stockKbar.setStockName("恒生科技");
+                stockKbar.setStockCode("999999");
+                stockKbar.setStockName("上证指数");
                 stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
                 stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
                 stockKbar.setOpenPrice(opens.get(i));
