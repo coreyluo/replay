@@ -295,7 +295,7 @@ public class ThsDataUtilComponent {
             if(format.equals("2018-01-02")){
                 flag  = true;
             }
-            if(format.equals("2022-06-02")){
+            if(format.equals("2022-06-08")){
                 flag  = false;
             }
             if(flag){
