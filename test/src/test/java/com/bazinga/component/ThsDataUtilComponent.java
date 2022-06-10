@@ -406,6 +406,71 @@ public class ThsDataUtilComponent {
         thsLoginOut();
     }
 
+    public void hsTech(){
+        thsLogin();
+
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2018-01-02")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-08")){
+                flag  = false;
+            }
+            if(flag){
+                hkTecKbar(format);
+            }
+        }
+        thsLoginOut();
+    }
+
+    /**
+     * 板块日kbar
+     */
+    public void blockKbar(String blockCode,String blockName){
+        System.out.println(blockCode);
+
+        String quote_str = JDIBridge.THS_HistoryQuotes(blockCode+".TI","open,high,low,close","","2022-06-01","2022-06-09");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date timeDate = DateUtil.parseDate(time, DateUtil.yyyy_MM_dd);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode(blockCode);
+                stockKbar.setStockName(blockName);
+                stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMdd));
+                stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                stockKbar.setTradeAmount(BigDecimal.ZERO);
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+
+    }
+
+
+
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
         System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
         String stockKey = getStockKey(stockCode);
