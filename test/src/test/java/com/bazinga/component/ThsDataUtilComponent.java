@@ -406,24 +406,6 @@ public class ThsDataUtilComponent {
         thsLoginOut();
     }
 
-    public void hsTech(){
-        thsLogin();
-
-        for (TradeDatePool tradeDatePool:tradeDatePools){
-            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
-            if(format.equals("2018-01-02")){
-                flag  = true;
-            }
-            if(format.equals("2022-06-08")){
-                flag  = false;
-            }
-            if(flag){
-                hkTecKbar(format);
-            }
-        }
-        thsLoginOut();
-    }
-
     /**
      * 板块日kbar
      */
