@@ -26,6 +26,9 @@ public class BackAvgDTO {
     @ExcelField(name = "买入时涨幅")
     private BigDecimal buyRate;
 
+    @ExcelField(name = "买入涨幅排名低到高")
+    private Integer rateRank;
+
     @ExcelField(name = "3日涨幅")
     private BigDecimal day3Rate;
 

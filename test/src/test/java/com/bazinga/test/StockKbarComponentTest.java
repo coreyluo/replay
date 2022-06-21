@@ -35,7 +35,7 @@ public class StockKbarComponentTest extends BaseTestCase {
     public void test(){
 
         stockKbarComponent.batchUpdateDaily();
-        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",999);
+        stockKbarComponent.initSpecialStockAndSaveKbarData("999999","上证指数",1200);
        // stockKbarComponent.initAndSaveIndexGlobal();
     }
 

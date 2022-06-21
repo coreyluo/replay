@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.CommonConstant;
 import com.bazinga.constant.SymbolConstants;
-import com.bazinga.dto.PlankHighDTO;
-import com.bazinga.dto.SelfExcelImportDTO;
-import com.bazinga.dto.SellReplayImportDTO;
-import com.bazinga.dto.ZhuanZaiDTO;
+import com.bazinga.dto.*;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
@@ -17,6 +14,7 @@ import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockKbarService;
+import com.bazinga.replay.util.PremiumUtil;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.DateUtil;
 import com.bazinga.util.Excel2JavaPojoUtil;
@@ -53,6 +51,71 @@ public class SelfExcelReplayComponent {
 
     @Autowired
     private CirculateInfoService circulateInfoService;
+
+
+
+    public void replay(){
+        File file = new File("E:/excelExport/大单突破打板情况.xlsx");
+        try {
+            List<BigOrderExcelDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(BigOrderExcelDTO.class);
+            List<BigOrderExcelDTO> resultList = new ArrayList<>();
+            for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
+                String stockCode = bigOrderExcelDTO.getStockCode().substring(0,6);
+
+             /*   if(!"300437".equals(stockCode)){
+                    continue;
+                }*/
+
+                String kbarDateFrom = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
+                StockKbarQuery query= new StockKbarQuery();
+                query.setStockCode(stockCode);
+                query.addOrderBy("kbar_date", Sort.SortType.ASC);
+                query.setKbarDateFrom(kbarDateFrom);
+                query.setLimit(10);
+                List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+
+                if(CollectionUtils.isEmpty(stockKbarList)){
+                    continue;
+                }
+
+                StockKbar stockKbar = stockKbarList.get(0);
+
+
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                String plankTime = "";
+                for (int i = 1; i < list.size(); i++) {
+                    ThirdSecondTransactionDataDTO preTransactionDataDTO = list.get(i-1);
+                    ThirdSecondTransactionDataDTO transactionDataDTO = list.get(i);
+                    if(transactionDataDTO.getTradeType() == 1 && stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice())==0){
+                        plankTime = transactionDataDTO.getTradeTime();
+                        break;
+                    }
+                }
+
+                BigDecimal premium = PremiumUtil.calProfit(stockKbarList.subList(1,stockKbarList.size()-1), stockKbar.getHighPrice());
+                bigOrderExcelDTO.setPremium(premium);
+                bigOrderExcelDTO.setPlankTime(plankTime);
+
+                StockKbarQuery kbarQuery= new StockKbarQuery();
+                kbarQuery.setStockCode(stockCode);
+                kbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
+                kbarQuery.setKbarDateTo(kbarDateFrom);
+                kbarQuery.setLimit(10);
+                List<StockKbar> preList = stockKbarService.listByCondition(kbarQuery);
+                if(!CollectionUtils.isEmpty(preList)){
+                    int plank = PlankHighUtil.calSerialsPlank(Lists.reverse(preList.subList(1, preList.size())));
+                    bigOrderExcelDTO.setPlankHigh(plank);
+                }
+
+            }
+            ExcelExportUtil.exportToFile(importList, "E:\\trendData\\大单突破打板情况增加字段.xls");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
 
 
     public void  replayMarket(){

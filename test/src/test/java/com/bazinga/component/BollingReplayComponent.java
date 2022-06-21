@@ -4,6 +4,8 @@ import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
 import com.bazinga.dto.BackAvgDTO;
 import com.bazinga.dto.StockBollingReplayDTO;
+import com.bazinga.replay.component.HistoryTransactionDataComponent;
+import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.StockBolling;
 import com.bazinga.replay.model.StockKbar;
@@ -12,6 +14,7 @@ import com.bazinga.replay.query.StockKbarQuery;
 import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.StockBollingService;
 import com.bazinga.replay.service.StockKbarService;
+import com.bazinga.replay.util.PremiumUtil;
 import com.bazinga.replay.util.StockKbarUtil;
 import com.bazinga.util.PlankHighUtil;
 import com.bazinga.util.PriceUtil;
@@ -23,9 +26,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,6 +46,9 @@ public class BollingReplayComponent {
     @Autowired
     private CommonReplayComponent commonReplayComponent;
 
+    @Autowired
+    private HistoryTransactionDataComponent historyTransactionDataComponent;
+
 
     public void replay2() throws Exception {
         List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
@@ -52,19 +56,23 @@ public class BollingReplayComponent {
         //  circulateInfos = circulateInfos.stream().filter(item-> "600860".equals(item.getStockCode())).collect(Collectors.toList());
         List<BackAvgDTO> resultList = new ArrayList<>();
         for (CirculateInfo circulateInfo : circulateInfos) {
-
+          /*  if(!"600436".equals(circulateInfo.getStockCode())){
+                continue;
+            }*/
             StockKbarQuery query = new StockKbarQuery();
             query.setStockCode(circulateInfo.getStockCode());
             query.setKbarDateFrom("20210101");
-            query.setKbarDateTo("20211231");
+            query.setKbarDateTo("20220527");
             query.addOrderBy("kbar_date", Sort.SortType.ASC);
             List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
             if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<30){
                 continue;
             }
             for (int i = 30; i < stockKbarList.size(); i++) {
-
                 StockKbar stockKbar = stockKbarList.get(i);
+              /*  if(!"20211222".equals(stockKbar.getKbarDate())){
+                    continue;
+                }*/
                 StockKbar sellStockKbar = null ;
                 if(i+1<stockKbarList.size()){
                     sellStockKbar = stockKbarList.get(i+1);
@@ -74,10 +82,10 @@ public class BollingReplayComponent {
                 StockKbar pre3StockKbar = stockKbarList.get(i-3);
                 StockKbar pre8StockKbar = stockKbarList.get(i-8);
                 BigDecimal day2Rate;
-                if(pre3StockKbar.getAdjFactor().equals(pre1stockKbar.getAdjClosePrice())){
-                     day2Rate = PriceUtil.getPricePercentRate(pre1stockKbar.getClosePrice().subtract(pre2StockKbar.getOpenPrice()),pre3StockKbar.getClosePrice());
+                if(pre3StockKbar.getAdjFactor().equals(pre1stockKbar.getAdjFactor())){
+                     day2Rate = PriceUtil.getPricePercentRate(pre1stockKbar.getClosePrice().subtract(pre3StockKbar.getClosePrice()),pre3StockKbar.getClosePrice());
                 }else {
-                    day2Rate = PriceUtil.getPricePercentRate(pre1stockKbar.getAdjClosePrice().subtract(pre2StockKbar.getAdjOpenPrice()),pre3StockKbar.getAdjClosePrice());
+                    day2Rate = PriceUtil.getPricePercentRate(pre1stockKbar.getAdjClosePrice().subtract(pre3StockKbar.getAdjOpenPrice()),pre3StockKbar.getAdjClosePrice());
                 }
 
                 if(day2Rate.compareTo(new BigDecimal("2"))<=0){
@@ -129,12 +137,20 @@ public class BollingReplayComponent {
                         continue;
                     }
                     log.info("满足买入条件stockCode{} kbarDate{}" ,stockKbar.getStockCode(),stockKbar.getKbarDate());
+
+                    List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
+                    ThirdSecondTransactionDataDTO buyDTO = historyTransactionDataComponent.getFixTimeDataOne(list, "09:31");
+                    if(buyDTO==null){
+                        log.info("未获取到分时成交指定时间点数据stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                        continue;
+                    }
+
                     BackAvgDTO exportDTO = new BackAvgDTO();
                     exportDTO.setOffsetBolling(offserBolling);
                     exportDTO.setStockCode(stockKbar.getStockCode());
                     exportDTO.setStockName(stockKbar.getStockName());
                     exportDTO.setBuykbarDate(stockKbar.getKbarDate());
-                    exportDTO.setBuyPrice(stockKbar.getOpenPrice());
+                    exportDTO.setBuyPrice(buyDTO.getTradePrice());
                     exportDTO.setCirculateAmount(pre1stockKbar.getClosePrice().multiply(new BigDecimal(circulateInfo.getCirculate())));
 
                     exportDTO.setDay3Rate(StockKbarUtil.getNDaysUpperRate(stockKbarList.subList(i-10,i),3));
@@ -150,33 +166,40 @@ public class BollingReplayComponent {
                     BigDecimal preday5AvgAmount = stockKbarList.subList(i - 5, i).stream().map(StockKbar::getTradeAmount).reduce(BigDecimal::add).get().divide(new BigDecimal("5"), 1, RoundingMode.HALF_UP);
                     exportDTO.setPreDay5AvgAmount(preday5AvgAmount);
                     exportDTO.setBollRatio(bollRatio);
-                    exportDTO.setBuyTime("09:25");
+                    exportDTO.setBuyTime("09:31");
                     exportDTO.setPreDayAmount(pre1stockKbar.getTradeAmount());
-                    exportDTO.setBuyRate(PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(pre1stockKbar.getClosePrice()),pre1stockKbar.getClosePrice()));
-                    if(sellStockKbar!=null && (StockKbarUtil.isUpperPrice(sellStockKbar,stockKbar) || PriceUtil.isSuddenPrice(sellStockKbar.getStockCode(),sellStockKbar.getClosePrice(),stockKbar.getClosePrice()))) {
-                        log.info("涨停或跌停 stockCode{} kbarDate{}", stockKbar.getStockCode(), stockKbar.getKbarDate());
-                        if (i + 2 < stockKbarList.size()) {
-                            sellStockKbar = stockKbarList.get(i + 2);
-                        }
-                    }
-                    if(sellStockKbar!=null){
-                        if( stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
-                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getClosePrice().subtract(exportDTO.getBuyPrice()),exportDTO.getBuyPrice()));
-                        }else {
-                            exportDTO.setPremium(PriceUtil.getPricePercentRate(sellStockKbar.getAdjClosePrice().subtract(stockKbar.getAdjOpenPrice())
-                                    ,stockKbar.getAdjOpenPrice()));
-                        }
-                    }
+                    exportDTO.setBuyRate(PriceUtil.getPricePercentRate(buyDTO.getTradePrice().subtract(pre1stockKbar.getClosePrice()),pre1stockKbar.getClosePrice()));
+
+                    BigDecimal premium = PremiumUtil.calProfit(stockKbarList.subList(i+1, stockKbarList.size()), exportDTO.getBuyPrice());
+                    exportDTO.setPremium(premium);
                     resultList.add(exportDTO);
                 }
             }
         }
+
+        Map<String,List<BackAvgDTO>> groupByMap = new HashMap<>();
+
+        for (BackAvgDTO backAvgDTO : resultList) {
+            List<BackAvgDTO> list = groupByMap.computeIfAbsent(backAvgDTO.getBuykbarDate(), k -> new ArrayList<>());
+            list.add(backAvgDTO);
+        }
+
+        groupByMap.forEach((key,list)->{
+            list.sort(Comparator.comparing(BackAvgDTO::getBuyRate).reversed());
+            for (int i = 0; i < list.size(); i++) {
+                BackAvgDTO backAvgDTO = list.get(i);
+                backAvgDTO.setRateRank(i+1);
+            }
+
+        });
+
+
         log.info("resultSize{}",resultList.size());
         for (int i = 0; i <= resultList.size()/65000; i++) {
             int from = 65000 *i;
             int to = 65000 *(i+1);
             to =  to> resultList.size()? resultList.size():to;
-            ExcelExportUtil.exportToFile(resultList.subList(from,to), "E:\\trendData\\均线回归买入_"+i+".xls");
+            ExcelExportUtil.exportToFile(resultList.subList(from,to), "E:\\trendData\\均线回归买入2022_"+i+".xls");
         }
 
 

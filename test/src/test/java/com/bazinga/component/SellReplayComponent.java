@@ -267,13 +267,13 @@ public class SellReplayComponent {
     public void replayExcel(){
 
 
-        File file = new File("E:/excelExport/陈1109.xlsx");
-        try {
-            List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
-            replay(importList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            File file = new File("E:/excelExport/陈1109.xlsx");
+            try {
+                List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
+                replay(importList);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
     }
 
     public void replay(List<SellReplayImportDTO> importList){

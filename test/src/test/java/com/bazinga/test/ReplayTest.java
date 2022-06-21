@@ -127,6 +127,9 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private ShIndexReplayComponent shIndexReplayComponent;
 
+    @Autowired
+    private IndexPeriodReplayComponent indexPeriodReplayComponent;
+
 
     @Test
     public void test(){
@@ -179,20 +182,26 @@ public class ReplayTest extends BaseTestCase {
         });
         THREAD_POOL.execute(()->{
             stockReplayByGroupComponent.replay("20220101","20220201");
-        });*/
+        });
 
         THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20220101","20220201");
+            stockReplayByGroupComponent.replayOpenAmountRank("20220101","20220301");
         });
         THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20220201","20220301");
+            stockReplayByGroupComponent.replayOpenAmountRank("20210401","20210713");
         });
         THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20220301","20220413");
-        });
-       /* THREAD_POOL.execute(()->{
-            stockReplayByGroupComponent.replay("20211001","20220101");
+            stockReplayByGroupComponent.replayOpenAmountRank("20211001","20220101");
         });*/
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replayOpenAmountRank("20220101","20220401");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replayOpenAmountRank("20210401","20220612");
+        });
+        THREAD_POOL.execute(()->{
+            stockReplayByGroupComponent.replayOpenAmountRank("20210701","20211001");
+        });
        /* THREAD_POOL.execute(()->{
             stockReplayByGroupComponent.replay("20190101","20190401");
         });
@@ -340,6 +349,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test13(){
-        shIndexReplayComponent.replayUpDown();
+       // shIndexReplayComponent.replayUpDown();
+       // indexPeriodReplayComponent.replay();
+        selfExcelReplayComponent.replay();
     }
 }

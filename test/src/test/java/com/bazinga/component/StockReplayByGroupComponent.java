@@ -3,14 +3,18 @@ package com.bazinga.component;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.constant.SymbolConstants;
+import com.bazinga.dto.OpenAmountReplayDTO;
 import com.bazinga.dto.PlankDayDTO;
 import com.bazinga.dto.RankDTO;
 import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
+import com.bazinga.replay.model.CirculateInfo;
 import com.bazinga.replay.model.RedisMonior;
 import com.bazinga.replay.model.StockKbar;
+import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
+import com.bazinga.replay.service.CirculateInfoService;
 import com.bazinga.replay.service.RedisMoniorService;
 import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.util.DateUtil;
@@ -50,6 +54,67 @@ public class StockReplayByGroupComponent {
 
     @Autowired
     private CommonReplayComponent commonReplayComponent;
+
+    @Autowired
+    private CirculateInfoService circulateInfoService;
+
+
+    public void replayOpenAmountRank(String kbarDateFrom ,String kbarDateTo){
+
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        Map<String,Long> circulateMap = new HashMap<>();
+        for (CirculateInfo circulateInfo : circulateInfos) {
+            circulateMap.put(circulateInfo.getStockCode(),circulateInfo.getCirculate());
+        }
+
+        List<OpenAmountReplayDTO> resultList = new ArrayList<>();
+        Map<String, List<RankDTO>> openAmountMap = blockOpenReplayComponent.getOpenAmountRank1000(kbarDateFrom, kbarDateTo);
+        log.info("获取到数据");
+        openAmountMap.forEach((kbarDate,rankDTOList)->{
+            BigDecimal over500TotalAmount = BigDecimal.ZERO;
+            int over500Count =0;
+            int over5000Count =0;
+            int over3000Count =0;
+            BigDecimal over500totalMarket = BigDecimal.ZERO;
+            BigDecimal minAmount = BigDecimal.ZERO;
+            BigDecimal pre10TotalAmount = BigDecimal.ZERO;
+            for (RankDTO rankDTO : rankDTOList) {
+                if(rankDTO.getTradeAmount().compareTo(new BigDecimal("5000000"))>0){
+                    over500Count++;
+                    over500TotalAmount = over500TotalAmount.add(rankDTO.getTradeAmount());
+                    over500totalMarket = over500totalMarket.add(rankDTO.getOpenPrice().multiply(new BigDecimal(circulateMap.get(rankDTO.getStockCode()).toString())));
+                }
+                if(rankDTO.getTradeAmount().compareTo(new BigDecimal("50000000"))>0){
+                    over5000Count ++;
+                }
+                if(rankDTO.getTradeAmount().compareTo(new BigDecimal("30000000"))>0){
+                    over3000Count ++;
+                }
+                if(rankDTO.getRank()<=10){
+                    pre10TotalAmount = pre10TotalAmount.add(rankDTO.getTradeAmount());
+                    if(rankDTO.getRank()==10){
+                        minAmount = rankDTO.getTradeAmount();
+                    }
+                }
+            }
+            OpenAmountReplayDTO exportDTO = new OpenAmountReplayDTO();
+
+            exportDTO.setKbarDate(kbarDate);
+            exportDTO.setMinAmount(minAmount);
+            exportDTO.setOver500Count(over500Count);
+            exportDTO.setOver500OpenAmount(over500TotalAmount);
+            exportDTO.setOver500TotalMarket(over500totalMarket);
+            exportDTO.setOver3000Count(over3000Count);
+            exportDTO.setOver5000Count(over5000Count);
+            exportDTO.setPre10TotalAmount(pre10TotalAmount);
+            resultList.add(exportDTO);
+        });
+        log.info("输出文件 kbarDateFrom{} kbarDateTo{}",kbarDateFrom,kbarDateTo);
+        com.xuxueli.poi.excel.ExcelExportUtil.exportToFile(resultList, "E:\\trendData\\开盘成交额排名回测"+kbarDateFrom+"_"+kbarDateTo+".xls");
+
+    }
+
+
 
     public void replayDayPlank(){
         Workbook workbook = ExcelExportUtil.creatWorkBook("XLS");

@@ -274,6 +274,101 @@ public class BlockOpenReplayComponent {
 
     }
 
+    public Map<String,List<RankDTO>> getOpenAmountRank1000(String kbarDateFrom ,String kbarDateTo){
+        Map<String,List<RankDTO>> resultMap = new HashMap<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        TradeDatePoolQuery tradeQuery = new TradeDatePoolQuery();
+        tradeQuery.setTradeDateFrom(DateUtil.parseDate(kbarDateFrom,DateUtil.yyyyMMdd));
+        tradeQuery.setTradeDateTo(DateUtil.parseDate(kbarDateTo,DateUtil.yyyyMMdd));
+        tradeQuery.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(tradeQuery);
+
+        String redisKey = "OPEN_AMOUNT_RANK1000"+ kbarDateFrom + SymbolConstants.UNDERLINE + kbarDateTo;
+        RedisMonior byRedisKey = redisMoniorService.getByRedisKey(redisKey);
+        if(byRedisKey!=null){
+            JSONObject jsonObject = JSONObject.parseObject(byRedisKey.getRedisValue());
+            jsonObject.forEach((key,value)->{
+                resultMap.put(key,JSONObject.parseArray(value.toString(),RankDTO.class));
+            });
+            return resultMap;
+        }
+        for (TradeDatePool tradeDatePool : tradeDatePools) {
+          /*  if(!commonComponent.isTradeDate(tradeDatePool.getTradeDate())){
+                continue;
+            }*/
+            String kbarDate = DateUtil.format(tradeDatePool.getTradeDate(),DateUtil.yyyyMMdd);
+            Map<String, BigDecimal> tempMap = new HashMap<>();
+            for (CirculateInfo circulateInfo : circulateInfos) {
+                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(circulateInfo.getStockCode(), tradeDatePool.getTradeDate());
+                if(CollectionUtils.isEmpty(list)){
+                    continue;
+                }
+                ThirdSecondTransactionDataDTO open = list.get(0);
+                tempMap.put(circulateInfo.getStockCode(), open.getTradePrice().multiply(new BigDecimal(open.getTradeQuantity()).multiply(CommonConstant.DECIMAL_HUNDRED)));
+            }
+            Map<String, BigDecimal> sortedMap = SortUtil.sortByValue(tempMap);
+            int rank = 1;
+            List<RankDTO> rankList = Lists.newArrayList();
+            for (Map.Entry<String, BigDecimal> entry : sortedMap.entrySet()) {
+                if(rank<=1000){
+
+                    StockKbarQuery query= new StockKbarQuery();
+                    query.setStockCode(entry.getKey());
+                    query.setKbarDateTo(kbarDate);
+                    query.addOrderBy("kbar_date", Sort.SortType.DESC);
+                    query.setLimit(2);
+                    List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+                    if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<2){
+                        continue;
+                    }
+                    StockKbar stockKbar = stockKbarList.get(0);
+                    StockKbar preStockKbar = stockKbarList.get(1);
+                    BigDecimal openRate;
+                    if(stockKbar.getAdjFactor().compareTo(preStockKbar.getAdjFactor())==0){
+                        openRate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice());
+                    }else {
+                        openRate = PriceUtil.getPricePercentRate(stockKbar.getAdjOpenPrice().subtract(preStockKbar.getAdjClosePrice()),preStockKbar.getAdjClosePrice());
+                    }
+
+                 /*   StockKbarQuery sellQuery= new StockKbarQuery();
+                    sellQuery.setStockCode(entry.getKey());
+                    sellQuery.setKbarDateFrom(kbarDate);
+                    sellQuery.addOrderBy("kbar_date", Sort.SortType.ASC);
+                    sellQuery.setLimit(2);
+                    List<StockKbar> sellStockKbarList = stockKbarService.listByCondition(sellQuery);
+                    if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<3){
+                        continue;
+                    }
+                    StockKbar sellStockKbar = sellStockKbarList.get(1);
+                    BigDecimal premium;
+                    BigDecimal sellPrice = sellStockKbar.getOpenPrice().add(sellStockKbar.getClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
+                    premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getOpenPrice()),stockKbar.getOpenPrice());*/
+                   /* if(stockKbar.getAdjFactor().compareTo(sellStockKbar.getAdjFactor())==0){
+
+                    }else {
+                        log.info("卖出发生复权stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                        BigDecimal sellPrice = sellStockKbar.getAdjOpenPrice().add(sellStockKbar.getAdjClosePrice()).divide(new BigDecimal("2"),2,BigDecimal.ROUND_HALF_UP);
+                        premium  = PriceUtil.getPricePercentRate(sellPrice.subtract(stockKbar.getAdjOpenPrice()),stockKbar.getAdjOpenPrice());
+                    }*/
+                  /*  if(StockKbarUtil.isUpperPrice(stockKbar,preStockKbar) && stockKbar.getLowPrice().compareTo(stockKbar.getHighPrice())==0){
+                        log.info("判断为一字板stockCode{} kbarDate{}",stockKbar.getStockCode(),stockKbar.getKbarDate());
+                        premium = BigDecimal.ZERO;
+                    }*/
+                    rankList.add(new RankDTO(entry.getKey(),rank,entry.getValue(),openRate,null,stockKbar.getOpenPrice()));
+
+
+                }
+                rank++;
+            }
+            resultMap.put(kbarDate,rankList);
+        }
+        RedisMonior redisMonior = new RedisMonior();
+        redisMonior.setRedisKey(redisKey);
+        redisMonior.setRedisValue(JSONObject.toJSONString(resultMap));
+        redisMoniorService.save(redisMonior);
+        return resultMap;
+    }
+
 
     public Map<String,List<RankDTO>> getOpenAmountRank(String kbarDateFrom ,String kbarDateTo){
         Map<String,List<RankDTO>> resultMap = new HashMap<>();

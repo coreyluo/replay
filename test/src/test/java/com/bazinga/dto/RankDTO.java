@@ -17,6 +17,17 @@ public class RankDTO {
 
     private BigDecimal premium;
 
+    private BigDecimal openPrice;
+
+    public RankDTO(String stockCode, Integer rank, BigDecimal tradeAmount, BigDecimal openRate, BigDecimal premium, BigDecimal openPrice) {
+        this.stockCode = stockCode;
+        this.rank = rank;
+        this.tradeAmount = tradeAmount;
+        this.openRate = openRate;
+        this.premium = premium;
+        this.openPrice = openPrice;
+    }
+
     public RankDTO(String stockCode, Integer rank, BigDecimal tradeAmount, BigDecimal openRate, BigDecimal premium) {
         this.stockCode = stockCode;
         this.rank = rank;
