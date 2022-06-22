@@ -23,6 +23,7 @@ import com.bazinga.util.PriceUtil;
 import com.google.common.collect.Lists;
 import com.xuxueli.poi.excel.ExcelExportUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.ListUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,60 +56,37 @@ public class SelfExcelReplayComponent {
 
 
     public void replay(){
-        File file = new File("E:/excelExport/大单突破打板情况.xlsx");
+        File file = new File("E:/excelExport/200w大单突破.xlsx");
         try {
             List<BigOrderExcelDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(BigOrderExcelDTO.class);
             List<BigOrderExcelDTO> resultList = new ArrayList<>();
+            Map<String,List<BigOrderExcelDTO>> tempMap = new HashMap<>();
+            Map<String,Integer> rankMap = new HashMap<>();
             for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
-                String stockCode = bigOrderExcelDTO.getStockCode().substring(0,6);
+                String kbarDate = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
 
-             /*   if(!"300437".equals(stockCode)){
-                    continue;
-                }*/
-
-                String kbarDateFrom = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
-                StockKbarQuery query= new StockKbarQuery();
-                query.setStockCode(stockCode);
-                query.addOrderBy("kbar_date", Sort.SortType.ASC);
-                query.setKbarDateFrom(kbarDateFrom);
-                query.setLimit(10);
-                List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
-
-                if(CollectionUtils.isEmpty(stockKbarList)){
-                    continue;
-                }
-
-                StockKbar stockKbar = stockKbarList.get(0);
-
-
-                List<ThirdSecondTransactionDataDTO> list = historyTransactionDataComponent.getData(stockKbar.getStockCode(), stockKbar.getKbarDate());
-                String plankTime = "";
-                for (int i = 1; i < list.size(); i++) {
-                    ThirdSecondTransactionDataDTO preTransactionDataDTO = list.get(i-1);
-                    ThirdSecondTransactionDataDTO transactionDataDTO = list.get(i);
-                    if(transactionDataDTO.getTradeType() == 1 && stockKbar.getHighPrice().compareTo(transactionDataDTO.getTradePrice())==0){
-                        plankTime = transactionDataDTO.getTradeTime();
-                        break;
-                    }
-                }
-
-                BigDecimal premium = PremiumUtil.calProfit(stockKbarList.subList(1,stockKbarList.size()-1), stockKbar.getHighPrice());
-                bigOrderExcelDTO.setPremium(premium);
-                bigOrderExcelDTO.setPlankTime(plankTime);
-
-                StockKbarQuery kbarQuery= new StockKbarQuery();
-                kbarQuery.setStockCode(stockCode);
-                kbarQuery.addOrderBy("kbar_date", Sort.SortType.DESC);
-                kbarQuery.setKbarDateTo(kbarDateFrom);
-                kbarQuery.setLimit(10);
-                List<StockKbar> preList = stockKbarService.listByCondition(kbarQuery);
-                if(!CollectionUtils.isEmpty(preList)){
-                    int plank = PlankHighUtil.calSerialsPlank(Lists.reverse(preList.subList(1, preList.size())));
-                    bigOrderExcelDTO.setPlankHigh(plank);
-                }
-
+                List<BigOrderExcelDTO> list = tempMap.computeIfAbsent(kbarDate, k -> new ArrayList<>());
+                list.add(bigOrderExcelDTO);
             }
-            ExcelExportUtil.exportToFile(importList, "E:\\trendData\\大单突破打板情况增加字段.xls");
+            tempMap.forEach((kbarDate,list)->{
+                list.sort(Comparator.comparing(BigOrderExcelDTO::getTradeTime));
+                for (int i = 0; i < list.size(); i++) {
+                    String stockCode = list.get(i).getStockCode();
+                    rankMap.put(kbarDate + stockCode,i+1);
+                }
+            });
+
+            for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
+                String kbarDate = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
+                bigOrderExcelDTO.setRank(rankMap.get(kbarDate+ bigOrderExcelDTO.getStockCode()));
+            }
+
+            int times = importList.size()/60000;
+            for (int i = 0; i < times + 1; i++) {
+                int toIndex = (i+1)* 60000;
+                toIndex = toIndex > importList.size()?importList.size():toIndex;
+                ExcelExportUtil.exportToFile(importList.subList(i* 60000, toIndex), "E:\\trendData\\200w大单突破增加字段"+i+".xls");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -25,10 +25,14 @@ public class BigOrderExcelDTO {
 
     @ExcelElement("时间")
     @ExcelField(name = "买入时间")
-    private String tradeTime;
+    private Date tradeTime;
+    @ExcelElement("当天买入时间排名")
+    private Integer rank;
 
 
-    @ExcelField(name = "上板时间")
+
+
+    /*@ExcelField(name = "上板时间")
     @ExcelElement("上板时间")
     private String plankTime;
 
@@ -38,6 +42,6 @@ public class BigOrderExcelDTO {
 
     @ExcelField(name = "打板收益")
     @ExcelElement("打板收益")
-    private BigDecimal premium;
+    private BigDecimal premium;*/
 
 }
