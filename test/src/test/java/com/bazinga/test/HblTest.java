@@ -144,8 +144,8 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
-        //thsDataUtilComponent.beiXiang();
-        thsDataUtilComponent.hsTech();
+        thsDataUtilComponent.beiXiang();
+        //thsDataUtilComponent.hsTech();
        /* TradeDatePoolQuery query = new TradeDatePoolQuery();
         query.addOrderBy("trade_date", Sort.SortType.ASC);
         List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
