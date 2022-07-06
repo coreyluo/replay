@@ -88,6 +88,23 @@ public class CommonReplayComponent {
         return resultMap;
     }
 
+    public Map<String,BigDecimal> initZrztOpenRate(){
+        Map<String,BigDecimal> resultMap = new HashMap<>();
+
+        StockKbarQuery query = new StockKbarQuery();
+        query.setStockCode("880863");
+        query.addOrderBy("kbar_date", Sort.SortType.ASC);
+        List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+
+        for (int i = 1; i < stockKbarList.size(); i++) {
+            StockKbar stockKbar = stockKbarList.get(i);
+            StockKbar preStockKbar = stockKbarList.get(i-1);
+            BigDecimal openRate = PriceUtil.getPricePercentRate(stockKbar.getOpenPrice().subtract(preStockKbar.getClosePrice()),preStockKbar.getClosePrice());
+            resultMap.put(stockKbar.getKbarDate(),openRate);
+        }
+        return resultMap;
+    }
+
 
     public Map<String, List<PlankDayDTO>> getPlankDayInfoMap(){
 

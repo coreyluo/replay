@@ -64,7 +64,7 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-     //   currentTradeDate = DateUtil.parseDate("20220617",DateUtil.yyyyMMdd);
+     //   currentTradeDate = DateUtil.parseDate("20220701",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -485,7 +485,8 @@ public class AccountPositionCalComponent {
                             String orderTime = positionCalDTO.getOrderTime();
                             Integer orderInteger = Integer.parseInt(orderTime.replaceAll(":",""));
                             BigDecimal position = orderPrice.multiply(new BigDecimal(orderQuantity));
-                            if(orderInteger< 93000){
+                            positionCalDTO.setBuyStrategy("跟大单");
+                            /*if(orderInteger< 93000){
                                 positionCalDTO.setBuyStrategy("布林带");
                             }else if(orderInteger< 94000){
                                 positionCalDTO.setBuyStrategy("上影线");
@@ -496,7 +497,7 @@ public class AccountPositionCalComponent {
                                     positionCalDTO.setBuyStrategy("500勇士");
 
                                 }
-                            }
+                            }*/
                         }
                     }
                     positionCalDTO.setSealType(sealType);

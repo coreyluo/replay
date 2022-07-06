@@ -351,6 +351,7 @@ public class ReplayTest extends BaseTestCase {
     public void test13(){
        // shIndexReplayComponent.replayUpDown();
        // indexPeriodReplayComponent.replay();
-        selfExcelReplayComponent.replay();
+      //  selfExcelReplayComponent.replay();
+        sellReplayComponent.replayStock();
     }
 }

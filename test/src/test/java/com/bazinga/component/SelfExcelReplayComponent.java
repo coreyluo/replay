@@ -56,7 +56,7 @@ public class SelfExcelReplayComponent {
 
 
     public void replay(){
-        File file = new File("E:/excelExport/200w大单突破.xlsx");
+        File file = new File("E:/excelExport/200w大单突破条件后.xlsx");
         try {
             List<BigOrderExcelDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(BigOrderExcelDTO.class);
             List<BigOrderExcelDTO> resultList = new ArrayList<>();
@@ -85,7 +85,7 @@ public class SelfExcelReplayComponent {
             for (int i = 0; i < times + 1; i++) {
                 int toIndex = (i+1)* 60000;
                 toIndex = toIndex > importList.size()?importList.size():toIndex;
-                ExcelExportUtil.exportToFile(importList.subList(i* 60000, toIndex), "E:\\trendData\\200w大单突破增加字段"+i+".xls");
+                ExcelExportUtil.exportToFile(importList.subList(i* 60000, toIndex), "E:\\trendData\\200w大单突破条件后增加字段"+i+".xls");
             }
 
         } catch (Exception e) {

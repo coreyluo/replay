@@ -288,6 +288,9 @@ public class SellReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
         List<Map> dataList = new ArrayList<>();
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        Map<String, Integer> endPlanksMap = commonReplayComponent.endPlanksMap(circulateInfos);
+        Map<String, BigDecimal> zrztOpenRateMap = commonReplayComponent.initZrztOpenRate();
         try {
             out:for (SellReplayImportDTO sellReplayImportDTO : importList) {
               /*  if(sellReplayImportDTO.getSealType()!=0){
@@ -320,7 +323,7 @@ public class SellReplayComponent {
                 }*/
                 List<ThirdSecondTransactionDataDTO> pre15List = historyTransactionDataComponent.getFixTimeData(list, "09:45");
                 BigDecimal lowPrice = new BigDecimal("11");
-                openPrice = list.get(0).getTradePrice();
+            /*    openPrice = list.get(0).getTradePrice();
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : pre15List) {
                     if(transactionDataDTO.getTradePrice().compareTo(lowPrice)<0){
                         lowPrice = transactionDataDTO.getTradePrice();
@@ -331,7 +334,7 @@ public class SellReplayComponent {
                         log.info("满足强势回弹 stockCode{} kbarDate{}",sellReplayImportDTO.getStockCode(),sellDateString);
                         continue out;
                     }
-                }
+                }*/
                 for (ThirdSecondTransactionDataDTO transactionDataDTO : list) {
                     if("09:25".equals(transactionDataDTO.getTradeTime())){
                         openPrice = transactionDataDTO.getTradePrice();
@@ -356,11 +359,13 @@ public class SellReplayComponent {
             }
 
             List<Map> exportList = Lists.newArrayList();
+
             groupByMap.forEach((key,list)->{
                 Map map = new HashMap<>();
                 map.put("sellDate",key);
                 map.put("count",list.size());
-                for (int i = 2; i < headList.length; i++) {
+                map.put("openRate",zrztOpenRateMap.get(key));
+                for (int i = 3; i < headList.length; i++) {
                     String attrKey = headList[i];
                     BigDecimal totalRate = BigDecimal.ZERO;
                     BigDecimal preRate = BigDecimal.ZERO;
@@ -371,7 +376,7 @@ public class SellReplayComponent {
                             preRate = new BigDecimal(itemMap.get(attrKey).toString());
                         }
                     }
-                    map.put(attrKey,totalRate.divide(new BigDecimal(list.size()),2,BigDecimal.ROUND_HALF_UP));
+                    map.put(attrKey,totalRate);
                   //  map.put(attrKey,totalRate);
                 }
                 exportList.add(map);
@@ -382,7 +387,7 @@ public class SellReplayComponent {
             excelExportUtil.writeMainData(1);
 
             try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\市场封住15min未反弹到中位聚合.xls");
+                FileOutputStream output=new FileOutputStream("E:\\excelExport\\持仓走势聚合.xls");
                 workbook.write(output);
                 output.flush();
             } catch (IOException e) {
@@ -473,14 +478,31 @@ public class SellReplayComponent {
         String[] headList = getHeadList();
         excelExportUtil.setHeadKey(headList);
 
-        File file = new File("E:/excelExport/陈1109.xlsx");
+        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
+        Map<String, Integer> endPlanksMap = commonReplayComponent.endPlanksMap(circulateInfos);
+        Map<String, BigDecimal> zrztOpenRateMap = commonReplayComponent.initZrztOpenRate();
+
+        File file = new File("E:/excelExport/老窝盈亏20220704.xlsx");
         try {
             List<SellReplayImportDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(SellReplayImportDTO.class);
-            for (SellReplayImportDTO sellReplayImportDTO : importList) {
+            List<SellReplayImportDTO> tempList = new ArrayList<>();
+            for (SellReplayImportDTO importDTO : importList) {
+                String kbarDate = DateUtil.format(importDTO.getKbarDate(),DateUtil.yyyyMMdd);
+                Date afterTradeDate = commonComponent.afterTradeDate(importDTO.getKbarDate());
+                String afterKbarDate = DateUtil.format(afterTradeDate,DateUtil.yyyyMMdd);
+                Integer plankCount = endPlanksMap.get(kbarDate);
+                BigDecimal openRate = zrztOpenRateMap.get(afterKbarDate);
+                if(plankCount>=100 && openRate.compareTo(new BigDecimal("2.5"))>0){
+                    tempList.add(importDTO);
+                }
+            }
+          /*  for (SellReplayImportDTO sellReplayImportDTO : importList) {
                 String currentKbarString = DateUtil.format(sellReplayImportDTO.getKbarDate(),DateUtil.yyyyMMdd);
                 String uniqueKey =  sellReplayImportDTO.getStockCode() + SymbolConstants.UNDERLINE + currentKbarString;
                 StockKbar stockKbar = stockKbarService.getByUniqueKey(uniqueKey);
-
+                if(stockKbar==null){
+                    continue;
+                }
                 Date sellDate = commonComponent.afterTradeDate(sellReplayImportDTO.getKbarDate());
                 String sellDateString = DateUtil.format(sellDate,DateUtil.yyyyMMdd);
                 Map<String,Object> map = new HashMap<>();
@@ -499,22 +521,9 @@ public class SellReplayComponent {
                 }
                 map.put("openRate", PriceUtil.getPricePercentRate(openPrice.subtract(stockKbar.getClosePrice()),stockKbar.getClosePrice()));
                 dataList.add(map);
-            }
+            }*/
+            replay(tempList);
 
-
-
-
-            excelExportUtil.setData(dataList);
-            excelExportUtil.writeTableHead(headList,workbook.createCellStyle(), 0);
-            excelExportUtil.writeMainData(1);
-
-            try {
-                FileOutputStream output=new FileOutputStream("E:\\excelExport\\卖出烂板2板均值.xls");
-                workbook.write(output);
-                output.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -531,7 +540,7 @@ public class SellReplayComponent {
      //   headList.add("openRate");
         headList.add("sellDate");
         headList.add("count");
-       // headList.add("overCount");
+        headList.add("openRate");
         headList.add("09:25");
         Date date = DateUtil.parseDate("20210531092900", DateUtil.yyyyMMddHHmmss);
         int count = 0;
