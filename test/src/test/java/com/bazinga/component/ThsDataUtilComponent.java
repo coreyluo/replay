@@ -6,10 +6,12 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bazinga.base.Sort;
 import com.bazinga.dto.ZhuanZaiExcelDTO;
+import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.model.ThsBlockInfo;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.replay.model.TradeDatePool;
 import com.bazinga.replay.query.TradeDatePoolQuery;
+import com.bazinga.replay.service.StockKbarService;
 import com.bazinga.replay.service.ThsQuoteInfoService;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
@@ -39,6 +41,8 @@ public class ThsDataUtilComponent {
     private ThsQuoteInfoService thsQuoteInfoService;
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+    @Autowired
+    private StockKbarService stockKbarService;
 
     public static final ExecutorService THREAD_POOL_QUOTE = ThreadPoolUtils.create(16, 32, 512, "QuoteThreadPool");
 
@@ -85,6 +89,369 @@ public class ThsDataUtilComponent {
             e.printStackTrace();
         }*/
     }
+
+    public void quoteQiHuo(String stockCode,String stockName,String tradeDate){
+        int ret = thsLogin();
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
+        String quote_str = JDIBridge.THS_Snapshot("ICZL.CFE","tradeTime;latest;ms;amt;vol","",tradeDate+" 09:15:00",tradeDate+" 15:05:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> amts = tableInfo.getJSONArray("amt").toJavaList(BigDecimal.class);
+            List<BigDecimal> vols = tableInfo.getJSONArray("vol").toJavaList(BigDecimal.class);
+            List<BigDecimal> latests = tableInfo.getJSONArray("latest").toJavaList(BigDecimal.class);
+            List<String> miss = tableInfo.getJSONArray("ms").toJavaList(String.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.DEFAULT_FORMAT);
+                ThsQuoteInfo quote = new ThsQuoteInfo();
+                quote.setStockCode("ICZL");
+                quote.setStockName("中证500股指期货");
+                quote.setQuoteDate(DateUtil.format(date,DateUtil.yyyyMMdd));
+                quote.setQuoteTime(DateUtil.format(date,DateUtil.HHMMSS));
+                quote.setCurrentPrice(latests.get(i));
+                String qouteTime = quote.getQuoteTime() + miss.get(i);
+                quote.setQuoteTime(qouteTime);
+                if(amts.get(i)==null) {
+                    quote.setAmt(BigDecimal.ZERO);
+                }else{
+                    quote.setAmt(amts.get(i));
+                }
+                if(vols.get(i)==null) {
+                    quote.setVol(0l);
+                }else{
+                    quote.setVol(vols.get(i).longValue());
+                }
+                thsQuoteInfoService.save(quote);
+                i++;
+            }
+        }
+        thsLoginOut();
+    }
+
+
+    public void qiHuoKbar(String stockCode,String stockName,String tradeDate){
+        int ret = thsLogin();
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("ICZL.CFE","open;close;high;low;volume;amount","Fill:Original",tradeDate+" 09:15:00",tradeDate+" 15:15:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            List<Long> volumes = tableInfo.getJSONArray("volume").toJavaList(Long.class);
+            List<BigDecimal> amounts = tableInfo.getJSONArray("amount").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.noSecondFormat);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode("ICZL500");
+                stockKbar.setStockName("中证500期货");
+                stockKbar.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMddHHmmss));
+                stockKbar.setUniqueKey(stockKbar.getStockCode()+"_"+stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                if(amounts.get(i)==null) {
+                    stockKbar.setTradeAmount(BigDecimal.ZERO);
+                }else{
+                    stockKbar.setTradeAmount(amounts.get(i));
+                }
+                if(volumes.get(i)==null) {
+                    stockKbar.setTradeQuantity(0l);
+                }else{
+                    stockKbar.setTradeQuantity(volumes.get(i));
+                }
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+        thsLoginOut();
+    }
+    public void beiXiang(){
+        thsLogin();
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        boolean flag = false;
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2018-01-02")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-22")){
+                flag  = false;
+            }
+            if(flag){
+                northMoneyFlowKbar(format,"沪股通");
+                northMoneyFlowKbar(format,"深股通");
+            }
+        }
+        thsLoginOut();
+    }
+
+    /**
+     * 北向资金净流入kbar
+     * @param tradeDate
+     */
+    public void northMoneyFlowKbar(String tradeDate,String typeStr){
+
+        System.out.println(tradeDate+ Thread.currentThread().getName());
+
+        String quote_str = JDIBridge.THS_DataPool("balanceOfSHSZHK",tradeDate+";"+tradeDate+";"+typeStr,"tradeDate:Y,updateTime:Y,type:Y,netBuyAmount:Y");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<String> types = tableInfo.getJSONArray("type").toJavaList(String.class);
+            List<String> times = tableInfo.getJSONArray("updateTime").toJavaList(String.class);
+            List<BigDecimal> amounts = tableInfo.getJSONArray("netBuyAmount").toJavaList(BigDecimal.class);
+            int i = 0;
+            Date date = DateUtil.parseDate(tradeDate+" 09:25", DateUtil.noSecondFormat);
+            for (String time:times){
+                String dateStamp = tradeDate + " " + time;
+                Date timeDate = DateUtil.parseDate(dateStamp, DateUtil.noSecondFormat);
+                String type = types.get(i);
+                StockKbar stockKbar = new StockKbar();
+                if(type.equals("沪股通")) {
+                    if(!timeDate.before(date)) {
+                        stockKbar.setStockCode("188888");
+                        stockKbar.setStockName("沪股通");
+                        stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                        stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                        stockKbar.setOpenPrice(BigDecimal.ZERO);
+                        stockKbar.setClosePrice(BigDecimal.ZERO);
+                        stockKbar.setHighPrice(BigDecimal.ZERO);
+                        stockKbar.setLowPrice(BigDecimal.ZERO);
+                        if(amounts.get(i)==null){
+                            stockKbar.setTradeAmount(BigDecimal.ZERO);
+                        }else {
+                            stockKbar.setTradeAmount(amounts.get(i));
+                        }
+                        stockKbar.setTradeQuantity(0l);
+                        stockKbarService.save(stockKbar);
+                    }
+                }
+                if(type.equals("深股通")) {
+                    if(!timeDate.before(date)) {
+                        stockKbar.setStockCode("188889");
+                        stockKbar.setStockName("深股通");
+                        stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                        stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                        stockKbar.setOpenPrice(BigDecimal.ZERO);
+                        stockKbar.setClosePrice(BigDecimal.ZERO);
+                        stockKbar.setHighPrice(BigDecimal.ZERO);
+                        stockKbar.setLowPrice(BigDecimal.ZERO);
+                        if(amounts.get(i)==null){
+                            stockKbar.setTradeAmount(BigDecimal.ZERO);
+                        }else {
+                            stockKbar.setTradeAmount(amounts.get(i));
+                        }
+                        stockKbar.setTradeQuantity(0l);
+                        stockKbarService.save(stockKbar);
+                    }
+                }
+                i++;
+            }
+        }
+
+    }
+
+    public void hsTech(){
+        thsLogin();
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        boolean flag = false;
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2018-01-02")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-08")){
+                flag  = false;
+            }
+            if(flag){
+                hkTecKbar(format);
+            }
+        }
+        thsLoginOut();
+    }
+
+
+    /**
+     * 恒生科技10minkbar
+     * @param tradeDate
+     */
+    public void hkTecKbar(String tradeDate){
+
+        System.out.println(tradeDate+ Thread.currentThread().getName());
+
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("000001.SH","open;high;low;close;volume;amount","Fill:Original,Interval:10",tradeDate+" 09:15:00",tradeDate+" 15:15:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            List<BigDecimal> amounts = tableInfo.getJSONArray("amount").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date timeDate = DateUtil.parseDate(time, DateUtil.noSecondFormat);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode("999999");
+                stockKbar.setStockName("上证指数");
+                stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMddHHmmss));
+                stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                if(amounts.get(i)==null){
+                    stockKbar.setTradeAmount(BigDecimal.ZERO);
+                }else {
+                    stockKbar.setTradeAmount(amounts.get(i));
+                }
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+
+    }
+
+    /**
+     * 指数kbar
+     * @param stockCode
+     * @param stockName
+     * @param tradeDate
+     */
+    public void indexKbar(String stockCode,String stockName,String tradeDate){
+        int ret = thsLogin();
+        System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
+        String quote_str = JDIBridge.THS_HighFrequenceSequence("000905.SH","open;close;high;low","Fill:Original",tradeDate+" 09:15:00",tradeDate+" 15:00:00");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date date = DateUtil.parseDate(time, DateUtil.noSecondFormat);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode("888888");
+                stockKbar.setStockName("中证500指数");
+                stockKbar.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMddHHmmss));
+                stockKbar.setUniqueKey(stockKbar.getStockCode()+"_"+stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                stockKbar.setTradeAmount(BigDecimal.ZERO);
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+        thsLoginOut();
+    }
+
+    /**
+     * 板块日kbar
+     */
+    public void blockKbar(String blockCode,String blockName){
+        System.out.println(blockCode);
+
+        String quote_str = JDIBridge.THS_HistoryQuotes(blockCode+".TI","open,high,low,close","","2022-06-01","2022-06-09");
+        if(!StringUtils.isEmpty(quote_str)){
+            JSONObject jsonObject = JSONObject.parseObject(quote_str);
+            JSONArray tables = jsonObject.getJSONArray("tables");
+            if(tables==null||tables.size()==0){
+                return;
+            }
+            JSONObject tableJson = tables.getJSONObject(0);
+            JSONArray timeArray = tableJson.getJSONArray("time");
+            if(timeArray==null||timeArray.size()==0){
+                return;
+            }
+            List<String> times = timeArray.toJavaList(String.class);
+            JSONObject tableInfo = tableJson.getJSONObject("table");
+            List<BigDecimal> opens = tableInfo.getJSONArray("open").toJavaList(BigDecimal.class);
+            List<BigDecimal> highs = tableInfo.getJSONArray("high").toJavaList(BigDecimal.class);
+            List<BigDecimal> lows = tableInfo.getJSONArray("low").toJavaList(BigDecimal.class);
+            List<BigDecimal> closes = tableInfo.getJSONArray("close").toJavaList(BigDecimal.class);
+            int i = 0;
+            for (String time:times){
+                Date timeDate = DateUtil.parseDate(time, DateUtil.yyyy_MM_dd);
+                StockKbar stockKbar = new StockKbar();
+                stockKbar.setStockCode(blockCode);
+                stockKbar.setStockName(blockName);
+                stockKbar.setKbarDate(DateUtil.format(timeDate, DateUtil.yyyyMMdd));
+                stockKbar.setUniqueKey(stockKbar.getStockCode() + "_" + stockKbar.getKbarDate());
+                stockKbar.setOpenPrice(opens.get(i));
+                stockKbar.setClosePrice(closes.get(i));
+                stockKbar.setHighPrice(highs.get(i));
+                stockKbar.setLowPrice(lows.get(i));
+                stockKbar.setTradeAmount(BigDecimal.ZERO);
+                stockKbar.setTradeQuantity(0l);
+                stockKbarService.save(stockKbar);
+                i++;
+            }
+        }
+
+    }
+
+
 
     public void quoteInfo(String stockCode,String stockName,String tradeDate){
         System.out.println(stockCode+"===="+stockName+"===="+tradeDate+ Thread.currentThread().getName());
@@ -153,7 +520,7 @@ public class ThsDataUtilComponent {
     public int thsLogin(){
         try {
             System.load("E://iFinDJava.dll");
-            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            int ret = JDIBridge.THS_iFinDLogin("ylz198", "307435");
             return ret;
         }catch (Exception e){
             log.error("同花顺登录失败",e);
@@ -164,7 +531,7 @@ public class ThsDataUtilComponent {
     public int thsLoginOut(){
         try {
             System.load("E://iFinDJava.dll");
-            int ret = JDIBridge.THS_iFinDLogin("lsyjx002", "334033");
+            int ret = JDIBridge.THS_iFinDLogin("ylz198", "307435");
             return ret;
         }catch (Exception e){
             log.error("同花顺登录失败",e);

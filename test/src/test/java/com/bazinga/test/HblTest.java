@@ -2,6 +2,7 @@ package com.bazinga.test;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.bazinga.base.Sort;
 import com.bazinga.component.*;
 import com.bazinga.dto.BlockLevelDTO;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
@@ -10,6 +11,7 @@ import com.bazinga.replay.dto.KBarDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.ThsQuoteInfo;
 import com.bazinga.replay.model.TradeDatePool;
+import com.bazinga.replay.query.TradeDatePoolQuery;
 import com.bazinga.replay.service.TradeDatePoolService;
 import com.bazinga.util.DateUtil;
 import com.google.common.collect.Lists;
@@ -142,9 +144,30 @@ public class HblTest extends BaseTestCase {
 
     @Test
     public void test(){
+        thsDataUtilComponent.beiXiang();
+        //thsDataUtilComponent.hsTech();
+       /* TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.addOrderBy("trade_date", Sort.SortType.ASC);
+        List<TradeDatePool> tradeDatePools = tradeDatePoolService.listByCondition(query);
+        boolean flag = false;
+        for (TradeDatePool tradeDatePool:tradeDatePools){
+            String format = DateUtil.format(tradeDatePool.getTradeDate(), DateUtil.yyyy_MM_dd);
+            if(format.equals("2022-06-02")){
+                flag  = true;
+            }
+            if(format.equals("2022-06-06")){
+                flag  = false;
+            }
+            if(flag){
+                //thsDataUtilComponent.indexKbar("","",format);
+                //thsDataUtilComponent.qiHuoKbar("","",format);
+                thsDataUtilComponent.northMoneyFlowKbar(format);
+            }
+        }*/
+
         //relationWithSZComponent.getUpperInfo();
-        relationWithSZComponent.relativeWithSZInfo();
-        //highPlankBuyComponent.plankExchangeAmountInfo();
+       //relationWithSZComponent.relativeWithSZInfo();
+       // highPlankBuyComponent.plankExchangeAmountInfo();
         //plankTimeLevelComponent.plankExchangeAmountInfo();
         //plankExchangeAmountComponent.plankExchangeAmountInfo();
         //disableSellUtilComponent.hs300Info();
