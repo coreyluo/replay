@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.OtherIndexInfoDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.OtherIndexInfo">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="index_code" jdbcType="VARCHAR" property="indexCode"/>
+        <result column="index_name" jdbcType="VARCHAR" property="indexName"/>
+        <result column="trade_date" jdbcType="VARCHAR" property="tradeDate"/>
+        <result column="time_stamp" jdbcType="VARCHAR" property="timeStamp"/>
+        <result column="index_value" jdbcType="DECIMAL" property="indexValue"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            index_code,
+            index_name,
+            trade_date,
+            time_stamp,
+            index_value,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from other_index_info
+        where id = #{id}
+    </select>
+
+
+    <insert id="insert" parameterType="com.bazinga.replay.model.OtherIndexInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into other_index_info (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{indexCode, jdbcType=VARCHAR},
+            #{indexName, jdbcType=VARCHAR},
+            #{tradeDate, jdbcType=VARCHAR},
+            #{timeStamp, jdbcType=VARCHAR},
+            #{indexValue, jdbcType=DECIMAL},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.OtherIndexInfo">
+        update other_index_info
+        <set>
+            <if test="indexCode != null">
+                index_code = #{indexCode, jdbcType=VARCHAR},
+            </if>
+            <if test="indexName != null">
+                index_name = #{indexName, jdbcType=VARCHAR},
+            </if>
+            <if test="tradeDate != null">
+                trade_date = #{tradeDate, jdbcType=VARCHAR},
+            </if>
+            <if test="timeStamp != null">
+                time_stamp = #{timeStamp, jdbcType=VARCHAR},
+            </if>
+            <if test="indexValue != null">
+                index_value = #{indexValue, jdbcType=DECIMAL},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="indexCode != null">
+            and index_code = #{indexCode, jdbcType=VARCHAR}
+        </if>
+        <if test="indexName != null">
+            and index_name = #{indexName, jdbcType=VARCHAR}
+        </if>
+        <if test="tradeDate != null">
+            and trade_date = #{tradeDate, jdbcType=VARCHAR}
+        </if>
+        <if test="timeStamp != null">
+            and time_stamp = #{timeStamp, jdbcType=VARCHAR}
+        </if>
+        <if test="indexValue != null">
+            and index_value = #{indexValue, jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.OtherIndexInfoQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from other_index_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.OtherIndexInfoQuery" resultType="java.lang.Integer">
+        select count(1)
+        from other_index_info
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>

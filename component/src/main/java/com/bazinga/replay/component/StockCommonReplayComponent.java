@@ -110,7 +110,9 @@ public class StockCommonReplayComponent {
         StockCommonReplayQuery stockCommonReplayQuery = new StockCommonReplayQuery();
         stockCommonReplayQuery.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMdd));
         List<StockCommonReplay> stockCommonReplays = stockCommonReplayService.listByCondition(stockCommonReplayQuery);
+        int index = 0;
         for (StockCommonReplay replay:stockCommonReplays) {
+            index++;
             try {
                 List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNew(replay.getStockCode(), 50, 11);
                 if(kbars.size()>=2) {
@@ -163,6 +165,7 @@ public class StockCommonReplayComponent {
                     }
                 }
                 stockCommonReplayService.updateById(replay);
+                System.out.println(replay.getStockCode()+"==firstPlankNoBuyInfo=="+index);
             }catch (Exception e){
                 log.error(e.getMessage(),e);
             }
@@ -175,10 +178,12 @@ public class StockCommonReplayComponent {
             log.info("当前日期不是交易日期");
             return;
         }
+        int index = 0;
         StockCommonReplayQuery stockCommonReplayQuery = new StockCommonReplayQuery();
         stockCommonReplayQuery.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMdd));
         List<StockCommonReplay> stockCommonReplays = stockCommonReplayService.listByCondition(stockCommonReplayQuery);
         for (StockCommonReplay replay:stockCommonReplays) {
+            index++;
             try {
                 List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNewDays(replay.getStockCode(), 50, 11);
                 List<StockKbar> stockKbars = Lists.reverse(kbars);
@@ -208,6 +213,7 @@ public class StockCommonReplayComponent {
                 replay.setRateDay5(rateDay5);
                 replay.setPlanksDay10(planks);
                 stockCommonReplayService.updateById(replay);
+                System.out.println(replay.getStockCode()+"==highRaiseStockInfo=="+index);
             }catch (Exception e){
                 log.error(e.getMessage(),e);
             }
@@ -223,7 +229,9 @@ public class StockCommonReplayComponent {
         StockCommonReplayQuery stockCommonReplayQuery = new StockCommonReplayQuery();
         stockCommonReplayQuery.setKbarDate(DateUtil.format(date,DateUtil.yyyyMMdd));
         List<StockCommonReplay> stockCommonReplays = stockCommonReplayService.listByCondition(stockCommonReplayQuery);
+        int index = 0;
         for (StockCommonReplay replay:stockCommonReplays) {
+            index++;
             try {
                 List<StockKbar> kbars = stockKbarComponent.getStockKBarRemoveNew(replay.getStockCode(), 50, 11);
                 List<StockKbar> stockKbars = Lists.reverse(kbars);
@@ -250,6 +258,7 @@ public class StockCommonReplayComponent {
                 replay.setRateDay3(rateDay3);
                 replay.setGatherPriceThanLow10(lowPrice);
                 stockCommonReplayService.updateById(replay);
+                System.out.println(replay.getStockCode()+"==forTwoPlankWuDi=="+index);
             }catch (Exception e){
                 log.error(e.getMessage(),e);
             }

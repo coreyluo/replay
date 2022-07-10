@@ -37,19 +37,22 @@ public class BusTest extends BaseTestCase {
 
     @Autowired
     private TradeDatePoolService tradeDatePoolService;
+    @Autowired
 
     @Test
     public void test(){
        // stockKbarComponent.batchUpdateDaily();
 
       //  dragonTigerDailyComponent.save2Db();
+        Date date = new Date();
+        long time = date.getTime();
+        System.out.println(time);
 
-
-       ShStockOrderQuery query= new ShStockOrderQuery();
+        /*ShStockOrderQuery query= new ShStockOrderQuery();
         query.setDateTrade(DateUtil.parseDate("20220511",DateUtil.yyyyMMdd));
        // query.setThscode("");
         List<ShStockOrder> shStockOrders = shStockOrderService.listByCondition(query);
-        System.out.println(JSONObject.toJSONString(shStockOrders));
+        System.out.println(JSONObject.toJSONString(shStockOrders));*/
 
 
         /*

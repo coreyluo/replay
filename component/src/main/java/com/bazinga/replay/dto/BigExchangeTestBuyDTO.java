@@ -8,21 +8,13 @@ import java.math.BigDecimal;
 @Data
 public class BigExchangeTestBuyDTO {
 
-    private String stockCode;
-
-    private String stockName;
-
     private String tradeDate;
 
-    private Long circulateZ;
+    private BigDecimal bigOrderAmountB = BigDecimal.ZERO;
 
-    private String planks;
+    private Integer bigOrderBTimes = 0;
 
-    private Integer endFlag;
+    private BigDecimal bigOrderAmountS = BigDecimal.ZERO;
 
-    private BigDecimal bigOrderAmount;
-
-    private Integer bigOrderTimes;
-
-    private BigDecimal profit;
+    private Integer bigOrderSTimes = 0;
 }

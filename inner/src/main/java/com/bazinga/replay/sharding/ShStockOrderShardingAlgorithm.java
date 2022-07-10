@@ -16,9 +16,11 @@ public class ShStockOrderShardingAlgorithm implements PreciseShardingAlgorithm<D
 
     @Override
     public String doSharding(Collection<String> tableNames, PreciseShardingValue<Date> preciseShardingValue) {
-
+        String day = DateUtil.format(preciseShardingValue.getValue(), DateUtil.MMdd);
+        String year = DateUtil.format(preciseShardingValue.getValue(), "yyyy");
+        String dateStr = year+"_"+day;
         for (String tableName : tableNames) {
-            if(tableName.endsWith(DateUtil.format(preciseShardingValue.getValue(),DateUtil.MMdd))){
+            if(tableName.endsWith(dateStr)){
                 return tableName;
             }
         }

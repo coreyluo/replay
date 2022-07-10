@@ -78,6 +78,43 @@ public class MarketUtil {
         return false;
     }
 
+    public static boolean isSh(String stockCode) {
+        if(StringUtils.isEmpty(stockCode)){
+            return false;
+        }
+        if(stockCode.startsWith("6")){
+            return true;
+        }
+        return false;
+    }
+    public static boolean isSz(String stockCode) {
+        if(StringUtils.isEmpty(stockCode)){
+            return false;
+        }
+        if(stockCode.startsWith("00")){
+            return true;
+        }
+        if(stockCode.startsWith("30")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isBlockCode(String stockCode) {
+        if(StringUtils.isEmpty(stockCode)){
+            return false;
+        }
+        if(stockCode.startsWith("885")){
+            return true;
+        }
+        if(stockCode.startsWith("881")){
+            return true;
+        }
+        if(stockCode.startsWith("884")){
+            return true;
+        }
+        return false;
+    }
 
     public static boolean isSHMarket(String stockCode){
         if(stockCode.startsWith("60")){
@@ -92,4 +129,32 @@ public class MarketUtil {
         return false;
     }
 
+
+    public static String thsToGeneralStock(String thsStock){
+        if(StringUtils.isBlank(thsStock)){
+            return null;
+        }
+        if(thsStock.equals("000001.SH")){
+            return "999999";
+        }
+        String replace = thsStock.replace(".SH", "");
+        String general = replace.replace(".SZ", "");
+        return general;
+    }
+
+    public static String generalToThsStock(String stock){
+        if(StringUtils.isBlank(stock)){
+            return null;
+        }
+        if(MarketUtil.isSh(stock)){
+            return stock+".SH";
+        }
+        if(MarketUtil.isSz(stock)){
+            return stock+".SZ";
+        }
+        if(MarketUtil.isBlockCode(stock)){
+            return stock+".TI";
+        }
+        return null;
+    }
 }

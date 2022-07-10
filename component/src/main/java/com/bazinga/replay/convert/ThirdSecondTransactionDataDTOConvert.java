@@ -24,6 +24,21 @@ public class ThirdSecondTransactionDataDTOConvert {
         return transactionDataDTOList;
 
     }
+    public static List<ThirdSecondTransactionDataDTO> currentConvert(DataTable dataTable){
+        int rows = dataTable.rows();
+        List<ThirdSecondTransactionDataDTO> transactionDataDTOList = Lists.newArrayList();
+        for(int i=0;i<rows;i++){
+            String[] row = dataTable.getRow(i);
+            ThirdSecondTransactionDataDTO dto = new ThirdSecondTransactionDataDTO();
+            dto.setTradeTime(row[0]);
+            dto.setTradePrice(new BigDecimal(row[1]).setScale(2, BigDecimal.ROUND_HALF_UP));
+            dto.setTradeQuantity(Integer.parseInt(row[2]));
+            dto.setTradeType(Integer.parseInt(row[4]));
+            transactionDataDTOList.add(dto);
+        }
+        return transactionDataDTOList;
+
+    }
 
 
 }

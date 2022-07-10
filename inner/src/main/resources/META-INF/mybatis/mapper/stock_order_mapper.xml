@@ -231,6 +231,11 @@
         <if test="mseq != null">
             and mseq = #{mseq, jdbcType=DECIMAL}
         </if>
+        <if test="dateTrade != null">
+            <![CDATA[
+            and date_trade = #{dateTrade, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
     </sql>
 
     <!-- ��Χ��ѯ���������� <�� >��between��like��in�� -->

@@ -32,7 +32,7 @@ public class CurrentDayTransactionDataComponent {
                 if (transactionData == null) {
                     continue;
                 }
-                List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(transactionData);
+                List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.currentConvert(transactionData);
                 resultList.addAll(0, list);
                 loopTimes++;
             }
@@ -209,7 +209,7 @@ public class CurrentDayTransactionDataComponent {
             if(transactionData ==null ){
                 return amount;
             }
-            List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.convert(transactionData);
+            List<ThirdSecondTransactionDataDTO> list = ThirdSecondTransactionDataDTOConvert.currentConvert(transactionData);
             for (ThirdSecondTransactionDataDTO dto:list){
                 if(dto.getTradeType()==1){
                     System.out.println(JSONObject.toJSONString(dto));

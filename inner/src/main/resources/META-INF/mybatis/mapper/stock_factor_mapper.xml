@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bazinga.replay.dao.StockFactorDAO">
+
+    <resultMap id="BaseResultMap" type="com.bazinga.replay.model.StockFactor">
+        <id column="id" jdbcType="BIGINT"  property="id" />
+        <result column="stock_code" jdbcType="VARCHAR" property="stockCode"/>
+        <result column="stock_name" jdbcType="VARCHAR" property="stockName"/>
+        <result column="kbar_date" jdbcType="VARCHAR" property="kbarDate"/>
+        <result column="unique_key" jdbcType="VARCHAR" property="uniqueKey"/>
+        <result column="index1" jdbcType="DECIMAL" property="index1"/>
+        <result column="index2a" jdbcType="DECIMAL" property="index2a"/>
+        <result column="index2b" jdbcType="DECIMAL" property="index2b"/>
+        <result column="index2c" jdbcType="DECIMAL" property="index2c"/>
+        <result column="index3" jdbcType="DECIMAL" property="index3"/>
+        <result column="index4" jdbcType="DECIMAL" property="index4"/>
+        <result column="index5" jdbcType="DECIMAL" property="index5"/>
+        <result column="index6" jdbcType="DECIMAL" property="index6"/>
+        <result column="index7" jdbcType="DECIMAL" property="index7"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        id,
+            stock_code,
+            stock_name,
+            kbar_date,
+            unique_key,
+            index1,
+            index2a,
+            index2b,
+            index2c,
+            index3,
+            index4,
+            index5,
+            index6,
+            index7,
+            create_time,
+            update_time
+        </sql>
+
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_factor
+        where id = #{id}
+    </select>
+
+
+    <select id="selectByUniqueKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_factor
+        where unique_key = #{uniqueKey} limit 1
+    </select>
+
+    <update id="updateByUniqueKey" parameterType="com.bazinga.replay.model.StockFactor">
+        update stock_factor
+        <set>
+        <if test="stockCode != null">
+            stock_code = #{stockCode, jdbcType=VARCHAR},
+        </if>
+        <if test="stockName != null">
+            stock_name = #{stockName, jdbcType=VARCHAR},
+        </if>
+        <if test="kbarDate != null">
+            kbar_date = #{kbarDate, jdbcType=VARCHAR},
+        </if>
+        <if test="index1 != null">
+            index1 = #{index1, jdbcType=DECIMAL},
+        </if>
+        <if test="index2a != null">
+            index2a = #{index2a, jdbcType=DECIMAL},
+        </if>
+        <if test="index2b != null">
+            index2b = #{index2b, jdbcType=DECIMAL},
+        </if>
+        <if test="index2c != null">
+            index2c = #{index2c, jdbcType=DECIMAL},
+        </if>
+        <if test="index3 != null">
+            index3 = #{index3, jdbcType=DECIMAL},
+        </if>
+        <if test="index4 != null">
+            index4 = #{index4, jdbcType=DECIMAL},
+        </if>
+        <if test="index5 != null">
+            index5 = #{index5, jdbcType=DECIMAL},
+        </if>
+        <if test="index6 != null">
+            index6 = #{index6, jdbcType=DECIMAL},
+        </if>
+        <if test="index7 != null">
+            index7 = #{index7, jdbcType=DECIMAL},
+        </if>
+        <if test="createTime != null">
+            create_time = #{createTime, jdbcType=TIMESTAMP},
+        </if>
+        <if test="updateTime != null">
+            update_time = #{updateTime, jdbcType=TIMESTAMP},
+        </if>
+        </set>
+        where unique_key = #{uniqueKey} limit 1
+    </update>
+    <insert id="insert" parameterType="com.bazinga.replay.model.StockFactor" useGeneratedKeys="true" keyProperty="id">
+        insert into stock_factor (<include refid="Base_Column_List" />)
+        values(
+        #{id, jdbcType=BIGINT},
+            #{stockCode, jdbcType=VARCHAR},
+            #{stockName, jdbcType=VARCHAR},
+            #{kbarDate, jdbcType=VARCHAR},
+            #{uniqueKey, jdbcType=VARCHAR},
+            #{index1, jdbcType=DECIMAL},
+            #{index2a, jdbcType=DECIMAL},
+            #{index2b, jdbcType=DECIMAL},
+            #{index2c, jdbcType=DECIMAL},
+            #{index3, jdbcType=DECIMAL},
+            #{index4, jdbcType=DECIMAL},
+            #{index5, jdbcType=DECIMAL},
+            #{index6, jdbcType=DECIMAL},
+            #{index7, jdbcType=DECIMAL},
+            #{createTime, jdbcType=TIMESTAMP},
+            #{updateTime, jdbcType=TIMESTAMP}
+            )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.bazinga.replay.model.StockFactor">
+        update stock_factor
+        <set>
+            <if test="stockCode != null">
+                stock_code = #{stockCode, jdbcType=VARCHAR},
+            </if>
+            <if test="stockName != null">
+                stock_name = #{stockName, jdbcType=VARCHAR},
+            </if>
+            <if test="kbarDate != null">
+                kbar_date = #{kbarDate, jdbcType=VARCHAR},
+            </if>
+            <if test="uniqueKey != null">
+                unique_key = #{uniqueKey, jdbcType=VARCHAR},
+            </if>
+            <if test="index1 != null">
+                index1 = #{index1, jdbcType=DECIMAL},
+            </if>
+            <if test="index2a != null">
+                index2a = #{index2a, jdbcType=DECIMAL},
+            </if>
+            <if test="index2b != null">
+                index2b = #{index2b, jdbcType=DECIMAL},
+            </if>
+            <if test="index2c != null">
+                index2c = #{index2c, jdbcType=DECIMAL},
+            </if>
+            <if test="index3 != null">
+                index3 = #{index3, jdbcType=DECIMAL},
+            </if>
+            <if test="index4 != null">
+                index4 = #{index4, jdbcType=DECIMAL},
+            </if>
+            <if test="index5 != null">
+                index5 = #{index5, jdbcType=DECIMAL},
+            </if>
+            <if test="index6 != null">
+                index6 = #{index6, jdbcType=DECIMAL},
+            </if>
+            <if test="index7 != null">
+                index7 = #{index7, jdbcType=DECIMAL},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime, jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime, jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id} limit 1
+    </update>
+
+    <sql id="Equal_Where_List">
+        <if test="stockCode != null">
+            and stock_code = #{stockCode, jdbcType=VARCHAR}
+        </if>
+        <if test="stockName != null">
+            and stock_name = #{stockName, jdbcType=VARCHAR}
+        </if>
+        <if test="kbarDate != null">
+            and kbar_date = #{kbarDate, jdbcType=VARCHAR}
+        </if>
+        <if test="uniqueKey != null">
+            and unique_key = #{uniqueKey, jdbcType=VARCHAR}
+        </if>
+        <if test="index1 != null">
+            and index1 = #{index1, jdbcType=DECIMAL}
+        </if>
+        <if test="index2a != null">
+            and index2a = #{index2a, jdbcType=DECIMAL}
+        </if>
+        <if test="index2b != null">
+            and index2b = #{index2b, jdbcType=DECIMAL}
+        </if>
+        <if test="index2c != null">
+            and index2c = #{index2c, jdbcType=DECIMAL}
+        </if>
+        <if test="index3 != null">
+            and index3 = #{index3, jdbcType=DECIMAL}
+        </if>
+        <if test="index4 != null">
+            and index4 = #{index4, jdbcType=DECIMAL}
+        </if>
+        <if test="index5 != null">
+            and index5 = #{index5, jdbcType=DECIMAL}
+        </if>
+        <if test="index6 != null">
+            and index6 = #{index6, jdbcType=DECIMAL}
+        </if>
+        <if test="index7 != null">
+            and index7 = #{index7, jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="Range_Where_List">
+        <if test="createTimeFrom != null">
+            <![CDATA[
+            and create_time >= #{createTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="createTimeTo != null">
+            <![CDATA[
+            and create_time <= #{createTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeFrom != null">
+            <![CDATA[
+            and update_time >= #{updateTimeFrom, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+        <if test="updateTimeTo != null">
+            <![CDATA[
+            and update_time <= #{updateTimeTo, jdbcType=TIMESTAMP}
+            ]]>
+        </if>
+    </sql>
+
+    <sql id="GtLastMaxId_Where">
+        <if test="lastMaxId != null and lastMaxId > 0">
+            and id > #{lastMaxId}
+        </if>
+    </sql>
+
+    <sql id="Order_By">
+        <if test="sorts != null and sorts.size > 0">
+            ORDER BY
+            <foreach collection="sorts" item="sortItem" separator=",">
+                ${sortItem.column} ${sortItem.type.message}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="selectByCondition" parameterType="com.bazinga.replay.query.StockFactorQuery" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from stock_factor
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+            <include refid="GtLastMaxId_Where" />
+        </where>
+        <include refid="Order_By"/>
+        <if test="limit > 0">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="com.bazinga.replay.query.StockFactorQuery" resultType="java.lang.Integer">
+        select count(1)
+        from stock_factor
+        <where>
+            <include refid="Equal_Where_List"/>
+            <include refid="Range_Where_List"/>
+        </where>
+    </select>
+
+
+</mapper>
