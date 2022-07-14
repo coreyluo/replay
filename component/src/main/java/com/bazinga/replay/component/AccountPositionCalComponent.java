@@ -64,7 +64,7 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-     //   currentTradeDate = DateUtil.parseDate("20220701",DateUtil.yyyyMMdd);
+     //   currentTradeDate = DateUtil.parseDate("20220713",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -307,7 +307,7 @@ public class AccountPositionCalComponent {
 
     public void calTiger(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-      //   currentTradeDate = DateUtil.parseDate("20220520",DateUtil.yyyyMMdd);
+     //    currentTradeDate = DateUtil.parseDate("20220713",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
