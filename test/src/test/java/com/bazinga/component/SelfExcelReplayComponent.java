@@ -9,6 +9,7 @@ import com.bazinga.replay.component.CommonComponent;
 import com.bazinga.replay.component.HistoryTransactionDataComponent;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;
 import com.bazinga.replay.model.CirculateInfo;
+import com.bazinga.replay.model.StockFactor;
 import com.bazinga.replay.model.StockKbar;
 import com.bazinga.replay.query.CirculateInfoQuery;
 import com.bazinga.replay.query.StockKbarQuery;
@@ -56,13 +57,13 @@ public class SelfExcelReplayComponent {
 
 
     public void replay(){
-        File file = new File("E:/excelExport/200w大单突破条件后.xlsx");
+        File file = new File("E:/excelExport/大单突破-10点均价用.xlsx");
         try {
             List<BigOrderExcelDTO> importList = new Excel2JavaPojoUtil(file).excel2JavaPojo(BigOrderExcelDTO.class);
             List<BigOrderExcelDTO> resultList = new ArrayList<>();
             Map<String,List<BigOrderExcelDTO>> tempMap = new HashMap<>();
             Map<String,Integer> rankMap = new HashMap<>();
-            for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
+          /*  for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
                 String kbarDate = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
 
                 List<BigOrderExcelDTO> list = tempMap.computeIfAbsent(kbarDate, k -> new ArrayList<>());
@@ -79,13 +80,32 @@ public class SelfExcelReplayComponent {
             for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
                 String kbarDate = DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd);
                 bigOrderExcelDTO.setRank(rankMap.get(kbarDate+ bigOrderExcelDTO.getStockCode()));
-            }
+            }*/
+            for (BigOrderExcelDTO bigOrderExcelDTO : importList) {
 
+              /*  if(!bigOrderExcelDTO.getStockCode().startsWith("300827")){
+                    continue;
+                }*/
+                StockKbarQuery query = new StockKbarQuery();
+                query.setStockCode(bigOrderExcelDTO.getStockCode().substring(0,6));
+                query.setKbarDateFrom(DateUtil.format(bigOrderExcelDTO.getKbarDate(),DateUtil.yyyyMMdd));
+
+                query.addOrderBy("kbar_date", Sort.SortType.ASC);
+                List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
+                if(CollectionUtils.isEmpty(stockKbarList) || stockKbarList.size()<2){
+
+                }else {
+                    int toIndex = stockKbarList.size()>10?10:stockKbarList.size();
+                    BigDecimal premium = calProfit(stockKbarList.subList(1, toIndex), bigOrderExcelDTO.getBuyPrice(),stockKbarList.get(0));
+                    bigOrderExcelDTO.setPremium(premium);
+
+                }
+            }
             int times = importList.size()/60000;
             for (int i = 0; i < times + 1; i++) {
                 int toIndex = (i+1)* 60000;
                 toIndex = toIndex > importList.size()?importList.size():toIndex;
-                ExcelExportUtil.exportToFile(importList.subList(i* 60000, toIndex), "E:\\trendData\\200w大单突破条件后增加字段"+i+".xls");
+                ExcelExportUtil.exportToFile(importList.subList(i* 60000, toIndex), "E:\\trendData\\大单突破-10点均价用加字段"+i+".xls");
             }
 
         } catch (Exception e) {
@@ -93,6 +113,31 @@ public class SelfExcelReplayComponent {
         }
 
 
+    }
+
+    private  BigDecimal calProfit(List<StockKbar> stockKbars, BigDecimal buyPrice, StockKbar buyStockKbar){
+        int i=0;
+        for (StockKbar stockKbar:stockKbars){
+            if(stockKbar.getHighPrice().compareTo(stockKbar.getLowPrice())!=0) {
+                i++;
+            }
+            if(i==1){
+                BigDecimal avgPrice = historyTransactionDataComponent.calHalfHourAvgPrice(stockKbar.getStockCode(),stockKbar.getKbarDate());
+                if(avgPrice==null){
+                    return null;
+                }
+                BigDecimal reason = null;
+                if(stockKbar.getAdjFactor().compareTo(buyStockKbar.getAdjFactor())!=0){
+                    reason = stockKbar.getAdjOpenPrice().divide(stockKbar.getOpenPrice(),4,BigDecimal.ROUND_HALF_UP);
+                    avgPrice = avgPrice.multiply(reason).setScale(2, BigDecimal.ROUND_HALF_UP);
+                    reason = buyStockKbar.getAdjOpenPrice().divide(buyStockKbar.getOpenPrice(),4,BigDecimal.ROUND_HALF_UP);
+                    buyPrice = buyPrice.multiply(reason).setScale(2, BigDecimal.ROUND_HALF_UP);
+                }
+                BigDecimal profit = PriceUtil.getPricePercentRate(avgPrice.subtract(buyPrice), buyPrice);
+                return profit;
+            }
+        }
+        return null;
     }
 
 

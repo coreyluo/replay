@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author yunshan
  * @date 2019/1/25
  */
-@Component
+@Component("testThsDataComponent")
 @Slf4j
 public class ThsDataComponent {
     @Autowired

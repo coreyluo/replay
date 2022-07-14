@@ -130,6 +130,8 @@ public class ReplayTest extends BaseTestCase {
     @Autowired
     private IndexPeriodReplayComponent indexPeriodReplayComponent;
 
+    @Autowired
+    private StockFactorReplayComponent stockFactorReplayComponent;
 
     @Test
     public void test(){
@@ -142,8 +144,8 @@ public class ReplayTest extends BaseTestCase {
 
     @Test
     public void test2(){
-        middlePlankReplayComponent.invoke();
-       // middlePlankReplayComponent.prePlankGroupBy();
+       // middlePlankReplayComponent.invoke();
+        middlePlankReplayComponent.invokeAllPlank();
     }
 
     @Test
@@ -352,6 +354,15 @@ public class ReplayTest extends BaseTestCase {
        // shIndexReplayComponent.replayUpDown();
        // indexPeriodReplayComponent.replay();
       //  selfExcelReplayComponent.replay();
-        sellReplayComponent.replayStock();
+      //  sellReplayComponent.replayStock();
+        //stockFactorReplayComponent.replay("20220101","20221230");
+        stockFactorReplayComponent.replay("20210101","20210630");
+     /*   stockFactorReplayComponent.replay("20210701","20211230");
+        stockFactorReplayComponent.replay("20200101","20200630");
+        stockFactorReplayComponent.replay("20200701","20201230");
+        stockFactorReplayComponent.replay("20190101","20190630");
+        stockFactorReplayComponent.replay("20190701","20191230");
+        stockFactorReplayComponent.replay("20180101","20180630");
+        stockFactorReplayComponent.replay("20180701","20181230");*/
     }
 }

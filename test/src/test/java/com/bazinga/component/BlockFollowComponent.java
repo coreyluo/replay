@@ -23,7 +23,6 @@ import com.bazinga.util.PriceUtil;
 import com.bazinga.util.ThreadPoolUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sun.deploy.net.proxy.WFirefoxProxyConfig;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import javax.sql.rowset.FilteredRowSet;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;

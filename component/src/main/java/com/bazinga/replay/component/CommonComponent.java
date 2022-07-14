@@ -67,6 +67,17 @@ public class CommonComponent {
         return dates.get(0).getTradeDate();
     }
 
+    public Date afterTradeDate(Date date, int days){
+        TradeDatePoolQuery query = new TradeDatePoolQuery();
+        query.setTradeDateFrom(DateTimeUtils.getDate235959(date));
+        query.addOrderBy("trade_date",Sort.SortType.ASC);
+        List<TradeDatePool> dates = tradeDatePoolService.listByCondition(query);
+        if(CollectionUtils.isEmpty(dates)){
+            return null;
+        }
+        return dates.get(days).getTradeDate();
+    }
+
     public List<StockKbar> getStockKBars(String stockCode){
         try {
             StockKbarQuery query = new StockKbarQuery();
@@ -130,33 +141,5 @@ public class CommonComponent {
     }
 
 
-    //包括新股最后一个一字板
-    public List<StockKbar> deleteNewStockTimes(List<StockKbar> list, int size){
-        List<StockKbar> datas = Lists.newArrayList();
-        if(CollectionUtils.isEmpty(list)){
-            return datas;
-        }
-        StockKbar first = null;
-        if(list.size()<size){
-            BigDecimal preEndPrice = null;
-            int i = 0;
-            for (StockKbar dto:list){
-                if(preEndPrice!=null&&i==0){
-                    if(!(dto.getHighPrice().equals(dto.getLowPrice()))){
-                        i++;
-                        datas.add(first);
-                    }
-                }
-                if(i!=0){
-                    datas.add(dto);
-                }
-                preEndPrice = dto.getClosePrice();
-                first = dto;
-            }
-        }else{
-            return list;
-        }
-        return datas;
-    }
 
 }

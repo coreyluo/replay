@@ -2,6 +2,7 @@ package com.bazinga.test;
 
 import com.bazinga.base.Sort;
 import com.bazinga.component.*;
+import com.bazinga.component.ThsDataComponent;
 import com.bazinga.replay.component.*;
 import com.bazinga.replay.dto.BigExchangeTestBuyDTO;
 import com.bazinga.replay.dto.ThirdSecondTransactionDataDTO;

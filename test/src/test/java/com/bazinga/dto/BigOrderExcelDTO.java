@@ -26,8 +26,13 @@ public class BigOrderExcelDTO {
     @ExcelElement("时间")
     @ExcelField(name = "买入时间")
     private Date tradeTime;
-    @ExcelElement("当天买入时间排名")
-    private Integer rank;
+
+    @ExcelElement("开仓价格")
+    @ExcelField(name = "开仓价格")
+    private BigDecimal buyPrice;
+
+    @ExcelElement("收益")
+    private BigDecimal premium;
 
 
 

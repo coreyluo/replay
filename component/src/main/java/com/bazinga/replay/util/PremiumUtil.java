@@ -34,4 +34,24 @@ public class PremiumUtil {
         return null;
     }
 
+
+
+
+    public static BigDecimal calDaysProfit(List<StockKbar> list, int days){
+        StockKbar buyStockKbar = list.get(0);
+        if(days<list.size()){
+            StockKbar sellStockKbar = list.get(days);
+            if(sellStockKbar.getAdjFactor().compareTo(buyStockKbar.getAdjFactor())==0){
+                return  PriceUtil.getPricePercentRate(sellStockKbar.getOpenPrice().subtract(buyStockKbar.getOpenPrice()),buyStockKbar.getOpenPrice());
+            }else {
+                return  PriceUtil.getPricePercentRate(sellStockKbar.getAdjOpenPrice().subtract(buyStockKbar.getAdjOpenPrice()),buyStockKbar.getAdjOpenPrice());
+            }
+        }else {
+            return null;
+        }
+
+
+    }
+
+
 }
