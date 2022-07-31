@@ -13,8 +13,9 @@ public class DailyTest extends BaseTestCase{
     public void test(){
         accountPositionCalComponent.cal("398000086400");
         accountPositionCalComponent.cal("398000102550");
+        accountPositionCalComponent.cal("398000319319");
         accountPositionCalComponent.cal("398000104348");
-        accountPositionCalComponent.cal("398000103912");
+     //   accountPositionCalComponent.cal("398000103912");
         accountPositionCalComponent.cal("398000131333");
         accountPositionCalComponent.cal("398000104352");
         accountPositionCalComponent.calTiger("505000011155");

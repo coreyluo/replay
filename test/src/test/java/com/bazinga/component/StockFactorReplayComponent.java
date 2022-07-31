@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -76,11 +78,11 @@ public class StockFactorReplayComponent {
                 if(tradeDate.after(DateUtil.parseDate(kbarDateTo, DateUtil.yyyyMMdd))){
                     continue;
                 }
-                if(PriceUtil.isUpperPrice(stockKbar.getOpenPrice(),preStockKbar.getClosePrice())){
+                if(PriceUtil.isHistoryUpperPrice(stockKbar.getStockCode(),stockKbar.getOpenPrice(),preStockKbar.getClosePrice(),stockKbar.getKbarDate())){
                     continue;
                 }
-                String uniqueKey = DateUtil.format(DateUtil.parseDate(stockKbar.getKbarDate(),DateUtil.yyyyMMdd),DateUtil.yyyy_MM_dd)
-                        + SymbolConstants.UNDERLINE + stockKbar.getStockCode();
+                String uniqueKey = DateUtil.format(DateUtil.parseDate(preStockKbar.getKbarDate(),DateUtil.yyyyMMdd),DateUtil.yyyy_MM_dd)
+                        + SymbolConstants.UNDERLINE + preStockKbar.getStockCode();
                 StockFactor stockFactor = stockFactorService.getByUniqueKey(uniqueKey);
                 StockFactorExportDTO exportDTO = new StockFactorExportDTO();
 
@@ -88,6 +90,7 @@ public class StockFactorReplayComponent {
                 objectList.add(stockKbar.getStockCode());
                 objectList.add(stockKbar.getStockName());
                 objectList.add(stockKbar.getKbarDate());
+                objectList.add(preStockKbar.getKbarDate());
                 if(stockFactor == null){
                     log.info("未查询到因子对象 uniqueKey {}",uniqueKey);
                     objectList.add("");
@@ -130,6 +133,7 @@ public class StockFactorReplayComponent {
         headList.add("股票代码");
         headList.add("股票名称");
         headList.add("买入日期");
+        headList.add("因子日期");
         headList.add("因子1");
         headList.add("因子2a");
         headList.add("因子2b");
@@ -153,32 +157,80 @@ public class StockFactorReplayComponent {
     }
 
 
-   /* private Map<String , BigDecimal> getPremiumMap (){
+    public void factorOutPut(String kbarDateFrom ,String kbarDateTo){
+        StockFactorQuery stockFactorQuery = new StockFactorQuery();
+        stockFactorQuery.setLimit(50000000);
+        List<StockFactor> stockFactors = stockFactorService.listByCondition(stockFactorQuery);
 
-
-        List<CirculateInfo> circulateInfos = circulateInfoService.listByCondition(new CirculateInfoQuery());
-
-        Map<String,BigDecimal> resultMap = new HashMap<>();
-
-        for (CirculateInfo circulateInfo : circulateInfos) {
-
-            StockKbarQuery query = new StockKbarQuery();
-            query.setStockCode(circulateInfo.getStockCode());
-            query.setKbarDateFrom("20180101");
-            query.addOrderBy("kbar_date", Sort.SortType.ASC);
-            List<StockKbar> stockKbarList = stockKbarService.listByCondition(query);
-
-            for (int i = 0; i < stockKbarList.size(); i++) {
-                StockKbar stockKbar = stockKbarList.get(i);
-                for (int j = 1; j <= 10; j++) {
-                    if(i+11<stockKbarList.size()){
-                        BigDecimal premium = PremiumUtil.calDaysProfit(stockKbarList.subList(i,i+11),j);
-                        resultMap.put(stockKbar.getUniqueKey() + j,premium);
-                    }
-                }
+        Map<String,List<StockFactor>> tempMap = new HashMap<>();
+        for (StockFactor stockFactor : stockFactors) {
+            BigDecimal sumValue = BigDecimal.ZERO;
+            if(stockFactor.getIndex1()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex1());
+            }if(stockFactor.getIndex2a()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex2a());
+            }if(stockFactor.getIndex2b()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex2b());
+            }if(stockFactor.getIndex2c()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex2c());
+            }if(stockFactor.getIndex3()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex3());
+            }if(stockFactor.getIndex4()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex4());
+            }if(stockFactor.getIndex5()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex5());
+            }if(stockFactor.getIndex6()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex6());
+            }if(stockFactor.getIndex7()!=null){
+                sumValue = sumValue.add(stockFactor.getIndex7());
             }
+            stockFactor.setSumValue(sumValue);
+            List<StockFactor> list = tempMap.computeIfAbsent(stockFactor.getKbarDate(), k -> new ArrayList<>());
+            list.add(stockFactor);
         }
-        return resultMap;
-    }*/
+        List<List<Object>> resultList = new ArrayList<>();
+        tempMap.forEach((kbarDate,list)->{
+            List<StockFactor> sortList = list.stream().sorted(Comparator.comparing(StockFactor::getSumValue).reversed()).collect(Collectors.toList());
+            List<Object> objectList = new ArrayList<>();
+            for (int i = 0; i <200; i++) {
+                StockFactor stockFactor = sortList.get(i);
+                objectList.add(stockFactor.getStockCode());
+                objectList.add(stockFactor.getStockName());
+                objectList.add(stockFactor.getKbarDate());
+                objectList.add(stockFactor.getIndex1());
+                objectList.add(stockFactor.getIndex2a());
+                objectList.add(stockFactor.getIndex2b());
+                objectList.add(stockFactor.getIndex2c());
+                objectList.add(stockFactor.getIndex3());
+                objectList.add(stockFactor.getIndex4());
+                objectList.add(stockFactor.getIndex5());
+                objectList.add(stockFactor.getIndex6());
+                objectList.add(stockFactor.getIndex7());
+                resultList.add(objectList);
+            }
+            log.info("");
+        });
+        List<Object> headList = getHeadList();
+        CSVUtil.createCSVFile(headList,resultList,"E:\\trendData","因子总和排名前200");
+
+    }
+
+    private List<Object> getSortHeadList(){
+        List<Object> headList = new ArrayList<>();
+
+        headList.add("股票代码");
+        headList.add("股票名称");
+        headList.add("因子日期");
+        headList.add("因子1");
+        headList.add("因子2a");
+        headList.add("因子2b");
+        headList.add("因子2c");
+        headList.add("因子3");
+        headList.add("因子4");
+        headList.add("因子5");
+        headList.add("因子6");
+        headList.add("因子7");
+        return headList;
+    }
 
 }

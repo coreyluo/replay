@@ -355,14 +355,19 @@ public class ReplayTest extends BaseTestCase {
        // indexPeriodReplayComponent.replay();
       //  selfExcelReplayComponent.replay();
       //  sellReplayComponent.replayStock();
-        //stockFactorReplayComponent.replay("20220101","20221230");
+      //  stockFactorReplayComponent.replay("20220101","20221230");
         stockFactorReplayComponent.replay("20210101","20210630");
-     /*   stockFactorReplayComponent.replay("20210701","20211230");
-        stockFactorReplayComponent.replay("20200101","20200630");
+        stockFactorReplayComponent.replay("20210701","20211230");
+         stockFactorReplayComponent.replay("20200101","20200630");
         stockFactorReplayComponent.replay("20200701","20201230");
         stockFactorReplayComponent.replay("20190101","20190630");
         stockFactorReplayComponent.replay("20190701","20191230");
         stockFactorReplayComponent.replay("20180101","20180630");
-        stockFactorReplayComponent.replay("20180701","20181230");*/
+        stockFactorReplayComponent.replay("20180701","20181230");
+    }
+
+    @Test
+    public void test14(){
+        stockFactorReplayComponent.factorOutPut("","");
     }
 }

@@ -54,6 +54,7 @@ public class AccountPositionCalComponent {
     static {
         ACCOUNT_NAME_MAP.put("398000086400","老窝");
         ACCOUNT_NAME_MAP.put("398000103912","赵");
+        ACCOUNT_NAME_MAP.put("398000319319","诚");
         ACCOUNT_NAME_MAP.put("398000131333","杜");
         ACCOUNT_NAME_MAP.put("398000104352","产品");
         ACCOUNT_NAME_MAP.put("398000104348","大佬");
@@ -64,7 +65,7 @@ public class AccountPositionCalComponent {
 
     public void cal(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-     //   currentTradeDate = DateUtil.parseDate("20220713",DateUtil.yyyyMMdd);
+        currentTradeDate = DateUtil.parseDate("20220729",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -307,7 +308,7 @@ public class AccountPositionCalComponent {
 
     public void calTiger(String preName){
         Date currentTradeDate = commonComponent.getCurrentTradeDate();
-     //    currentTradeDate = DateUtil.parseDate("20220713",DateUtil.yyyyMMdd);
+         currentTradeDate = DateUtil.parseDate("20220729",DateUtil.yyyyMMdd);
         String kbarDate = DateUtil.format(currentTradeDate,DateUtil.yyyyMMdd);
         Date preTradeDate = commonComponent.preTradeDate(currentTradeDate);
         String preKbarDate = DateUtil.format(preTradeDate,DateUtil.yyyyMMdd);
@@ -485,18 +486,17 @@ public class AccountPositionCalComponent {
                             String orderTime = positionCalDTO.getOrderTime();
                             Integer orderInteger = Integer.parseInt(orderTime.replaceAll(":",""));
                             BigDecimal position = orderPrice.multiply(new BigDecimal(orderQuantity));
-                            positionCalDTO.setBuyStrategy("跟大单");
+                            if(position.compareTo(new BigDecimal("10000"))>0){
+                                positionCalDTO.setBuyStrategy("跟大单");
+                            }else {
+                                positionCalDTO.setBuyStrategy("跟板块");
+                            }
                             /*if(orderInteger< 93000){
                                 positionCalDTO.setBuyStrategy("布林带");
                             }else if(orderInteger< 94000){
                                 positionCalDTO.setBuyStrategy("上影线");
                             }else {
-                                if(position.compareTo(new BigDecimal("20000"))>0){
-                                    positionCalDTO.setBuyStrategy("日内突破");
-                                }else {
-                                    positionCalDTO.setBuyStrategy("500勇士");
 
-                                }
                             }*/
                         }
                     }

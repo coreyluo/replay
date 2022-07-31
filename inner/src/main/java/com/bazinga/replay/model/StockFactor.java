@@ -144,6 +144,8 @@ public class StockFactor implements Serializable {
      */
     private BigDecimal index7;
 
+    private BigDecimal sumValue;
+
     /**
      * 创建时间
      *
